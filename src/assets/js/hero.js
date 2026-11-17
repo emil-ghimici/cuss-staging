@@ -19,7 +19,7 @@
   var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // What the crew says when you hover over him (tap on phones), by what he's doing.
-  // DRAFT lines, to be approved before the site goes live. Plain, warm, a bit dry; no doom.
+  // Approved 2026-11-17. Plain, warm, a bit dry; no doom.
   var LINES = {
     tv: ['Mind the screen, it’s older than me.', 'Who’s been touching the telly?', 'Hang on, I’ll give it a twist.', 'Signal’s gone again. Back in a sec.', 'It’s grand. A twist and it’ll come back.'],
     job: ['Somebody has to keep the lights on.', 'One thing at a time.', 'Nearly there. Nearly.', 'If it’s broken, I’m on it.'],
