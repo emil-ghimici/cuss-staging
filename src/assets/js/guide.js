@@ -178,6 +178,8 @@
     perch = el; busy = false;
     var k = el.getAttribute('data-crew-stop');
     if (k) job(k, el);
+    var room = el.matches('.mon') && el.closest('[data-room]');
+    if (room) intro(room);
     check();
   }
   // His box went off the bottom: grab the top of the first box above, from where he went out, and pull up onto it
@@ -203,6 +205,73 @@
       if (neon && !reduced) { neon.classList.remove('ignite'); void neon.getBBox(); neon.classList.add('ignite'); }
     }, reduced ? 0 : 450);
   }
+
+  /* ---------- In the Control room: he shows the visitor round, monitor by monitor ---------- */
+  // Lines approved 2026-11-17 (the bank and invoice lines quote what is on those screens)
+  var ROOM_LINES = {
+    bank: 'Someone’s left a note. Check who paid??',
+    sheet: '#REF! means a formula’s broken somewhere.',
+    inv: 'Sourdouhg. One typo, wrong invoice.',
+    hello: 'That’s the Control room. Press Connect them.',
+    confirm: 'Your call. Have a look, then press Confirm.'
+  };
+  var queue = Promise.resolve();
+  function inRoom(room) { return !!(perch && room.contains(perch)); }
+  function enqueue(fn) { queue = queue.then(fn).catch(function () {}); return queue; }
+  // Hop to another monitor along the top edges: second arm out, pull himself across
+  function hop(el) {
+    if (busy || perch === el) return Promise.resolve();
+    busy = true; hush();
+    var r = crewEl.getBoundingClientRect();
+    perch = null; putFixed(r.left, r.top);
+    var st = seatOf(el), tx = seatX(st, (st.left + st.right) / 2), ty = st.top - ch() + dangle();
+    return pullTo(tx, ty).then(function () { land(el); });
+  }
+  function point(line) {
+    crewEl.classList.add('point'); say(line, 4000);
+    return sleep(reduced ? 0 : 700).then(function () { crewEl.classList.remove('point'); });
+  }
+  function showRound(room, mon, line) {
+    return enqueue(function () {
+      if (!inRoom(room) || !mon) return;
+      if (reduced) { say(line, 4000); return; }
+      // A monitor too close to the header to sit on (the header would catch him): point at it from where he is
+      var st = seatOf(mon);
+      if (st.top - ch() + dangle() < hh() + 8) {
+        var me = crewEl.getBoundingClientRect();
+        crewEl.classList.toggle('flip', (st.left + st.right) / 2 < me.left + me.width / 2);
+        return point(line);
+      }
+      return hop(mon).then(function () { if (inRoom(room)) return point(line); });
+    });
+  }
+  function nearestToButtons(room) {
+    var b = room.querySelector('.room-bar').getBoundingClientRect(), best = null, bd = Infinity;
+    room.querySelectorAll('.mon').forEach(function (m) {
+      var r = m.getBoundingClientRect(), d = Math.hypot(r.left - b.left, r.bottom - b.top);
+      if (d < bd) { bd = d; best = m; }
+    });
+    return best;
+  }
+  // First time he lands on the wall: point out what's wrong, then hand over to the visitor
+  function intro(room) {
+    if (room.dataset.crewIntro || room.classList.contains('connected')) return;
+    room.dataset.crewIntro = '1';
+    ['bank', 'sheet', 'inv'].forEach(function (k) {
+      var m = room.querySelector('.mon[data-k="' + k + '"]');
+      if (m) { showRound(room, m, ROOM_LINES[k]); enqueue(function () { return sleep(reduced ? 0 : 1800); }); }
+    });
+    showRound(room, nearestToButtons(room), ROOM_LINES.hello);
+  }
+  doc.addEventListener('room:step', function (e) { showRound(e.detail.room, e.detail.mon, e.detail.line); });
+  doc.addEventListener('room:await', function (e) { showRound(e.detail.room, e.detail.mon, ROOM_LINES.confirm); });
+  doc.addEventListener('room:done', function (e) {
+    showRound(e.detail.room, e.detail.mon, e.detail.line).then(function () {
+      if (!inRoom(e.detail.room) || reduced) return;
+      crewEl.classList.add('tapping'); return sleep(400).then(function () { crewEl.classList.remove('tapping'); });   // the nod
+    });
+  });
+  doc.addEventListener('room:reset', function () { queue = Promise.resolve(); });
 
   /* ---------- Tips ---------- */
   var bubbleTimer = 0;
@@ -276,6 +345,8 @@
     putDoc(seatX(pick, innerWidth * 0.75) + scrollX, pick.top - ch() + dangle() + scrollY);
     perch = pick.el;
     var k = pick.el.getAttribute('data-crew-stop'); if (k) job(k, pick.el);
+    var room = pick.el.matches('.mon') && pick.el.closest('[data-room]');
+    if (room) intro(room);
   }
 
   function begin() {

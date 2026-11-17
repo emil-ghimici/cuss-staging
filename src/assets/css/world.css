@@ -226,3 +226,11 @@ html:not(.js) .room .connect{display:none}
 /* While the guide has him, the hero's CREW is away (one character, never two) */
 .scene .crew.away{visibility:hidden}
 .g-crew{pointer-events:auto}
+/* CREW pointing down into the monitor he sits on */
+.g-crew.point .arm{transform:rotate(-40deg)}
+/* The wall's flicker and cable flow pause off screen */
+.room.paused .mon.flicker .scr,.room.paused .cables path{animation-play-state:paused}
+/* Phones: monitor text at 14 px (the floor for small labels); screens grow to fit their lines */
+@media (max-width: 760px){
+  .mon .scr,.room.mini .mon .scr{font-size:14px;height:auto;min-height:150px;line-height:1.45}
+}
