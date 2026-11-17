@@ -165,3 +165,13 @@ html:not(.js) .room .connect{display:none}
   html.js .scene .crew:not(.live){visibility:hidden}
 }
 @media (min-width: 761px) and (max-width: 1060px){.hero .actions{grid-template-columns:1fr}}
+
+/* The crew's speech bubble: a little screen above his head (decoration, hidden from screen readers) */
+.scene .crew{cursor:default}
+.crew-bubble{position:absolute;z-index:6;max-width:240px;width:max-content;padding:8px 12px;background:#05080a;color:#3ee6e0;border:2px solid #3ee6e0;font:500 16px/1.4 var(--font-mono);pointer-events:none;
+  transform:translate(-50%,calc(-100% + 6px));opacity:0;transition:opacity .15s,transform .15s cubic-bezier(.2,.8,.2,1)}
+.crew-bubble.on{opacity:1;transform:translate(-50%,-100%)}
+.crew-bubble p{margin:0}
+.crew-bubble::after{content:"";position:absolute;left:calc(50% + var(--tail,0px) - 7px);bottom:-9px;width:12px;height:12px;background:#05080a;border:2px solid #3ee6e0;border-top:0;border-left:0;transform:rotate(45deg)}
+:root:not([data-theme="light"]) .crew-bubble{box-shadow:0 0 12px rgba(62,230,224,.3)}
+@media (max-width: 760px){.crew-bubble{max-width:200px}}

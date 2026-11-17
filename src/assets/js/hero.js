@@ -18,6 +18,19 @@
   var tube = scene.querySelector('[data-tube]'), spark = scene.querySelector('[data-spark]'), sign = scene.querySelector('[data-sign]');
   var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // What the crew says when you hover over him (tap on phones), by what he's doing.
+  // DRAFT lines, to be approved before the site goes live. Plain, warm, a bit dry; no doom.
+  var LINES = {
+    tv: ['Mind the screen, it’s older than me.', 'Who’s been touching the telly?', 'Hang on, I’ll give it a twist.', 'Signal’s gone again. Back in a sec.', 'It’s grand. A twist and it’ll come back.'],
+    job: ['Somebody has to keep the lights on.', 'One thing at a time.', 'Nearly there. Nearly.', 'If it’s broken, I’m on it.'],
+    // one more line for the job in hand
+    tube: ['This light’s been flickering all week.'],
+    junction: ['Don’t touch that box. Seriously.'],
+    sign: ['This sign’s been loose since Tuesday.'],
+    off: ['Just popping out. Back in a tick.'],
+    tea: ['Back in a minute, the kettle’s on.', 'Tea break. The telly can mind itself.', 'Ten minutes. Union rules.', 'Don’t tell the boss.'],
+    idle: ['Got something that needs fixing? That’s the Contact button.', 'We fix things. That’s the whole job.', 'Spreadsheets held together with tape? Seen worse.', 'The first call’s free, by the way.', 'All quiet. Suspiciously quiet.']
+  };
   var BG = '#05080a', PH = '62,230,224';           // the screen and phosphor tokens (screens stay dark in both themes)
   var FONT = '"Chakra Petch", "Chakra Petch Fallback", sans-serif';
   var SPRING = 0.09, DAMPING = 0.78;               // from the dot field: pull to target, velocity kept per frame
@@ -176,12 +189,13 @@
 
   /* ---------------- One loop, one clock ---------------- */
   // The crew's timers run on this clock, so they freeze with everything else when the hero is paused.
-  var clock = 0, waits = [], raf = 0, lastT = 0, acc = 0, running = false, onScreen = false, resting = false;
+  var chatting = false, clock = 0, waits = [], raf = 0, lastT = 0, acc = 0, running = false, onScreen = false, resting = false;
   function wait(ms) { return new Promise(function (r) { waits.push({ t: clock + ms, r: r }); }); }
   function loop(t) {
     raf = requestAnimationFrame(loop);
     var el = lastT ? Math.min(250, t - lastT) : FRAME_MS; lastT = t;
-    clock += el; acc += el;
+    if (!chatting) clock += el;   // he stops what he's doing while you talk to him
+    acc += el;
     if (waits.length) {
       var due = waits.filter(function (w) { return w.t <= clock; });
       if (due.length) { waits = waits.filter(function (w) { return w.t > clock; }); due.forEach(function (w) { w.r(); }); }
@@ -281,6 +295,10 @@
     return go.then(untilWeak).then(twist);
   }
   function job(s) {
+    crew.busy = s.id;
+    return jobInner(s).then(function () { crew.busy = false; });
+  }
+  function jobInner(s) {
     if (s.act === 'off') {
       // Out by the street's right-hand edge, back in from the left (the scene clips its left edge)
       var w = sceneW(), exit = offRight();
@@ -338,6 +356,62 @@
     }).then(life);
   }
 
+  /* ---------------- Talking to the crew ---------------- */
+  var bubble = doc.createElement('div'), bubbleText = doc.createElement('p'), lastLine = {}, bubbleTimer = 0, walkTarget = null;
+  bubble.className = 'crew-bubble'; bubble.setAttribute('aria-hidden', 'true'); bubble.hidden = true;
+  bubble.appendChild(bubbleText); scene.appendChild(bubble);
+  function situation() {
+    if (resting) return 'tea';
+    if (crew.needTV || state === 'broken') return 'tv';
+    if (crew.busy) return 'job';
+    return 'idle';
+  }
+  function pick(kind) {
+    var list = kind === 'job' ? LINES.job.concat(LINES[crew.busy] || []) : LINES[kind], i;
+    do { i = (Math.random() * list.length) | 0; } while (list.length > 1 && i === lastLine[kind]);
+    lastLine[kind] = i;
+    return list[i];
+  }
+  function freezeWalk() {
+    // Stop him where he is: read his current position off the running transition
+    var m = new DOMMatrixReadOnly(getComputedStyle(crewEl).transform), x = m.m41;
+    if (Math.abs(x - crew.x) > 1) { walkTarget = crew.x; place(x, 0); crew.x = x; }
+  }
+  function resumeWalk() {
+    if (walkTarget === null) return;
+    var d = Math.abs(walkTarget - crew.x); place(walkTarget, Math.max(0.2, d / 90)); walkTarget = null;
+  }
+  function say() {
+    var sr = scene.getBoundingClientRect(), cr = crewEl.getBoundingClientRect();
+    bubbleText.textContent = pick(situation());
+    bubble.hidden = false;
+    var bw = bubble.offsetWidth, cx = cr.left - sr.left + cr.width / 2;
+    var left = Math.max(bw / 2 + 4, Math.min(sr.width - bw / 2 - 4, cx));
+    bubble.style.left = left + 'px';
+    bubble.style.top = (cr.top - sr.top - 8) + 'px';
+    bubble.style.setProperty('--tail', (cx - left) + 'px');
+    void bubble.offsetWidth; bubble.classList.add('on');
+  }
+  function openChat() {
+    clearTimeout(bubbleTimer);
+    if (!chatting) { chatting = true; freezeWalk(); say(); }
+    bubbleTimer = setTimeout(closeChat, 5000);
+  }
+  function closeChat() {
+    clearTimeout(bubbleTimer);
+    if (!chatting) return;
+    chatting = false; bubble.classList.remove('on'); bubble.hidden = true;
+    resumeWalk();
+  }
+  crewEl.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') openChat(); });
+  crewEl.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') { clearTimeout(bubbleTimer); bubbleTimer = setTimeout(closeChat, 300); } });
+  crewEl.addEventListener('pointerdown', function (e) {
+    if (e.pointerType === 'mouse') return;
+    e.stopPropagation();
+    chatting ? closeChat() : openChat();
+  });
+  doc.addEventListener('pointerdown', function (e) { if (chatting && !crewEl.contains(e.target)) closeChat(); });
+
   /* ---------------- Visitors ---------------- */
   function poke() {
     lastAny = performance.now();
@@ -360,7 +434,7 @@
     breakIt();
   }
   // Only a pointer or finger on the TV screen breaks the picture; anywhere in the hero still wakes the crew
-  hero.addEventListener('pointermove', poke, { passive: true });
+  hero.addEventListener('pointermove', function (e) { if (!crewEl.contains(e.target)) poke(); }, { passive: true });
   screenEl.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse' || e.buttons) onScreenAt(e.clientX, e.clientY); }, { passive: true });
   screenEl.addEventListener('touchmove', function (e) { var t = e.touches[0]; if (t) onScreenAt(t.clientX, t.clientY); }, { passive: true });
   screenEl.addEventListener('pointerleave', function () { ptr = null; });
