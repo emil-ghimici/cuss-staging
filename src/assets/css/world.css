@@ -1,0 +1,147 @@
+/* World zones: the derelict neon street, screens, the crew. Never behind body text,
+   never between a visitor and the Contact button. Screens stay dark in both themes. */
+
+/* Street line art, drawn with the theme tokens */
+.street .ln{fill:none;stroke:var(--divider);stroke-width:2}
+.street .ln2{fill:none;stroke:var(--ink-muted);stroke-width:1.5;opacity:.55}
+.street .amb{fill:none;stroke:var(--amber);stroke-width:3;stroke-linecap:round;color:var(--amber)}
+.street .hazs{fill:none;stroke:var(--hazard);stroke-width:2}
+.street .sig{fill:none;stroke:var(--signal);stroke-width:3;stroke-linecap:round;color:var(--signal)}
+.street .txt-amb{fill:var(--amber);font:600 18px var(--font-display);letter-spacing:.12em}
+.street .blk{fill:var(--surface-1)}
+.street .blk2{fill:var(--surface-2)}
+.street .cable,.divider .cable{fill:none;stroke:var(--ink-muted);stroke-width:2;opacity:.6}
+.street .win-a{fill:var(--amber);opacity:.55}
+.street .win-h{fill:var(--hazard);opacity:.5}
+:root:not([data-theme="light"]) .street .amb,:root:not([data-theme="light"]) .street .sig{filter:drop-shadow(0 0 6px currentColor)}
+@media (prefers-color-scheme: light){:root:not([data-theme]) .street .amb,:root:not([data-theme]) .street .sig{filter:none}}
+
+/* Flicker: at most 3 flashes, ≤ 3 per second, then steady for seconds */
+.flick{animation:flick 6s steps(1) infinite}
+.flick.fixed{animation:none}
+@keyframes flick{0%,100%{opacity:1}61%{opacity:.25}62%{opacity:1}64%{opacity:.35}65%{opacity:1}}
+.spark{opacity:0}
+.spark.on{animation:spark .9s steps(2) 3}
+@keyframes spark{0%{opacity:1}50%{opacity:0}}
+
+/* Hero */
+@media (min-width: 1061px){.hero h1{min-height:5.5em}}
+.hero{position:relative;overflow:hidden;background:var(--surface-0)}
+.hero-in{display:grid;grid-template-columns:6fr 7fr;gap:var(--space-6);align-items:center;min-height:720px;padding-top:var(--space-7);padding-bottom:var(--space-7)}
+.hero-copy{position:relative;z-index:2;align-self:start;padding-top:var(--space-5)}
+.hero-copy .note{font-size:16px;margin:0;color:var(--ink-muted)}
+.scene{position:relative;height:520px}
+.scene .street{position:absolute;inset:0;width:100%;height:100%}
+.tv{position:absolute;left:21%;top:146px;width:58%;aspect-ratio:4/3.2;background:#2b2f36;padding:22px 92px 22px 22px;border:2px solid #4b525d}
+.tv::after{content:"";position:absolute;right:-1px;top:-1px;width:46px;height:30px;background:linear-gradient(135deg,transparent 48%,#0b0f14 50%);opacity:.9}
+.tv-screen{position:relative;width:100%;height:100%;background:var(--screen);overflow:hidden;border:3px solid #15181d}
+.tv-screen canvas{width:100%;height:100%}
+.scan{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.05) 0 1px,transparent 1px 3px);mix-blend-mode:screen}
+.vign{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 60px rgba(0,0,0,.85)}
+.dial{position:absolute;right:26px;width:44px;height:44px;border-radius:50%;background:#14171c;border:3px solid #59606b}
+.dial::after{content:"";position:absolute;left:50%;top:4px;width:4px;height:14px;margin-left:-2px;background:#ffb547;transform-origin:50% 16px;transition:transform .35s steps(3)}
+.dial.d1{top:34px}.dial.d2{top:96px}
+.dial.turn::after{transform:rotate(80deg)}
+.tv .grille{position:absolute;right:22px;bottom:26px;width:52px;height:70px;background:repeating-linear-gradient(to bottom,#59606b 0 3px,transparent 3px 8px)}
+.tv .legs{position:absolute;left:12%;right:12%;bottom:-26px;height:26px;border-left:6px solid #3a3f47;border-right:6px solid #3a3f47}
+.tv.jolt{animation:jolt .3s steps(3)}
+@keyframes jolt{33%{transform:translate(3px,-2px) rotate(.4deg)}66%{transform:translate(-2px,1px)}}
+
+/* The crew: a battered maintenance robot */
+.crew{position:absolute;left:0;bottom:50px;width:90px;height:120px;transform:translateX(var(--x,0));z-index:3}
+.crew svg{width:100%;height:100%;overflow:visible}
+.crew .arm{transform-origin:50px 46px;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.crew.reach .arm{transform:rotate(-70deg)}
+.crew.up .arm{transform:rotate(-140deg)}
+.crew.flinch{animation:flinch .3s steps(2)}
+@keyframes flinch{50%{translate:0 -6px}}
+.crew .mug{opacity:0;transition:opacity .3s}
+.crew.tea .mug{opacity:1}
+.crew.flip svg{transform:scaleX(-1)}
+.crew .eye{fill:var(--phosphor)}
+:root:not([data-theme="light"]) .crew .eye{filter:drop-shadow(0 0 4px var(--phosphor))}
+
+/* Section dividers (static SVG; the neon ignites once when seen) */
+.divider{position:relative;height:120px;background:var(--surface-0);overflow:hidden}
+.divider svg{position:absolute;inset:0;width:100%;height:100%}
+.tape{fill:#c6ff3d}
+.tape-bg{fill:#14181e}
+.sign-plate{fill:var(--surface-2);stroke:var(--amber);stroke-width:2}
+.sign-txt{fill:var(--amber);font:600 20px var(--font-display);letter-spacing:.2em}
+.open-txt{fill:none;stroke:var(--amber);stroke-width:3;font:600 54px var(--font-display);letter-spacing:.14em}
+:root:not([data-theme="light"]) .open-txt{filter:drop-shadow(0 0 8px var(--amber))}
+.ignite{animation:ignite 1.2s steps(1) 1}
+@keyframes ignite{0%{opacity:.15}20%{opacity:1}35%{opacity:.3}55%{opacity:1}70%{opacity:.4}85%,100%{opacity:1}}
+
+/* Control room */
+.room{position:relative}
+.room-tag{color:var(--amber)}
+.room-wall{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-7);margin-top:var(--space-6)}
+.mon{position:relative;background:#262a31;padding:14px 14px 32px;border:2px solid #444b56}
+.mon .label{position:absolute;left:14px;bottom:6px;font:500 14px/1.4 var(--font-mono);letter-spacing:.06em;color:#9fb0c0;text-transform:uppercase}
+.mon .led2{position:absolute;right:14px;bottom:11px;width:8px;height:8px;background:#5a2430}
+.mon.live{border-color:#3ee6e0}
+.mon.live .led2{background:var(--phosphor);box-shadow:0 0 6px var(--phosphor)}
+.mon .scr{position:relative;height:200px;margin:0;white-space:pre-wrap;background:var(--screen);color:var(--phosphor);font:500 15px/1.5 var(--font-mono);padding:12px 14px;overflow:hidden}
+.mon .scr::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.04) 0 1px,transparent 1px 3px);pointer-events:none}
+.mon .dim{color:#7f9ea7}
+.mon .amb{color:#ffb547}
+.mon .hz{color:#c6ff3d}
+.mon .hi{background:rgba(62,230,224,.18);outline:1px solid rgba(62,230,224,.5)}
+.mon.flicker .scr{animation:mflick 4s steps(1) infinite}
+@keyframes mflick{0%,100%{opacity:1}48%{opacity:.6}49%{opacity:1}}
+.mon .sticky{position:absolute;right:-10px;top:-14px;transform:rotate(6deg);background:#ffd96a;color:#3a2a00;font:700 14px/1.2 var(--font-sans);padding:8px 10px;box-shadow:2px 3px 0 rgba(0,0,0,.35);z-index:2}
+.room.connected .mon .sticky{display:none}
+:root:not([data-theme="light"]) .mon.live{box-shadow:0 0 14px rgba(62,230,224,.35)}
+.cables{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.cables path{fill:none;stroke:var(--signal);stroke-width:3;stroke-dasharray:6 8;opacity:0;transition:opacity .4s}
+.room.connected .cables path{opacity:.9;animation:flow 1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-28}}
+.room-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4);margin-top:var(--space-7)}
+.caption{font:500 16px/1.5 var(--font-mono);color:var(--amber);min-height:48px;display:flex;align-items:center;margin:0}
+.room .confirm,.room.awaiting .connect,.room.connected .connect{display:none}
+.room.awaiting .confirm{display:inline-flex}
+/* Without the script the wall simply shows the "before" state with its caption */
+html:not(.js) .room .connect{display:none}
+
+@media (max-width: 1060px){
+  .hero-in{grid-template-columns:1fr 1fr}
+}
+@media (max-width: 760px){
+  .hero-in{grid-template-columns:1fr;min-height:0;padding-top:var(--space-6);padding-bottom:var(--space-5);gap:var(--space-4)}
+  .scene{height:360px;margin:0 calc(var(--space-4) * -1)}
+  .tv{left:50%;transform:translateX(-50%);top:96px;width:78%;padding:14px 64px 14px 14px}
+  .tv.jolt{animation:joltm .3s steps(3)}
+  @keyframes joltm{33%{transform:translate(calc(-50% + 3px),-2px)}66%{transform:translate(calc(-50% - 2px),1px)}}
+  .dial{right:14px;width:36px;height:36px}.dial.d1{top:20px}.dial.d2{top:70px}
+  .dial::after{transform-origin:50% 13px;height:11px}
+  .tv .grille{right:14px;width:36px;height:50px;bottom:18px}
+  .crew{width:58px;height:78px}
+  .room-wall{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5) var(--space-3)}
+  .mon{padding:8px 8px 28px}
+  .mon .scr{height:150px;font-size:12px;padding:8px}
+  .mon .label{left:8px;font-size:14px;letter-spacing:.02em}
+  .mon .sticky{font-size:14px;right:-4px;padding:5px 6px}
+  .room-bar .btn{flex:1 1 100%}
+  .divider{height:96px}
+}
+@media (prefers-reduced-motion: reduce){
+  .flick,.mon.flicker .scr,.cursor{animation:none}
+}
+
+/* Before the crew's script runs (and the reduced-motion still): hand on the dial, beside the TV */
+.scene .crew{left:calc(79% - 34px)}
+@media (max-width: 760px){
+  .scene .crew{left:calc(89% - 70px);top:30px;bottom:auto}
+}
+
+/* Trimmed demo on service pages */
+.room.mini{background:var(--surface-2);padding:var(--space-6);border:var(--border-divider-w) solid var(--divider)}
+.room.mini .room-wall{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-6)}
+.room.mini .mon .scr{height:170px;font-size:14px}
+.room.mini .room-bar{margin-top:var(--space-6)}
+@media (max-width: 760px){
+  .room.mini{padding:var(--space-4);margin:0 calc(var(--space-4) * -1)}
+  .room.mini .room-wall{gap:var(--space-5) var(--space-3)}
+  .room.mini .mon .scr{height:150px;font-size:12px}
+}

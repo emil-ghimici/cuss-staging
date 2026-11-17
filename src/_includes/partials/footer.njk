@@ -1,0 +1,37 @@
+<footer class="ftr" id="site-footer">
+  <div class="ftr-tape" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="ftr-in">
+      <div>
+        <a class="logo" href="/"><span class="led bv-sm" aria-hidden="true"></span>CuSS<span class="sr"> home</span></a>
+        <p class="brandline">Custom software, automation and websites for Irish businesses. Free first call, written quote before work starts.</p>
+      </div>
+      <nav aria-labelledby="ftr-svc"><h2 class="ftr-h" id="ftr-svc">Services</h2>
+        <ul class="plain">
+          {%- for s in services %}
+          <li><a href="/services/{{ s.slug }}/">{{ s.name }}</a></li>
+          {%- endfor %}
+        </ul>
+      </nav>
+      <nav aria-labelledby="ftr-cuss"><h2 class="ftr-h" id="ftr-cuss">CuSS</h2>
+        <ul class="plain">
+          <li><a href="/work/">Work</a></li>
+          <li><a href="/about/">About</a></li>
+          <li><a href="/contact/">Contact</a></li>
+          <li><a href="/privacy.html">Privacy</a></li>
+        </ul>
+      </nav>
+      <div><h2 class="ftr-h">Get in touch</h2>
+        <ul class="plain">
+          <li><a href="mailto:{{ site.email }}">{{ site.email }}</a></li>
+          <li><a href="tel:{{ site.phone.tel }}">{{ site.phone.display }}</a></li>
+        </ul>
+        <p class="muted ftr-town">{{ site.town }}</p>
+      </div>
+    </div>
+    <div class="legal">
+      <p>{{ site.legalName }} is a registered business name. CRO no. {{ site.legal.cro }}. Owner: {{ site.legal.owner }}. {{ site.legal.address }}.</p>
+      <p>No cookies, no trackers.</p>
+    </div>
+  </div>
+</footer>

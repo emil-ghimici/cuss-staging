@@ -1,0 +1,47 @@
+# Builds the Eleventy site and publishes it with GitHub Pages.
+# - In the staging repo (cuss-staging) every push to main deploys, with noindex and the /cuss-staging/ path.
+# - In the live repo it only runs when started by hand, until cuss.ie's Pages source is switched to Actions.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.repository == 'emil-ghimici/cuss-staging' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      STAGING: ${{ github.repository == 'emil-ghimici/cuss-staging' && '1' || '' }}
+      PATH_PREFIX: ${{ github.repository == 'emil-ghimici/cuss-staging' && '/cuss-staging/' || '/' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx @11ty/eleventy
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

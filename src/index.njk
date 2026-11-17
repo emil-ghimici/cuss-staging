@@ -1,0 +1,105 @@
+---
+layout: layouts/base.njk
+permalink: /
+---
+{%- from "macros.njk" import faq, steps, contact with context %}
+<section class="hero" data-hero aria-labelledby="hero-h">
+  <div class="wrap hero-in">
+    <div class="hero-copy">
+      <p class="mono eyebrow">Athlone · Midlands · Ireland-wide</p>
+      <h1 id="hero-h">Custom software that fits the way your business works</h1>
+      <p class="lead">Automation, apps, dashboards and websites for small businesses in Athlone, the Midlands and across Ireland.</p>
+      <div class="actions"><a class="btn btn-contact bv-md" href="#contact">Tell us what you need</a><a class="btn bv-md" href="#demo">See how it works</a></div>
+      <p class="note">{{ site.promise }}</p>
+    </div>
+    {% include "partials/hero-scene.njk" %}
+  </div>
+</section>
+
+<section class="sec sec-alt" aria-labelledby="pain-h">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">Sound familiar?</p><h2 id="pain-h">Running a business shouldn’t mean doing the computer’s job</h2></div>
+    <ul class="grid g4 plain">
+      {%- for p in pains %}
+      <li class="info bv-lg">{% icon p.icon, "ci" %}<h3 class="h4">{{ p.t }}</h3><p>{{ p.d }}</p></li>
+      {%- endfor %}
+    </ul>
+  </div>
+</section>
+
+<div class="divider" aria-hidden="true"><svg viewBox="0 0 1280 120" preserveAspectRatio="xMidYMid slice" focusable="false">
+  <defs><pattern id="hz1" width="36" height="24" patternUnits="userSpaceOnUse" patternTransform="skewX(-40)"><rect width="36" height="24" class="tape-bg"/><rect width="18" height="24" class="tape"/></pattern></defs>
+  <rect x="-20" y="76" width="1320" height="24" fill="url(#hz1)"/>
+  <path class="cable" d="M560 0v26M720 0v26"/>
+  <rect class="sign-plate" x="510" y="22" width="260" height="58"/>
+  <text class="sign-txt" data-neon x="640" y="59" text-anchor="middle">WORKSHOP</text>
+</svg></div>
+
+<section class="sec" id="demo" aria-labelledby="demo-h">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">The control room · Demo: fictional business</p><h2 id="demo-h">Six tools that don’t talk to each other. Watch what happens when they do.</h2>
+      <p class="lead">A small bakery takes a wholesale order by email.<span class="js-only"> Press <strong>Connect them</strong> and follow the same order through.</span></p></div>
+    {% include "partials/room.njk" %}
+  </div>
+</section>
+
+<section class="sec sec-alt" id="services" aria-labelledby="svc-h">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">Services</p><h2 id="svc-h">What we build</h2></div>
+    <ul class="grid g3 plain">
+      {%- for s in services %}
+      <li><a class="card bv-lg" href="/services/{{ s.slug }}/">{% icon s.icon, "ci" %}<h3 class="h4">{{ s.name }}</h3><p>{{ s.summary }}</p><span class="arrow" aria-hidden="true">→</span></a></li>
+      {%- endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="how-h">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">How we work</p><h2 id="how-h">Four steps, no surprises</h2></div>
+    {{ steps(howSteps) }}
+  </div>
+</section>
+
+<section class="sec sec-alt" aria-labelledby="work-h">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">Work</p><h2 id="work-h">Things we’ve built</h2></div>
+    <ul class="grid g3 plain">
+      {%- for w in work %}
+      <li><a class="card work bv-lg{% if w.placeholder %} placeholder{% endif %}" href="/work/"><div class="bezel bv-md"><div class="shot"><svg viewBox="0 0 300 170" preserveAspectRatio="none" aria-hidden="true" focusable="false">{{ w.shot | safe }}</svg></div></div><span class="mono tag">{{ w.kind }}</span><h3 class="h4">{{ w.title }}</h3><p>{{ w.d }}</p></a></li>
+      {%- endfor %}
+    </ul>
+    <p class="see-all"><a class="link-tap" href="/work/">See all work →</a></p>
+  </div>
+</section>
+
+<section class="sec" aria-labelledby="why-h">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">Why CuSS</p><h2 id="why-h">A small firm you can trust with your business</h2></div>
+    <ul class="grid g4 plain">
+      {%- for w in why %}
+      <li class="info bv-lg">{% icon w.icon, "ci" %}<h3 class="h4">{{ w.t }}</h3><p>{{ w.d }}</p></li>
+      {%- endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="sec sec-alt" aria-labelledby="faq-h">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">Questions</p><h2 id="faq-h">Things people ask us</h2></div>
+    {{ faq(faqs, true) }}
+  </div>
+</section>
+
+<div class="divider" aria-hidden="true"><svg viewBox="0 0 1280 120" preserveAspectRatio="xMidYMid slice" focusable="false">
+  <path class="cable" d="M0 18Q320 70 640 22T1280 30"/>
+  <path class="cable" d="M580 30v14M700 30v14"/>
+  <rect class="sign-plate" x="530" y="40" width="220" height="70" style="stroke:var(--divider)"/>
+  <text class="open-txt" data-neon x="640" y="96" text-anchor="middle">OPEN</text>
+</svg></div>
+
+<section class="sec" aria-labelledby="contact-h">
+  <div class="wrap">
+    {{ contact('Tell us what you need') }}
+  </div>
+</section>

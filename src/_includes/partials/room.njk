@@ -1,0 +1,16 @@
+{#- Control room demo. Set `roomKeys` before including to show only some monitors (service pages). -#}
+<div class="room{% if roomKeys %} mini bv-lg{% endif %}" data-room>
+  {%- if roomKeys %}<span class="mono room-tag">Demo · fictional business</span>{% endif %}
+  <div class="room-wall">
+    {%- for m in room.monitors %}{% if not roomKeys or m.k in roomKeys %}
+    <div class="mon flicker bv-md" data-k="{{ m.k }}">{% if m.sticky %}<span class="sticky">{{ m.sticky }}</span>{% endif %}<pre class="scr">{{ m.before | safe }}</pre><span class="label">{{ m.label }}</span><span class="led2" aria-hidden="true"></span></div>
+    {%- endif %}{% endfor %}
+    <svg class="cables" aria-hidden="true" focusable="false"></svg>
+  </div>
+  <div class="room-bar">
+    <button class="btn bv-md connect" type="button">{% icon "workflow" %}Connect them</button>
+    <button class="btn btn-signal bv-md confirm" type="button">{% icon "check" %}Confirm invoice</button>
+    <button class="btn bv-md again" type="button" hidden>Run again</button>
+    <p class="caption" aria-live="polite">{{ room.caption }}</p>
+  </div>
+</div>
