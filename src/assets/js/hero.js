@@ -30,7 +30,7 @@
     off: ['Just popping out. Back in a tick.'],
     held: ['Whoa, easy!', 'I can walk, you know.', 'Mind the paintwork.'],
     thanks: ['Cheers, I was getting to that.'],
-    // His name, said once per visit after he first tunes the TV (expansion to be confirmed)
+    // His name (confirmed 2026-11-17), said once per visit after he first tunes the TV
     intro: ['Hiya. I’m CREW: CuSS Robot for Everyday Work.'],
     tea: ['Back in a minute, the kettle’s on.', 'Tea break. The telly can mind itself.', 'Ten minutes. Union rules.', 'Don’t tell the boss.'],
     idle: ['Got something that needs fixing? That’s the Contact button.', 'We fix things. That’s the whole job.', 'Spreadsheets held together with tape? Seen worse.', 'The first call’s free, by the way.', 'All quiet. Suspiciously quiet.']
