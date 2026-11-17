@@ -177,3 +177,10 @@ html:not(.js) .room .connect{display:none}
 .crew-bubble::after{content:"";position:absolute;left:calc(50% + var(--tail,0px) - 7px);bottom:-9px;width:12px;height:12px;background:#05080a;border:2px solid #3ee6e0;border-top:0;border-left:0;transform:rotate(45deg)}
 :root:not([data-theme="light"]) .crew-bubble{box-shadow:0 0 12px rgba(62,230,224,.3)}
 @media (max-width: 760px){.crew-bubble{max-width:200px}}
+/* Beside his head (no room above inside the scene): tail points sideways at him */
+.crew-bubble.side{transform:translate(6px,0)}
+.crew-bubble.side.on{transform:none}
+.crew-bubble.side.left{transform:translate(calc(-100% - 6px),0)}
+.crew-bubble.side.left.on{transform:translateX(-100%)}
+.crew-bubble.side::after{left:-9px;top:14px;bottom:auto;border:2px solid #3ee6e0;border-right:0;border-top:0}
+.crew-bubble.side.left::after{left:auto;right:-9px;border:2px solid #3ee6e0;border-left:0;border-bottom:0}
