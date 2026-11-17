@@ -21,7 +21,7 @@
 
   // Lines when no section has a tip of its own (approved idle lines)
   var IDLE = ['We fix things. That’s the whole job.', 'The first call’s free, by the way.', 'Got something that needs fixing? That’s the Contact button.'];
-  // What he says at each showpiece stop (DRAFT, to be approved)
+  // What he says at each showpiece stop (approved 2026-11-17)
   var STOP_LINES = { open: 'Hang on, I’ll straighten that.', workshop: 'Mind the tape.' };
 
   /* ---------- Where he should be ---------- */

@@ -1,4 +1,5 @@
 // Home page content (design spec section 12). Copy is the agreed draft; final copy still to come.
+// CREW's section tips (data-crew-tip in index.njk) were approved 2026-11-17.
 export default {
   title: 'Custom software, automation & websites in Athlone | CuSS',
   description: 'Custom web apps, automation, dashboards and websites for small businesses in Athlone, the Midlands and across Ireland. Free first call, written quote before work starts.',
