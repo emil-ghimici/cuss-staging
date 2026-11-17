@@ -189,27 +189,40 @@ html:not(.js) .room .connect{display:none}
 .crew-bubble.side::after{left:-9px;top:14px;bottom:auto;border:2px solid #3ee6e0;border-right:0;border-top:0}
 .crew-bubble.side.left::after{left:auto;right:-9px;border:2px solid #3ee6e0;border-left:0;border-bottom:0}
 
-/* ---------- CREW the guide: hangs from the header on his arm and travels with the visitor ---------- */
-.guide{position:fixed;left:0;top:var(--header-h);z-index:28;width:0;height:0}
-.guide-swing{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
-.guide-rope{position:absolute;left:-1.5px;top:0;width:3px;height:100px;transform-origin:0 0;background:repeating-linear-gradient(to bottom,#8a93a0 0 12px,#4b525d 12px 14px)}
-.guide-crew{position:absolute;left:0;top:0;width:60px;height:80px;cursor:pointer}
-.guide-crew svg{width:100%;height:100%;overflow:visible}
-.guide-crew .eye{fill:var(--phosphor)}
-.guide-crew .arm{transform-origin:50px 46px;transform:rotate(-150deg);transition:transform .3s}
-.guide-crew.tapping .arm{transform:rotate(-100deg)}
-.guide-crew .mug{display:none}
-/* Sitting in the header (narrower desktops): above the header bar, no rope */
-.guide.sit{z-index:31}
-.guide.sit .guide-rope{display:none}
-.guide.sit .guide-crew{width:44px;height:59px}
-.guide-bubble{position:fixed;z-index:32;max-width:240px}
+/* ---------- CREW the guide: caught by the header where he stands, rappels to the next box ---------- */
+.g-fixed{position:fixed;left:0;top:0;width:0;height:0;z-index:28;pointer-events:none}
+.g-doc{position:absolute;left:0;top:0;width:0;height:0;z-index:20}
+.g-crew{position:absolute;left:0;top:0;width:84px;height:112px;cursor:pointer;will-change:transform}
+.g-crew svg{width:100%;height:100%;overflow:visible}
+.g-crew .eye{fill:var(--phosphor)}
+.g-crew .mug{display:none}
+.g-crew .arm{transform-origin:50px 46px;transition:transform .25s}
+.g-crew.hang .arm{transform:rotate(-150deg)}
+.g-crew.flip svg{transform:scaleX(-1)}
+.g-crew.tapping .arm{transform:rotate(-100deg)}
+.g-fixed.on .g-crew{z-index:28}
+/* Rope and second arm: 100 px bars stretched and turned with transform only */
+.g-line{position:absolute;left:0;top:0;width:100px;transform-origin:0 50%;opacity:0}
+.g-line.on{opacity:1}
+.g-rope{height:3px;margin-top:-1.5px;background:repeating-linear-gradient(90deg,#8a93a0 0 12px,#4b525d 12px 14px)}
+.g-arm{height:7px;margin-top:-3.5px;border-radius:3px;background:repeating-linear-gradient(90deg,#8a93a0 0 16px,#4b525d 16px 19px)}
+.g-grip{position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;background:#9aa3ae;border:2px solid #59606b;opacity:0}
+.g-grip.on{opacity:1}
+/* His bubble rides with him, beside his head */
+.g-bubble{position:absolute;top:0;right:calc(100% + 10px);left:auto;max-width:240px;width:max-content;transform:none}
+.g-bubble.on{transform:none}
+.g-bubble::after{left:auto;right:-9px;top:14px;bottom:auto;border:2px solid #3ee6e0;border-left:0;border-bottom:0}
+.g-bubble.right{right:auto;left:calc(100% + 10px)}
+.g-bubble.right::after{right:auto;left:-9px;border:2px solid #3ee6e0;border-right:0;border-top:0}
 @media (max-width: 760px){
-  .guide-crew{width:40px;height:54px}
-  .guide-bubble{max-width:200px}
+  .g-crew{width:54px;height:72px}
+  .g-bubble{max-width:200px}
 }
 /* The OPEN sign hangs from one connector until CREW fixes it */
 .divider .hanging{transform-box:view-box;transform-origin:580px 44px;transform:rotate(9deg);transition:transform .6s cubic-bezier(.3,1.4,.5,1)}
 .divider .hook-r{opacity:0;transition:opacity .2s .45s}
 .divider.fixed .hanging{transform:none}
 .divider.fixed .hook-r{opacity:.6}
+/* While the guide has him, the hero's CREW is away (one character, never two) */
+.scene .crew.away{visibility:hidden}
+.g-crew{pointer-events:auto}

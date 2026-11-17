@@ -434,7 +434,7 @@
   function hideBubble() { clearTimeout(bubbleTimer); bubble.classList.remove('on'); bubble.hidden = true; }
   // He speaks up now and then on his own, at most one line every 12 s, and never over a chat
   function mutter(kind, sure) {
-    if (chatting || held || reduced) return;
+    if (chatting || held || reduced || crewEl.classList.contains('away')) return;
     var now = performance.now();
     if (now - lastMutter < 12000 || (!sure && Math.random() > 0.5)) return;
     lastMutter = now;
