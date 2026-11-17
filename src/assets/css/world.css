@@ -92,7 +92,7 @@
 .tape-bg{fill:#14181e}
 .sign-plate{fill:var(--surface-2);stroke:var(--amber);stroke-width:2}
 .sign-txt{fill:var(--amber);font:600 20px var(--font-display);letter-spacing:.2em}
-.open-txt{fill:none;stroke:var(--amber);stroke-width:3;font:600 54px var(--font-display);letter-spacing:.14em}
+.open-txt{fill:none;stroke:var(--amber);stroke-width:3;font:600 46px var(--font-display);letter-spacing:.14em}
 :root:not([data-theme="light"]) .open-txt{filter:drop-shadow(0 0 8px var(--amber))}
 .ignite{animation:ignite 1.2s steps(1) 1}
 @keyframes ignite{0%{opacity:.15}20%{opacity:1}35%{opacity:.3}55%{opacity:1}70%{opacity:.4}85%,100%{opacity:1}}
@@ -219,7 +219,7 @@ html:not(.js) .room .connect{display:none}
   .g-bubble{max-width:200px}
 }
 /* The OPEN sign hangs from one connector until CREW fixes it */
-.divider .hanging{transform-box:view-box;transform-origin:580px 44px;transform:rotate(9deg);transition:transform .6s cubic-bezier(.3,1.4,.5,1)}
+.divider .hanging{transform-box:view-box;transform-origin:580px 40px;transform:rotate(6deg);transition:transform .6s cubic-bezier(.3,1.4,.5,1)}
 .divider .hook-r{opacity:0;transition:opacity .2s .45s}
 .divider.fixed .hanging{transform:none}
 .divider.fixed .hook-r{opacity:.6}
