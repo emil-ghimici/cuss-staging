@@ -193,7 +193,7 @@
 
   /* ---------------- One loop, one clock ---------------- */
   // The crew's timers run on this clock, so they freeze with everything else when the hero is paused.
-  var gen = 0, chatting = false, clock = 0, waits = [], raf = 0, lastT = 0, acc = 0, running = false, onScreen = false, resting = false;
+  var teaLong = false, gen = 0, chatting = false, clock = 0, waits = [], raf = 0, lastT = 0, acc = 0, running = false, onScreen = false, resting = false;
   function wait(ms, keep) { return new Promise(function (r) { waits.push({ t: clock + ms, r: r, g: keep ? -1 : gen }); }); }
   function loop(t) {
     raf = requestAnimationFrame(loop);
@@ -204,7 +204,7 @@
       var due = waits.filter(function (w) { return w.t <= clock; });
       if (due.length) { waits = waits.filter(function (w) { return w.t > clock; }); due.forEach(function (w) { if (w.g === -1 || w.g === gen) w.r(); }); }
     }
-    if (acc < FRAME_MS) return;
+    if (acc < (resting ? FRAME_MS * 3 : FRAME_MS)) return;
     var dt = Math.min(3, acc / 16.667); acc = 0;
     if (state === 'broken' && performance.now() - lastMove > 1000) setState('weak');
     draw(dt);
@@ -212,7 +212,7 @@
   function start() { if (!raf) { lastT = 0; raf = requestAnimationFrame(loop); } }
   function stop() { if (raf) { cancelAnimationFrame(raf); raf = 0; } }
   function sync() {
-    running = onScreen && !doc.hidden && !resting;
+    running = onScreen && !doc.hidden && !teaLong;
     if (running) start(); else stop();
     scene.classList.toggle('paused', !running);
   }
@@ -288,7 +288,8 @@
     if (id === 'sign') return Math.max(0, vx(100) - crewW() / 2);
     return Math.min(sceneW() - crewW(), vx(560) - crewW() / 2);
   }
-  function teaSpot() { return phone ? besideTV() : Math.min(sceneW() - crewW(), vx(585) - crewW() / 2); }
+  var crateEl = scene.querySelector('.crate');
+  function teaSpot() { return phone || !crateEl ? besideTV() : crateEl.offsetLeft + crateEl.offsetWidth / 2 - crewW() / 2; }
 
   function place(x, dur) {
     crewEl.style.transition = dur ? 'transform ' + dur + 's linear' : 'none';
@@ -351,13 +352,14 @@
   }
   function rest() {
     return walkTo(teaSpot()).then(function () {
-      crewEl.classList.add('tea'); if (!phone) crewEl.classList.add('sit');
+      crewEl.classList.add('tea'); if (!phone) crewEl.classList.add('sit', 'flip');   // facing the screen
       mutter('tea', true);
-      resting = true;
-      return new Promise(function (r) { crew.wake = r; setTimeout(function () { if (resting) sync(); }, 3600); });   // let the line be read, then stop everything
+      resting = true; sync();
+      // He watches the telly for a minute (it plays on at a third of the frame rate), then everything stops
+      return new Promise(function (r) { crew.wake = r; setTimeout(function () { if (resting) { teaLong = true; sync(); } }, 60000); });
     }).then(function () {
       crewEl.classList.remove('tea', 'sit');
-      resting = false; sync();
+      resting = false; teaLong = false; sync();
     });
   }
   var lastAny = 0;
@@ -468,13 +470,13 @@
 
   /* ---------------- Carrying him (desktop) ---------------- */
   // A short drag picks him up; he follows the pointer inside the scene and drops to the ground on release.
-  // Dropped near something broken, he fixes it straight away. Never left behind the TV screen.
+  // Dropped near something broken, he fixes it straight away. He is on the top layer, so he can be left anywhere.
   var drag = null;
   function stopEverything() {
     gen++;                                  // ends whatever he was in the middle of
     armOff(); dial.classList.remove('turn');
     crewEl.classList.remove('tea', 'sit', 'reach', 'up', 'flinch');
-    if (resting) { resting = false; crew.wake = null; sync(); }
+    if (resting) { resting = false; teaLong = false; crew.wake = null; sync(); }
     crew.busy = false; walkTarget = null;
   }
   crewEl.addEventListener('pointerdown', function (e) {
@@ -510,9 +512,7 @@
     if (!was) return;
     held = false; hideBubble();
     crewEl.classList.remove('held');
-    // Never left standing behind the TV screen: slide to the nearer side
-    var x = crew.x, mid = x + crewW() / 2;
-    if (mid > tvLeft() && mid < tvRight()) x = mid - tvLeft() < tvRight() - mid ? Math.max(0, tvLeft() - crewW()) : tvRight() + 2;
+    var x = crew.x;
     crewEl.style.transition = 'transform .4s cubic-bezier(.5,0,.9,.6)';
     crewEl.style.setProperty('--x', Math.round(x) + 'px');
     crewEl.style.setProperty('--y', '0px');

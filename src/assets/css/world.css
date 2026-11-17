@@ -51,7 +51,10 @@
 @keyframes jolt{33%{transform:translate(3px,-2px) rotate(.4deg)}66%{transform:translate(-2px,1px)}}
 
 /* The crew: a battered maintenance robot */
-.crew{position:absolute;left:0;bottom:calc(50 * var(--u));width:calc(90 * var(--u));height:calc(120 * var(--u));transform:translate(var(--x,0),var(--y,0));z-index:1}
+.crew{position:absolute;left:0;bottom:calc(50 * var(--u));width:calc(90 * var(--u));height:calc(120 * var(--u));transform:translate(var(--x,0),var(--y,0));z-index:4}
+/* His tea crate, in front of the TV so he can watch it on his break (desktop) */
+.scene .crate{position:absolute;z-index:3;left:calc(392 * var(--u));bottom:calc(50 * var(--u));width:calc(52 * var(--u));height:calc(40 * var(--u));background:var(--surface-2);border:2px solid var(--divider)}
+.scene .crate::after{content:"";position:absolute;left:0;right:0;top:45%;border-top:2px solid var(--divider)}
 .crew.held{z-index:5;cursor:grabbing}
 .crew.held svg{transform:rotate(-6deg)}
 .crew.sit{translate:0 calc(-38 * var(--u))}
@@ -69,7 +72,7 @@
 :root:not([data-theme="light"]) .crew .eye{filter:drop-shadow(0 0 4px var(--phosphor))}
 
 /* His telescopic arm: reaches whatever needs fixing from where he stands (transform only) */
-.reach-arm,.reach-hand{position:absolute;left:0;top:0;z-index:4;pointer-events:none;opacity:0}
+.reach-arm,.reach-hand{position:absolute;left:0;top:0;z-index:5;pointer-events:none;opacity:0}
 .reach-arm{height:calc(7 * var(--u));margin-top:calc(-3.5 * var(--u));transform-origin:0 50%;border-radius:calc(3 * var(--u));background:repeating-linear-gradient(90deg,#8a93a0 0 calc(16 * var(--u)),#4b525d calc(16 * var(--u)) calc(19 * var(--u)));
   transform:translate(var(--sx),var(--sy)) rotate(var(--ang)) scaleX(0);transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .1s}
 .reach-hand{width:calc(14 * var(--u));height:calc(14 * var(--u));margin:calc(-7 * var(--u)) 0 0 calc(-7 * var(--u));border-radius:50%;background:#9aa3ae;border:calc(2 * var(--u)) solid #59606b;
@@ -136,7 +139,8 @@ html:not(.js) .room .connect{display:none}
   .dial{right:calc(23 * var(--u));width:calc(59 * var(--u));height:calc(59 * var(--u))}.dial.d1{top:calc(33 * var(--u))}.dial.d2{top:calc(115 * var(--u))}
   .dial::after{transform-origin:50% calc(22 * var(--u));height:calc(18 * var(--u))}
   .tv .grille{right:calc(23 * var(--u));width:calc(59 * var(--u));height:calc(82 * var(--u));bottom:calc(30 * var(--u))}
-  .scene .crew{left:calc(470 * var(--u));top:calc(14 * var(--u));bottom:auto;z-index:3}
+  .scene .crew{left:calc(470 * var(--u));top:calc(14 * var(--u));bottom:auto}
+  .scene .crate{display:none}
   .room-wall{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5) var(--space-3)}
   .mon{padding:8px 8px 28px}
   .mon .scr{height:150px;font-size:12px;padding:8px}
