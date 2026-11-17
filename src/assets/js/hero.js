@@ -28,6 +28,10 @@
     junction: ['Don’t touch that box. Seriously.'],
     sign: ['This sign’s been loose since Tuesday.'],
     off: ['Just popping out. Back in a tick.'],
+    held: ['Whoa, easy!', 'I can walk, you know.', 'Mind the paintwork.'],
+    thanks: ['Cheers, I was getting to that.'],
+    // His name, said once per visit after he first tunes the TV (expansion to be confirmed)
+    intro: ['Hiya. I’m CREW: CuSS Robot for Everyday Work.'],
     tea: ['Back in a minute, the kettle’s on.', 'Tea break. The telly can mind itself.', 'Ten minutes. Union rules.', 'Don’t tell the boss.'],
     idle: ['Got something that needs fixing? That’s the Contact button.', 'We fix things. That’s the whole job.', 'Spreadsheets held together with tape? Seen worse.', 'The first call’s free, by the way.', 'All quiet. Suspiciously quiet.']
   };
@@ -189,16 +193,16 @@
 
   /* ---------------- One loop, one clock ---------------- */
   // The crew's timers run on this clock, so they freeze with everything else when the hero is paused.
-  var chatting = false, clock = 0, waits = [], raf = 0, lastT = 0, acc = 0, running = false, onScreen = false, resting = false;
-  function wait(ms) { return new Promise(function (r) { waits.push({ t: clock + ms, r: r }); }); }
+  var gen = 0, chatting = false, clock = 0, waits = [], raf = 0, lastT = 0, acc = 0, running = false, onScreen = false, resting = false;
+  function wait(ms, keep) { return new Promise(function (r) { waits.push({ t: clock + ms, r: r, g: keep ? -1 : gen }); }); }
   function loop(t) {
     raf = requestAnimationFrame(loop);
     var el = lastT ? Math.min(250, t - lastT) : FRAME_MS; lastT = t;
-    if (!chatting) clock += el;   // he stops what he's doing while you talk to him
+    if (!chatting && !held) clock += el;   // he stops what he's doing while you talk to him or carry him
     acc += el;
     if (waits.length) {
       var due = waits.filter(function (w) { return w.t <= clock; });
-      if (due.length) { waits = waits.filter(function (w) { return w.t > clock; }); due.forEach(function (w) { w.r(); }); }
+      if (due.length) { waits = waits.filter(function (w) { return w.t > clock; }); due.forEach(function (w) { if (w.g === -1 || w.g === gen) w.r(); }); }
     }
     if (acc < FRAME_MS) return;
     var dt = Math.min(3, acc / 16.667); acc = 0;
@@ -214,26 +218,33 @@
   }
 
   /* ---------------- The crew ---------------- */
-  var crew = { x: 0, needTV: true, wake: null };
+  var crew = { x: 0, needTV: true, wake: null, busy: false };
+  var held = false;                                   // being carried by the visitor (desktop)
   function sceneW() { return scene.clientWidth; }
   // A point of the street drawing (viewBox 640×520, "xMidYMax slice") in scene pixels
   function vx(x) { var w = sceneW(), h = scene.clientHeight, s = Math.max(w / 640, h / 520); return (x - 320) * s + w / 2; }
   function vy(y) { var w = sceneW(), h = scene.clientHeight, s = Math.max(w / 640, h / 520); return (y - 520) * s + h; }
   function crewW() { return crewEl.offsetWidth; }
-  // The telescopic arm, so he can reach whatever needs fixing from where he stands
+  function rel(el) { var r = el.getBoundingClientRect(), s = scene.getBoundingClientRect(); return { x: r.left - s.left + r.width / 2, y: r.top - s.top + r.height / 2 }; }
+
+  // The telescopic arm: it grows out of his shoulder to whatever needs fixing, and back
   var armEl = doc.createElement('span'), handEl = doc.createElement('span');
   armEl.className = 'reach-arm'; handEl.className = 'reach-hand';
   armEl.setAttribute('aria-hidden', 'true'); handEl.setAttribute('aria-hidden', 'true');
   scene.appendChild(armEl); scene.appendChild(handEl);
-  function rel(el) { var r = el.getBoundingClientRect(), s = scene.getBoundingClientRect(); return { x: r.left - s.left + r.width / 2, y: r.top - s.top + r.height / 2 }; }
+  function armOff() {
+    [armEl, handEl].forEach(function (el) { el.classList.remove('on', 'out'); });
+    crewEl.classList.remove('extend');
+  }
   function reachTo(x, y, instant) {
     var sr = scene.getBoundingClientRect(), cr = crewEl.getBoundingClientRect();
     var left = x < cr.left - sr.left + cr.width / 2;
     crewEl.classList.toggle('flip', left);                     // face the job (the sprite faces right)
     var sx = cr.left - sr.left + (left ? 26 : 52) / 78 * cr.width, sy = cr.top - sr.top + 52 / 104 * cr.height;
     var len = Math.hypot(x - sx, y - sy), ang = Math.atan2(y - sy, x - sx);
+    // Put it at his shoulder first with no transition, so nothing slides across the scene…
     [armEl, handEl].forEach(function (el) {
-      el.classList.remove('out'); el.classList.toggle('still', !!instant);
+      el.classList.add('still'); el.classList.remove('out');
       el.style.setProperty('--sx', sx + 'px'); el.style.setProperty('--sy', sy + 'px');
       el.style.setProperty('--tx', x + 'px'); el.style.setProperty('--ty', y + 'px');
     });
@@ -241,29 +252,44 @@
     crewEl.classList.add('extend');
     armEl.classList.add('on'); handEl.classList.add('on');
     void armEl.offsetWidth;
+    // …then let it grow out
+    if (!instant) { armEl.classList.remove('still'); handEl.classList.remove('still'); }
     armEl.classList.add('out'); handEl.classList.add('out');
     return instant ? Promise.resolve() : wait(470);
   }
   function retract() {
     armEl.classList.remove('out'); handEl.classList.remove('out');
-    return wait(470).then(function () { armEl.classList.remove('on'); handEl.classList.remove('on'); crewEl.classList.remove('extend'); });
+    return wait(470).then(armOff);
   }
   function tap(x, y) {
     return reachTo(x, y).then(function () { return wait(600); }).then(retract)
       .then(function () { return wait(200); }).then(function () { return reachTo(x, y); })
       .then(function () { return wait(600); }).then(retract);
   }
+
+  // Where things are. On phones he lives on top of the TV and reaches from its ends.
+  function tvLeft() { return tv.offsetLeft; }
+  function tvRight() { return tv.offsetLeft + tv.offsetWidth; }
   function offRight() { return hero.getBoundingClientRect().right - scene.getBoundingClientRect().left + 20; }
-  function besideTV() { return tv.offsetLeft + tv.offsetWidth + 2; }
+  function besideTV() { return phone ? tvRight() - crewW() - 4 : tvRight() + 2; }
   function nearTV() { return Math.abs(crew.x - besideTV()) < 140; }
-  function spots() {
-    return [
-      { id: 'tube', x: vx(560) - crewW() / 2, at: [550, 96] },
-      { id: 'junction', x: Math.min(sceneW() - crewW(), vx(560) - crewW() / 2), at: [586, 352] },
-      { id: 'sign', x: Math.max(0, vx(100) - crewW() / 2), at: [72, 270] },
-      { id: 'off', act: 'off' }
-    ];
+  var THINGS = {
+    tube: { at: [550, 96], broken: function () { return tube && !tube.classList.contains('fixed'); },
+      fix: function () { tube.classList.add('fixed'); wait(25000, true).then(function () { tube.classList.remove('fixed'); }); } },
+    junction: { at: [586, 352], broken: function () { return spark && spark.classList.contains('on'); },
+      fix: function () { spark.classList.remove('on'); } },
+    sign: { at: [72, 270], broken: function () { return sign && sign.getAttribute('transform').indexOf('rotate(0') !== 0; },
+      fix: function () { sign.setAttribute('transform', 'rotate(0 75 270)'); wait(60000, true).then(function () { sign.setAttribute('transform', 'rotate(-9 75 270)'); }); } }
+  };
+  // On phones the sign is reached at its far end, so the arm passes over the bezel, not the screen
+  function atOf(id) { var a = THINGS[id].at; return id === 'sign' && phone ? [30, 270] : a; }
+  function standFor(id) {
+    if (phone) return id === 'sign' ? tvLeft() - crewW() * 0.25 : tvRight() - crewW() - 4;
+    if (id === 'sign') return Math.max(0, vx(100) - crewW() / 2);
+    return Math.min(sceneW() - crewW(), vx(560) - crewW() / 2);
   }
+  function teaSpot() { return phone ? besideTV() : Math.min(sceneW() - crewW(), vx(585) - crewW() / 2); }
+
   function place(x, dur) {
     crewEl.style.transition = dur ? 'transform ' + dur + 's linear' : 'none';
     crewEl.style.setProperty('--x', Math.round(x) + 'px');
@@ -271,6 +297,7 @@
   }
   function walkTo(x) {
     var d = Math.abs(x - crew.x), dur = Math.max(0.3, d / 90);     // slow, a trundle
+    if (d < 2) return wait(60);
     crewEl.classList.toggle('flip', x < crew.x);
     place(x, dur);
     return wait(dur * 1000 + 60);
@@ -291,29 +318,27 @@
   }
   function untilWeak() { return state === 'broken' ? wait(200).then(untilWeak) : Promise.resolve(); }
   function fixTV() {
-    var go = phone ? Promise.resolve() : walkTo(besideTV()).then(function () { crewEl.classList.add('flip'); });
-    return go.then(untilWeak).then(twist);
+    // He only reaches the dials from the right-hand side, never across the screen
+    return walkTo(besideTV()).then(function () { mutter('tv'); return untilWeak(); }).then(twist);
   }
-  function job(s) {
-    crew.busy = s.id;
-    return jobInner(s).then(function () { crew.busy = false; });
+  function job(id) {
+    crew.busy = id;
+    return jobInner(id).then(function () { crew.busy = false; });
   }
-  function jobInner(s) {
-    if (s.act === 'off') {
+  function jobInner(id) {
+    if (id === 'off') {
       // Out by the street's right-hand edge, back in from the left (the scene clips its left edge)
-      var w = sceneW(), exit = offRight();
-      return walkTo(exit)
+      mutter('off', true);
+      var w = sceneW();
+      return wait(1500).then(function () { return walkTo(offRight()); })
         .then(function () { return wait(2500 + Math.random() * 2000); })
         .then(function () { if (spark) { spark.classList.remove('on'); void spark.getBBox(); spark.classList.add('on'); } return wait(800 + Math.random() * 1000); })
-        .then(function () { place(-crewW() - 10, 0); void crewEl.offsetWidth; return walkTo(Math.min(w * 0.12, tv.offsetLeft - crewW())); });
+        .then(function () { place(-crewW() - 10, 0); void crewEl.offsetWidth; return walkTo(Math.min(w * 0.12, tvLeft() - crewW())); });
     }
-    return walkTo(s.x)
-      .then(function () { return tap(vx(s.at[0]), vy(s.at[1])); })
-      .then(function () {
-        if (s.id === 'tube' && tube) { tube.classList.add('fixed'); wait(25000).then(function () { tube.classList.remove('fixed'); }); }
-        if (s.id === 'junction' && spark) spark.classList.remove('on');
-        if (s.id === 'sign' && sign) sign.setAttribute('transform', 'rotate(0 75 270)');
-      });
+    var t = THINGS[id];
+    return walkTo(standFor(id))
+      .then(function () { mutter('job'); return tap(vx(atOf(id)[0]), vy(atOf(id)[1])); })
+      .then(function () { t.fix(); });
   }
   // A pause between jobs, cut short (after 2–6 s) if the picture breaks meanwhile
   function pause(ms) {
@@ -325,11 +350,11 @@
     return tick();
   }
   function rest() {
-    var sit = phone ? Promise.resolve() : walkTo(vx(481) - crewW() / 2);
-    return sit.then(function () {
+    return walkTo(teaSpot()).then(function () {
       crewEl.classList.add('tea'); if (!phone) crewEl.classList.add('sit');
-      resting = true; sync();
-      return new Promise(function (r) { crew.wake = r; });
+      mutter('tea', true);
+      resting = true;
+      return new Promise(function (r) { crew.wake = r; setTimeout(function () { if (resting) sync(); }, 3600); });   // let the line be read, then stop everything
     }).then(function () {
       crewEl.classList.remove('tea', 'sit');
       resting = false; sync();
@@ -340,26 +365,31 @@
     return pause(4000 + Math.random() * 4000).then(function () {
       if (crew.needTV) return fixTV();
       if (performance.now() - lastAny > 45000) return rest();
-      if (phone) {
-        return tap(vx(550), vy(96)).then(function () { if (tube) { tube.classList.add('fixed'); wait(25000).then(function () { tube.classList.remove('fixed'); }); } });
-      }
-      var list = spots(), s = list[(Math.random() * list.length) | 0];
-      return job(s).then(function () { if (crew.needTV) return wait(2000 + Math.random() * 4000).then(fixTV); });
+      if (Math.random() < 0.2) mutter('idle');
+      var ids = phone ? ['tube', 'junction', 'sign'] : ['tube', 'junction', 'sign', 'off'];
+      var id = ids[(Math.random() * ids.length) | 0];
+      return job(id).then(function () { if (crew.needTV) return wait(2000 + Math.random() * 4000).then(fixTV); });
     }).then(life);
   }
   function firstEntrance() {
     return wait(2500).then(untilWeak).then(function () {
       crewEl.classList.remove('reach', 'flip');
-      if (phone) return twist();
-      place(offRight(), 0); void crewEl.offsetWidth;
+      place(phone ? besideTV() : offRight(), 0); void crewEl.offsetWidth;
       return fixTV();
+    }).then(function () {
+      // He introduces himself once per visit
+      var seen = false;
+      try { seen = sessionStorage.getItem('cuss-crew-hello') === '1'; sessionStorage.setItem('cuss-crew-hello', '1'); } catch (e) {}
+      if (!seen && !chatting && !held && !reduced) { lastMutter = performance.now(); showBubble(LINES.intro[0], 5000); return wait(5200); }
     }).then(life);
   }
 
-  /* ---------------- Talking to the crew ---------------- */
-  var bubble = doc.createElement('div'), bubbleText = doc.createElement('p'), lastLine = {}, bubbleTimer = 0, walkTarget = null;
+  /* ---------------- Talking: his speech bubble ---------------- */
+  var bubble = doc.createElement('div'), bubbleWho = doc.createElement('span'), bubbleText = doc.createElement('p');
+  var lastLine = {}, bubbleTimer = 0, walkTarget = null, lastMutter = -1e9;
   bubble.className = 'crew-bubble'; bubble.setAttribute('aria-hidden', 'true'); bubble.hidden = true;
-  bubble.appendChild(bubbleText); scene.appendChild(bubble);
+  bubbleWho.className = 'who'; bubbleWho.textContent = 'CREW';
+  bubble.appendChild(bubbleWho); bubble.appendChild(bubbleText); scene.appendChild(bubble);
   function situation() {
     if (resting) return 'tea';
     if (crew.needTV || state === 'broken') return 'tv';
@@ -372,6 +402,30 @@
     lastLine[kind] = i;
     return list[i];
   }
+  function placeBubble() {
+    var sr = scene.getBoundingClientRect(), cr = crewEl.getBoundingClientRect();
+    var bw = bubble.offsetWidth, cx = cr.left - sr.left + cr.width / 2;
+    var left = Math.max(bw / 2 + 4, Math.min(sr.width - bw / 2 - 4, cx));
+    bubble.style.left = left + 'px';
+    bubble.style.top = (cr.top - sr.top - 8) + 'px';
+    bubble.style.setProperty('--tail', (cx - left) + 'px');
+  }
+  function showBubble(text, ms) {
+    clearTimeout(bubbleTimer);
+    bubbleText.textContent = text;
+    bubble.hidden = false; placeBubble();
+    void bubble.offsetWidth; bubble.classList.add('on');
+    if (ms) bubbleTimer = setTimeout(hideBubble, ms);
+  }
+  function hideBubble() { clearTimeout(bubbleTimer); bubble.classList.remove('on'); bubble.hidden = true; }
+  // He speaks up now and then on his own, at most one line every 12 s, and never over a chat
+  function mutter(kind, sure) {
+    if (chatting || held || reduced) return;
+    var now = performance.now();
+    if (now - lastMutter < 12000 || (!sure && Math.random() > 0.5)) return;
+    lastMutter = now;
+    showBubble(kind === 'off' ? LINES.off[0] : pick(kind), 3500);
+  }
   function freezeWalk() {
     // Stop him where he is: read his current position off the running transition
     var m = new DOMMatrixReadOnly(getComputedStyle(crewEl).transform), x = m.m41;
@@ -381,36 +435,96 @@
     if (walkTarget === null) return;
     var d = Math.abs(walkTarget - crew.x); place(walkTarget, Math.max(0.2, d / 90)); walkTarget = null;
   }
-  function say() {
-    var sr = scene.getBoundingClientRect(), cr = crewEl.getBoundingClientRect();
-    bubbleText.textContent = pick(situation());
-    bubble.hidden = false;
-    var bw = bubble.offsetWidth, cx = cr.left - sr.left + cr.width / 2;
-    var left = Math.max(bw / 2 + 4, Math.min(sr.width - bw / 2 - 4, cx));
-    bubble.style.left = left + 'px';
-    bubble.style.top = (cr.top - sr.top - 8) + 'px';
-    bubble.style.setProperty('--tail', (cx - left) + 'px');
-    void bubble.offsetWidth; bubble.classList.add('on');
-  }
   function openChat() {
-    clearTimeout(bubbleTimer);
-    if (!chatting) { chatting = true; freezeWalk(); say(); }
-    bubbleTimer = setTimeout(closeChat, 5000);
+    if (held) return;
+    if (!chatting) { chatting = true; freezeWalk(); showBubble(pick(situation())); }
+    clearTimeout(bubbleTimer); bubbleTimer = setTimeout(closeChat, 5000);
   }
   function closeChat() {
-    clearTimeout(bubbleTimer);
     if (!chatting) return;
-    chatting = false; bubble.classList.remove('on'); bubble.hidden = true;
+    chatting = false; hideBubble();
     resumeWalk();
   }
   crewEl.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') openChat(); });
-  crewEl.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') { clearTimeout(bubbleTimer); bubbleTimer = setTimeout(closeChat, 300); } });
+  crewEl.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse' && !held) { clearTimeout(bubbleTimer); bubbleTimer = setTimeout(closeChat, 300); } });
   crewEl.addEventListener('pointerdown', function (e) {
-    if (e.pointerType === 'mouse') return;
+    if (e.pointerType === 'mouse' || e.pointerType === 'pen') return;          // desktop: hover talks, press-and-drag carries
     e.stopPropagation();
     chatting ? closeChat() : openChat();
   });
   doc.addEventListener('pointerdown', function (e) { if (chatting && !crewEl.contains(e.target)) closeChat(); });
+
+  /* ---------------- Carrying him (desktop) ---------------- */
+  // A short drag picks him up; he follows the pointer inside the scene and drops to the ground on release.
+  // Dropped near something broken, he fixes it straight away. Never left behind the TV screen.
+  var drag = null;
+  function stopEverything() {
+    gen++;                                  // ends whatever he was in the middle of
+    armOff(); dial.classList.remove('turn');
+    crewEl.classList.remove('tea', 'sit', 'reach', 'up', 'flinch');
+    if (resting) { resting = false; crew.wake = null; sync(); }
+    crew.busy = false; walkTarget = null;
+  }
+  crewEl.addEventListener('pointerdown', function (e) {
+    if (phone || reduced || !(e.pointerType === 'mouse' || e.pointerType === 'pen') || e.button !== 0) return;
+    var cr = crewEl.getBoundingClientRect();
+    drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, ox: e.clientX - cr.left, oy: e.clientY - cr.top, on: false };
+    e.preventDefault();
+  });
+  doc.addEventListener('pointermove', function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.on) {
+      if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 6) return;
+      drag.on = true; held = true; chatting = false;
+      try { crewEl.setPointerCapture(e.pointerId); } catch (err) {}
+      stopEverything();
+      var m = new DOMMatrixReadOnly(getComputedStyle(crewEl).transform);
+      crew.x = m.m41; place(crew.x, 0);
+      drag.base = crewEl.offsetTop;                          // his top when standing on the ground
+      crewEl.classList.add('held');
+      showBubble(pick('held'));
+    }
+    var sr = scene.getBoundingClientRect();
+    var x = Math.max(0, Math.min(sceneW() - crewW(), e.clientX - sr.left - drag.ox));
+    var top = Math.max(0, Math.min(drag.base, e.clientY - sr.top - drag.oy));
+    crew.x = x;
+    crewEl.style.setProperty('--x', Math.round(x) + 'px');
+    crewEl.style.setProperty('--y', Math.round(top - drag.base) + 'px');
+    placeBubble();
+  });
+  function drop(e) {
+    if (!drag || (e && e.pointerId !== drag.id)) return;
+    var was = drag.on; drag = null;
+    if (!was) return;
+    held = false; hideBubble();
+    crewEl.classList.remove('held');
+    // Never left standing behind the TV screen: slide to the nearer side
+    var x = crew.x, mid = x + crewW() / 2;
+    if (mid > tvLeft() && mid < tvRight()) x = mid - tvLeft() < tvRight() - mid ? Math.max(0, tvLeft() - crewW()) : tvRight() + 2;
+    crewEl.style.transition = 'transform .4s cubic-bezier(.5,0,.9,.6)';
+    crewEl.style.setProperty('--x', Math.round(x) + 'px');
+    crewEl.style.setProperty('--y', '0px');
+    crew.x = x;
+    poke();
+    var my = gen;
+    wait(420).then(function () { return afterDrop(); }).then(function () { if (my === gen) return life(); });
+  }
+  doc.addEventListener('pointerup', drop);
+  doc.addEventListener('pointercancel', drop);
+  function afterDrop() {
+    var mid = crew.x + crewW() / 2, best = null, bd = 170;
+    if ((crew.needTV || state === 'broken') && Math.abs(mid - (tvRight() + crewW() / 2)) < bd) best = 'tv';
+    Object.keys(THINGS).forEach(function (id) {
+      var t = THINGS[id], d = Math.abs(mid - vx(atOf(id)[0]));
+      if (best !== 'tv' && t.broken() && d < bd) { bd = d; best = id; }
+    });
+    if (!best) return Promise.resolve();
+    lastMutter = performance.now(); showBubble(LINES.thanks[0], 3000);
+    if (best === 'tv') return fixTV();
+    var t = THINGS[best];
+    crew.busy = best;
+    return tap(vx(atOf(best)[0]), vy(atOf(best)[1])).then(function () { t.fix(); crew.busy = false; });
+  }
 
   /* ---------------- Visitors ---------------- */
   function poke() {
@@ -453,7 +567,7 @@
       return;
     }
     whenIdle(makeNoise);   // the crew keeps the markup's still pose: hand on the dial
-    if (!phone) { crewEl.style.left = '0'; place(offRight(), 0); }
+    crewEl.style.left = '0'; place(phone ? besideTV() : offRight(), 0);
     crewEl.classList.add('live');
     lastMove = lastAny = performance.now();
     ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
@@ -470,9 +584,9 @@
       var wasPhone = phone;
       build(); makeNoise();
       if (phone !== wasPhone) {                    // crossed the breakpoint: put him where this layout wants him
-        armEl.classList.remove('on', 'out'); crewEl.classList.remove('extend', 'sit');
-        crewEl.style.left = phone ? '' : '0';
-        place(phone ? 0 : besideTV(), 0);
+        stopEverything();
+        place(besideTV(), 0);
+        life();
         crew.needTV = true;
       }
     });
