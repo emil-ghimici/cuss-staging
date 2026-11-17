@@ -153,7 +153,7 @@
   function wait(ms) { return new Promise(function (r) { waits.push({ t: clock + ms, r: r }); }); }
   function loop(t) {
     raf = requestAnimationFrame(loop);
-    var el = lastT ? Math.min(100, t - lastT) : FRAME_MS; lastT = t;
+    var el = lastT ? Math.min(250, t - lastT) : FRAME_MS; lastT = t;
     clock += el; acc += el;
     if (waits.length) {
       var due = waits.filter(function (w) { return w.t <= clock; });
