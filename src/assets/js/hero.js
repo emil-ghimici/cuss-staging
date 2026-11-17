@@ -25,7 +25,10 @@
 
   /* ---------------- The picture ---------------- */
   var W = 0, H = 0, phone = false, parts = [], ptsC = [], ptsF = [];
+  var mqPhone = window.matchMedia('(max-width: 760px)');
   var state = 'broken', lastMove = 0, roll = 0, jolt = 0;
+  var shown = null;          // the words last on screen ('c' CuSS or 'f' full name): breaking disturbs them, it doesn't wipe them
+  var ptr = null;            // the pointer or finger on the screen, in canvas pixels
 
   function sample(lines, initials) {
     var c = doc.createElement('canvas'); c.width = W; c.height = H;
@@ -55,7 +58,7 @@
   function build() {
     var r = screenEl.getBoundingClientRect();
     W = Math.max(40, Math.round(r.width)); H = Math.max(40, Math.round(r.height));
-    phone = scene.clientWidth < 520;
+    phone = mqPhone.matches;                              // the same breakpoint as the CSS
     canvas.width = W; canvas.height = H;                   // low resolution on purpose: a CRT, and cheap
     ptsC = sample(['CuSS'], null);
     ptsF = sample(['Custom', 'Software', 'Solutions'], [2, 1, 1]);
@@ -70,7 +73,7 @@
       parts.push(p);
     }
   }
-  function setState(s) { state = s; }
+  function setState(s) { if (s !== 'broken') shown = s === 'weak' ? 'c' : 'f'; state = s; }
 
   // Static is a pre-drawn noise texture, shown at a random offset each frame: one drawImage, not thousands of rects
   var noiseTex = null, noisePat = null;
@@ -96,11 +99,27 @@
     ctx.fillStyle = state === 'broken' ? 'rgba(5,8,10,.7)' : 'rgba(5,8,10,.55)';
     ctx.fillRect(0, 0, W, H);
     // Static at a level brightness (no flashing): the texture's density does the work
+    var R = Math.min(W, H) * 0.3;
     if (noisePat) {
       var ox = (Math.random() * W) | 0, oy = (Math.random() * H) | 0;
       ctx.globalAlpha = noise;
       ctx.translate(-ox, -oy); ctx.fillStyle = noisePat; ctx.fillRect(ox, oy, W, H); ctx.setTransform(1, 0, 0, 1, 0, 0);
+      // Like a finger on a real set: the static gathers and brightens around the pointer
+      if (ptr) {
+        ctx.save(); ctx.beginPath(); ctx.arc(ptr.x, ptr.y, R, 0, 6.2832); ctx.clip();
+        ctx.globalAlpha = 1;
+        for (var pass = 0; pass < 2; pass++) {
+          var px = (Math.random() * W) | 0, py = (Math.random() * H) | 0;
+          ctx.translate(-px, -py); ctx.fillRect(px, py, W, H); ctx.setTransform(1, 0, 0, 1, 0, 0);
+        }
+        ctx.restore();
+      }
       ctx.globalAlpha = 1;
+    }
+    if (ptr) {
+      var g = ctx.createRadialGradient(ptr.x, ptr.y, 0, ptr.x, ptr.y, R);
+      g.addColorStop(0, 'rgba(200,240,240,.14)'); g.addColorStop(1, 'rgba(200,240,240,0)');
+      ctx.fillStyle = g; ctx.fillRect(ptr.x - R, ptr.y - R, R * 2, R * 2);
     }
 
     // Horizontal roll while the picture is broken; a jolt rolls through once
@@ -109,20 +128,28 @@
     if (jolt > 0) { jolt -= dt; roll = (roll + 31 * dt) % H; }
     var rollOff = roll | 0;
 
-    var set = state === 'weak' ? 'c' : state === 'tuned' ? 'f' : null;
-    var amp = state === 'weak' ? 1.6 : 0.5, size = phone ? 2.5 : 3;
+    var broken = state === 'broken';
+    var set = state === 'weak' ? 'c' : state === 'tuned' ? 'f' : shown;   // broken keeps the last words, disturbed
+    var amp = broken ? 3.5 : state === 'weak' ? 1.6 : 0.5, size = phone ? 2.5 : 3;
+    var R2 = R * R;
     var damp = Math.pow(DAMPING, dt), pull = SPRING * dt;
     var lit = [[], [], [], [], [], [], [], []];
     for (var j = 0; j < parts.length; j++) {
       var p = parts[j], q = set ? p[set] : null;
-      if (q) { p.tx = q.x; p.ty = q.y; }
+      if (q) {
+        p.tx = q.x; p.ty = q.y;
+        if (broken && ptr) {                        // pushed about by the pointer, like the old dot field
+          var dx = q.x - ptr.x, dy = q.y - ptr.y, d2 = dx * dx + dy * dy;
+          if (d2 < R2) { var d = Math.sqrt(d2) || 1, k = (1 - d / R); k = k * k * R * 0.5; p.tx += dx / d * k + (Math.random() - 0.5) * 10; p.ty += dy / d * k + (Math.random() - 0.5) * 10; }
+        }
+      }
       else if (Math.random() < 0.05) { p.tx = Math.random() * W; p.ty = Math.random() * H; }
       p.vx = (p.vx + (p.tx - p.x) * pull) * damp; p.vy = (p.vy + (p.ty - p.y) * pull) * damp;
       p.x += p.vx * dt; p.y += p.vy * dt;
       if (!q || (set === 'c' ? p.cd : p.fd)) continue;
-      if (state === 'weak' && Math.random() < 0.1) continue;          // dropouts: noise crawling through the letters
-      // shade 0–7: weak shimmers across the range, tuned keeps the initials bright and the rest dim
-      var s = state === 'weak' ? 1 + ((Math.random() * 6) | 0) : (q.h ? 6 + (Math.random() * 2 | 0) : (Math.random() * 2) | 0);
+      if ((state === 'weak' && Math.random() < 0.1) || (broken && Math.random() < 0.3)) continue;   // dropouts: noise crawling through
+      // shade 0–7: broken sinks into the static, weak shimmers across the range, tuned keeps the initials bright
+      var s = broken ? (Math.random() * 4) | 0 : state === 'weak' ? 1 + ((Math.random() * 6) | 0) : (q.h ? 6 + (Math.random() * 2 | 0) : (Math.random() * 2) | 0);
       lit[s].push(p.x + (Math.random() * 2 - 1) * amp, (p.y + rollOff) % H);
     }
     for (var b = 0; b < 8; b++) {
@@ -177,15 +204,49 @@
   function sceneW() { return scene.clientWidth; }
   // A point of the street drawing (viewBox 640×520, "xMidYMax slice") in scene pixels
   function vx(x) { var w = sceneW(), h = scene.clientHeight, s = Math.max(w / 640, h / 520); return (x - 320) * s + w / 2; }
+  function vy(y) { var w = sceneW(), h = scene.clientHeight, s = Math.max(w / 640, h / 520); return (y - 520) * s + h; }
   function crewW() { return crewEl.offsetWidth; }
+  // The telescopic arm, so he can reach whatever needs fixing from where he stands
+  var armEl = doc.createElement('span'), handEl = doc.createElement('span');
+  armEl.className = 'reach-arm'; handEl.className = 'reach-hand';
+  armEl.setAttribute('aria-hidden', 'true'); handEl.setAttribute('aria-hidden', 'true');
+  scene.appendChild(armEl); scene.appendChild(handEl);
+  function rel(el) { var r = el.getBoundingClientRect(), s = scene.getBoundingClientRect(); return { x: r.left - s.left + r.width / 2, y: r.top - s.top + r.height / 2 }; }
+  function reachTo(x, y, instant) {
+    var sr = scene.getBoundingClientRect(), cr = crewEl.getBoundingClientRect();
+    var left = x < cr.left - sr.left + cr.width / 2;
+    crewEl.classList.toggle('flip', left);                     // face the job (the sprite faces right)
+    var sx = cr.left - sr.left + (left ? 26 : 52) / 78 * cr.width, sy = cr.top - sr.top + 52 / 104 * cr.height;
+    var len = Math.hypot(x - sx, y - sy), ang = Math.atan2(y - sy, x - sx);
+    [armEl, handEl].forEach(function (el) {
+      el.classList.remove('out'); el.classList.toggle('still', !!instant);
+      el.style.setProperty('--sx', sx + 'px'); el.style.setProperty('--sy', sy + 'px');
+      el.style.setProperty('--tx', x + 'px'); el.style.setProperty('--ty', y + 'px');
+    });
+    armEl.style.width = len + 'px'; armEl.style.setProperty('--ang', ang + 'rad');
+    crewEl.classList.add('extend');
+    armEl.classList.add('on'); handEl.classList.add('on');
+    void armEl.offsetWidth;
+    armEl.classList.add('out'); handEl.classList.add('out');
+    return instant ? Promise.resolve() : wait(470);
+  }
+  function retract() {
+    armEl.classList.remove('out'); handEl.classList.remove('out');
+    return wait(470).then(function () { armEl.classList.remove('on'); handEl.classList.remove('on'); crewEl.classList.remove('extend'); });
+  }
+  function tap(x, y) {
+    return reachTo(x, y).then(function () { return wait(600); }).then(retract)
+      .then(function () { return wait(200); }).then(function () { return reachTo(x, y); })
+      .then(function () { return wait(600); }).then(retract);
+  }
   function offRight() { return hero.getBoundingClientRect().right - scene.getBoundingClientRect().left + 20; }
   function besideTV() { return tv.offsetLeft + tv.offsetWidth + 2; }
   function nearTV() { return Math.abs(crew.x - besideTV()) < 140; }
   function spots() {
     return [
-      { id: 'tube', x: vx(550) - crewW() / 2, act: 'up' },
-      { id: 'junction', x: Math.min(sceneW() - crewW(), vx(586) - crewW() / 2), act: 'reach' },
-      { id: 'sign', x: Math.max(0, vx(75) - crewW() / 2), act: 'up' },
+      { id: 'tube', x: vx(560) - crewW() / 2, at: [550, 96] },
+      { id: 'junction', x: Math.min(sceneW() - crewW(), vx(560) - crewW() / 2), at: [586, 352] },
+      { id: 'sign', x: Math.max(0, vx(100) - crewW() / 2), at: [72, 270] },
       { id: 'off', act: 'off' }
     ];
   }
@@ -202,15 +263,15 @@
   }
   function act(cls, ms) { crewEl.classList.add(cls); return wait(ms).then(function () { crewEl.classList.remove(cls); }); }
   function twist() {
-    crewEl.classList.add('reach');
-    return wait(450)
+    var d = rel(dial);
+    return reachTo(d.x, d.y)
       .then(function () { dial.classList.add('turn'); return wait(380); })
       .then(function () { dial.classList.remove('turn'); return wait(250); })
       .then(function () { dial.classList.add('turn'); return wait(300); })
       .then(function () {
         setState('tuned'); crew.needTV = false;
-        crewEl.classList.remove('reach'); dial.classList.remove('turn');
-        return wait(300);
+        dial.classList.remove('turn');
+        return retract();
       })
       .then(function () { return act('flinch', 320); });              // the nod
   }
@@ -229,9 +290,7 @@
         .then(function () { place(-crewW() - 10, 0); void crewEl.offsetWidth; return walkTo(Math.min(w * 0.12, tv.offsetLeft - crewW())); });
     }
     return walkTo(s.x)
-      .then(function () { return act(s.act, 700); })
-      .then(function () { return wait(250); })
-      .then(function () { return act(s.act, 700); })
+      .then(function () { return tap(vx(s.at[0]), vy(s.at[1])); })
       .then(function () {
         if (s.id === 'tube' && tube) { tube.classList.add('fixed'); wait(25000).then(function () { tube.classList.remove('fixed'); }); }
         if (s.id === 'junction' && spark) spark.classList.remove('on');
@@ -264,7 +323,7 @@
       if (crew.needTV) return fixTV();
       if (performance.now() - lastAny > 45000) return rest();
       if (phone) {
-        return act('up', 900).then(function () { if (tube) { tube.classList.add('fixed'); wait(25000).then(function () { tube.classList.remove('fixed'); }); } });
+        return tap(vx(550), vy(96)).then(function () { if (tube) { tube.classList.add('fixed'); wait(25000).then(function () { tube.classList.remove('fixed'); }); } });
       }
       var list = spots(), s = list[(Math.random() * list.length) | 0];
       return job(s).then(function () { if (crew.needTV) return wait(2000 + Math.random() * 4000).then(fixTV); });
@@ -295,20 +354,30 @@
     jolt = 8;
     if (nearTV() || phone) act('flinch', 320);
   }
-  hero.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse' || e.buttons) breakIt(); }, { passive: true });
-  hero.addEventListener('touchmove', breakIt, { passive: true });
-  hero.addEventListener('pointerdown', function (e) {
-    if (e.target.closest('a,button')) return poke();
-    thump(); breakIt(); lastMove = performance.now() - 600;
-  });
-  hero.addEventListener('focusin', thump);
+  function onScreenAt(cx, cy) {
+    var r = canvas.getBoundingClientRect();
+    ptr = { x: (cx - r.left) * W / r.width, y: (cy - r.top) * H / r.height };
+    breakIt();
+  }
+  // Only a pointer or finger on the TV screen breaks the picture; anywhere in the hero still wakes the crew
+  hero.addEventListener('pointermove', poke, { passive: true });
+  screenEl.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse' || e.buttons) onScreenAt(e.clientX, e.clientY); }, { passive: true });
+  screenEl.addEventListener('touchmove', function (e) { var t = e.touches[0]; if (t) onScreenAt(t.clientX, t.clientY); }, { passive: true });
+  screenEl.addEventListener('pointerleave', function () { ptr = null; });
+  screenEl.addEventListener('touchend', function () { ptr = null; }, { passive: true });
+  tv.addEventListener('pointerdown', function (e) { thump(); onScreenAt(e.clientX, e.clientY); lastMove = performance.now() - 600; });
 
   /* ---------------- Start ---------------- */
   // The show never delays the message: wait for the fonts (so the letters sample in Chakra Petch)
   // and for the page to settle, then build the picture and let the crew in.
   function begin() {
     build();
-    if (reduced) { stillFrame(); return; }
+    if (reduced) {
+      stillFrame();
+      crewEl.classList.remove('reach');
+      var d = rel(dial); reachTo(d.x, d.y, true);
+      return;
+    }
     whenIdle(makeNoise);   // the crew keeps the markup's still pose: hand on the dial
     if (!phone) { crewEl.style.left = '0'; place(offRight(), 0); }
     crewEl.classList.add('live');
@@ -323,7 +392,15 @@
     var lastW = scene.clientWidth;
     window.addEventListener('resize', function () {
       if (Math.abs(scene.clientWidth - lastW) < 30) return;
-      lastW = scene.clientWidth; build(); makeNoise();
+      lastW = scene.clientWidth;
+      var wasPhone = phone;
+      build(); makeNoise();
+      if (phone !== wasPhone) {                    // crossed the breakpoint: put him where this layout wants him
+        armEl.classList.remove('on', 'out'); crewEl.classList.remove('extend', 'sit');
+        crewEl.style.left = phone ? '' : '0';
+        place(phone ? 0 : besideTV(), 0);
+        crew.needTV = true;
+      }
     });
     if (spark) setInterval(function () { if (running && !spark.classList.contains('on') && Math.random() < 0.3) spark.classList.add('on'); }, 9000);
     firstEntrance();
