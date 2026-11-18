@@ -1,4 +1,9 @@
-{#- Shared components. Import with: {% from "macros.njk" import faq, steps, contact with context %} -#}
+{#- Shared components. Import with: {% from "macros.njk" import faq, steps, contact, ph with context %} -#}
+
+{#- A clearly marked placeholder for copy still to come (never filled by guessing) -#}
+{%- macro ph(what) -%}
+<p class="ph"><span class="mono">Copy to come</span> {{ what }}</p>
+{%- endmacro -%}
 
 {%- macro faq(items, openFirst = false) -%}
 <div class="faq">
@@ -19,11 +24,11 @@
 {#- Contact block. Short version on Home and service pages (one chip pre-ticked, no phone);
     full version on the Contact page (adds the phone number under the promise).
     Without JavaScript: the heading, the ready-made email link and the visible address. -#}
-{%- macro contact(heading, ticked = 'Not sure yet', full = false, lead = 'Tick what fits. We’ll write the email for you.') -%}
+{%- macro contact(heading, ticked = 'Not sure yet', full = false, lead = 'Tick what fits. We’ll write the email for you.', level = 2) -%}
 {%- set mail = ticked | composeMail(site.email) %}
 <div class="contact-grid" id="contact">
   <div>
-    <h2 id="contact-h">{{ heading }}</h2>
+    <h{{ level }} id="contact-h">{{ heading }}</h{{ level }}>
     <p class="lead js-only">{{ lead }}</p>
     <p class="lead no-js">Write to us at <a href="mailto:{{ site.email }}">{{ site.email }}</a> and tell us a little about your business.</p>
     <form class="compose js-only" data-compose data-to="{{ site.email }}" onsubmit="return false">

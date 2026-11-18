@@ -1,0 +1,8 @@
+---
+layout: layouts/base.njk
+css: [bands]
+---
+{#- Inner pages: the street band (world) with CREW doing the page's one job, breadcrumbs on a solid strip
+    along its bottom edge, then the calm page. `band` names the vignette in _includes/bands/. -#}
+{% include "partials/band.njk" %}
+{{ content | safe }}

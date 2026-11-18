@@ -1,0 +1,35 @@
+---
+layout: layouts/inner.njk
+permalink: /work/
+section: work
+band: work
+bandTip: "Real work, and a couple of labelled demos."
+crewPerches: ".card.work"
+scripts: [band]
+title: "Work: client projects and labelled demos | CuSS"
+description: "Software, automation and websites we’ve built for Irish businesses, with clearly labelled demos. CuSS, Athlone."
+crumbs:
+  - { name: "Home", url: "/" }
+  - { name: "Work" }
+---
+{#- Work (design spec sections 7, 11): few items, demos clearly labelled. PLACEHOLDERS: the client project's
+    title and screenshots, the page lead, each item's story. -#}
+{%- from "macros.njk" import contact, ph with context %}
+<div class="wrap">
+  <div class="intro">
+    <p class="mono eyebrow">Work</p>
+    <h1>Things we’ve built</h1>
+    {{ ph('a short lead for the Work page') }}
+  </div>
+  <section class="sec-tight" aria-label="Projects and demos" data-crew-tip="Real work, and a couple of labelled demos.">
+    <ul class="grid g3 plain">
+      {%- for w in work %}
+      <li><article class="card work static bv-lg{% if w.placeholder %} placeholder{% endif %}"><div class="bezel bv-md"><div class="shot"><svg viewBox="0 0 300 170" preserveAspectRatio="none" aria-hidden="true" focusable="false">{{ w.shot | safe }}</svg></div></div><span class="mono tag">{{ w.kind }}</span><h2 class="h4">{{ w.title }}</h2><p>{{ w.d }}</p></article></li>
+      {%- endfor %}
+    </ul>
+    {{ ph('each item’s story and real screenshots (client project title and screenshots to come)') }}
+  </section>
+  <section class="contact-sec sec-tight" aria-labelledby="contact-h" data-crew-tip="Tick a few boxes. I’ll do the typing.">
+    {{ contact('Got something similar in mind?') }}
+  </section>
+</div>

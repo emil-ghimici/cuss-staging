@@ -1,25 +1,37 @@
 /* CREW, the site guide: one character, the same size as in the hero (design spec section 2, "How CREW travels").
-   - Caught where he is: as the page scrolls up, the header's bottom edge reaches him and he grabs it right there,
-     hanging from it on his arm-rope.
-   - Rappels: he lets out rope to the nearest box below him. If the box isn't straight below, he fires his second
-     arm at it and pulls himself across. He sits on the box's top edge, lets go, and the rope zips back up.
-   - Rides with the page while perched (he is part of the document then: no work while you scroll).
-   - Scrolling back up: when his box leaves the bottom of the screen, he grabs the top of the first box above him,
-     from where he went out, and pulls himself up onto it.
-   - Home page: he starts as the hero's CREW and goes back to the hero when you scroll back up to it.
+   - Grab (during the scroll): the header's bottom edge reaches him and he clamps it with his telescopic arm, right
+     where he is. The top bar is his ONLY point of contact for rappelling.
+   - Hang: dead still in the fixed layer while the page scrolls under him; his eye watches it pass.
+   - He never moves while the page moves. "Scrolling stopped" = no movement for CREW_STILL_MS, or `scrollend`;
+     a finger on the screen counts as scrolling. Then, after CREW_DELAY_MS:
+       straight down: the arm telescopes out to the box below; he lands with a squash; the arm retracts.
+       off to one side: the second arm hooks the box's top edge and reels him across.
+       no box in view below: he stays hanging.
+     Scrolling again mid-move freezes him where he is (he re-clamps the top bar); he picks afresh next time.
+   - Scrolling up: his box takes him out of view; after the stop and delay he rappels from the top bar to a box in view.
+   - He sits on a box's top edge and rides with the page until the header catches him again.
+   - Home: he starts as the hero's (or a page band's) CREW and goes back there when you scroll back up to it.
    - Showpiece signs ([data-crew-stop]) are boxes too, with a job when he lands on them.
-   - Hover or tap: the tip for the section he's sitting in.
-   Transform only. Reduced motion: no rappelling; he simply appears, still, on a box near what's on screen. */
+   Transform only. Reduced motion: no moves; after the same stop and delay he simply appears, still, on a box. */
 (function () {
   'use strict';
   var doc = document;
   var fixedEl = doc.querySelector('[data-guide]');
   if (!fixedEl) return;
-  var docEl = doc.querySelector('.g-doc'), crewEl = docEl.querySelector('.g-crew');
-  var rope = fixedEl.querySelector('.g-rope'), arm = fixedEl.querySelector('.g-arm'), grip = fixedEl.querySelector('.g-grip');
+
+  /* Tunable (README section 2, decided 2026-11-17; to be tested on staging, a longer delay is expected to suit) */
+  var CREW_STILL_MS = 150;     // no page movement for this long = scrolling stopped
+  var CREW_DELAY_MS = 600;     // then he waits this long before he moves
+  var GRAB_MS = 150, JOLT_MS = 400, PEEK_AFTER_MS = 4000, FIRE_MS = 200, RETRACT_MS = 250, SQUASH_PX = 2;
+  function travelMs(px) { return Math.min(1200, 400 + Math.abs(px)); }   // 400 ms + 1 ms per px, max 1200 ms
+
+  var docEl = doc.querySelector('.g-doc'), crewEl = docEl.querySelector('.g-crew'), svg = crewEl.querySelector('svg');
+  var arm1 = fixedEl.querySelector('.g-arm1'), arm2 = fixedEl.querySelector('.g-arm2'), grip = fixedEl.querySelector('.g-grip');
   var bubble = crewEl.querySelector('.g-bubble'), bubbleText = bubble.querySelector('p');
   var hdr = doc.querySelector('.hdr');
-  var heroEl = doc.querySelector('[data-hero]'), heroCrew = heroEl && heroEl.querySelector('.scene .crew');
+  // His home: the home hero, or an inner page's street band
+  var homeEl = doc.querySelector('[data-crew-home], [data-hero]'), homeCrew = homeEl && homeEl.querySelector('.crew');
+  if (homeEl && homeEl.hasAttribute('data-crew-stay')) return;            // Privacy, 404: he stays in the band
   var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var mqPhone = matchMedia('(max-width: 760px)');
 
@@ -28,16 +40,23 @@
   var STOP_LINES = { open: 'Hang on, I’ll straighten that.', workshop: 'Mind the tape.' };
   // Where he sits on each sign: a point of the divider drawing (viewBox 1280×120, "xMidYMid slice")
   var STOP_SEAT = { open: [700, 40], workshop: [700, 22] };
-  var PERCHES = '.info, .card, .steps li, .faq details, .crt, .mon, [data-crew-stop]';
+  // Boxes he sits on; a page can narrow them (Contact: only the CRT preview; Work: the work cards)
+  var PERCHES = doc.body.getAttribute('data-crew-perches') || '.info, .card, .steps li, .vsteps li, .faq details, .crt, .mon, [data-crew-stop]';
 
   function hh() { return hdr.offsetHeight; }
   function cw() { return crewEl.offsetWidth; }
   function ch() { return crewEl.offsetHeight; }
   function dangle() { return ch() * 0.2; }                 // his tracks hang into the box's top padding
+  function hangGap() { return ch() * 0.16; }               // how far below the top bar he hangs when caught
+  function lerp(a, b, e) { return a + (b - a) * e; }
+  function easeOut(k) { return 1 - Math.pow(1 - k, 3); }
+  function easeInOut(k) { return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; }
 
-  /* ---------- Where he is: perched in the page, or in the fixed layer while moving ---------- */
+  /* ---------- Where he is ---------- */
+  // mode: 'home' (in the hero/band), 'perch' (sitting on a box, part of the page), 'hang' (from the top bar),
+  //       'move' (on his way somewhere; fixed layer), 'tucked' (up in the top bar, out of view, near a Contact button)
+  var mode = 'home', perch = null, perchDoc = { x: 0, y: 0 }, pos = { x: 0, y: 0 };
   var done = {};                                           // sign jobs done on this page
-  var perch = null, perchDoc = { x: 0, y: 0 }, pos = { x: 0, y: 0 };   // pos: screen coords while in the fixed layer
   function putFixed(x, y) {
     if (crewEl.parentNode !== fixedEl) { fixedEl.appendChild(crewEl); fixedEl.classList.add('on'); }
     pos.x = x; pos.y = y;
@@ -48,13 +67,14 @@
     perchDoc.x = x; perchDoc.y = y;
     crewEl.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
   }
-  function line(el, x1, y1, x2, y2) {
+  function bar(el, x1, y1, x2, y2) {                        // a 100 px bar stretched and turned (transform only)
     var len = Math.hypot(x2 - x1, y2 - y1), ang = Math.atan2(y2 - y1, x2 - x1);
     el.style.transform = 'translate(' + x1.toFixed(1) + 'px,' + y1.toFixed(1) + 'px) rotate(' + ang.toFixed(4) + 'rad) scaleX(' + (len / 100).toFixed(3) + ')';
   }
   function flipped() { return crewEl.classList.contains('flip'); }
   function handAt() { return { x: pos.x + cw() * (flipped() ? 0.38 : 0.62), y: pos.y + ch() * 0.04 }; }
   function shoulderAt() { return { x: pos.x + cw() * (flipped() ? 0.34 : 0.66), y: pos.y + ch() * 0.5 }; }
+  function tilt(deg) { svg.style.rotate = deg ? deg.toFixed(2) + 'deg' : ''; }
 
   /* ---------- Boxes he can sit on ---------- */
   function seatOf(el) {
@@ -72,10 +92,12 @@
     if (mqPhone.matches) return hi;                         // phones: the right-hand end keeps most text clear
     return Math.max(lo, Math.min(hi, nearX - cw() / 2));
   }
+  function seatY(seat) { return seat.top - ch() + dangle(); }
   function candidates() {
-    var out = [], minTop = hh() + ch() * 0.6, maxTop = innerHeight - 24;
+    var out = [], minTop = hh() + ch() - dangle() + hangGap() + 2, maxTop = innerHeight - 24;   // seated, he's fully below the header
     doc.querySelectorAll(PERCHES).forEach(function (el) {
-      if (el.closest('.panel, .menu, [data-hero], .g-doc') || el.offsetParent === null) return;
+      if (el.closest('.panel, .menu, [data-crew-home], [data-hero], .g-doc') || el.offsetParent === null) return;
+      if (el.closest('[data-crew-never]')) return;
       var s = seatOf(el);
       if (s.top >= minTop && s.top <= maxTop) out.push(s);
     });
@@ -92,104 +114,170 @@
     });
     return best;
   }
-  // The first box above him, as close to straight up from where he went out as possible
-  function firstAbove(docY, atX) {
-    var best = null, bd = Infinity;
-    candidates().forEach(function (s) {
-      var up = docY - (s.top + scrollY);
-      if (up <= 0) return;
-      var d = up + Math.abs(seatX(s, atX) + cw() / 2 - atX) * 1.5;
-      if (d < bd) { bd = d; best = s; }
-    });
-    return best;
-  }
 
-  /* ---------- Tweens (one rAF loop, only while he's moving) ---------- */
-  var busy = false;
-  function tween(ms, fn) {
+  /* ---------- Tweens: one rAF loop, only while he's moving. A move can be frozen mid-way. ---------- */
+  var moveTok = null;
+  function tween(ms, ease, fn) {
+    var tok = moveTok = { dead: false };
     return new Promise(function (res) {
       var t0 = 0;
       function f(t) {
+        if (tok.dead) return res(false);
         if (!t0) t0 = t;
-        var k = Math.min(1, (t - t0) / ms), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-        fn(e, k);
-        if (k < 1) requestAnimationFrame(f); else res();
+        var k = Math.min(1, (t - t0) / ms);
+        fn(ease(k), k);
+        if (k < 1) requestAnimationFrame(f); else res(true);
+      }
+      requestAnimationFrame(f);
+    });
+  }
+  // Decorations that may outlive a move (an arm retracting): stop if their own generation changed
+  function anim(ms, fn, still) {
+    return new Promise(function (res) {
+      var t0 = 0;
+      function f(t) {
+        if (still && !still()) return res(false);
+        if (!t0) t0 = t;
+        var k = Math.min(1, (t - t0) / ms);
+        fn(k);
+        if (k < 1) requestAnimationFrame(f); else res(true);
       }
       requestAnimationFrame(f);
     });
   }
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
-  // Second arm: fire it at the seat's edge, pull himself there, let go
-  function pullTo(tx, ty, alongside) {
-    var sx = pos.x, sy = pos.y, gx = tx + cw() * 0.5, gy = ty + ch() * 0.8;
-    crewEl.classList.toggle('flip', tx < sx);
-    arm.classList.add('on'); grip.classList.add('on');
-    return tween(220, function (e) {                                 // shoot the arm out
-      var s = shoulderAt(), x = s.x + (gx - s.x) * e, y = s.y + (gy - s.y) * e;
-      line(arm, s.x, s.y, x, y); grip.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
-      if (alongside) alongside();
-    }).then(function () {
-      return tween(Math.min(900, 300 + Math.hypot(tx - sx, ty - sy) * 1.2), function (e) {   // pull himself in
-        putFixed(sx + (tx - sx) * e, sy + (ty - sy) * e);
-        var s = shoulderAt(); line(arm, s.x, s.y, gx, gy);
-        if (alongside) alongside();
-      });
-    }).then(function () { arm.classList.remove('on'); grip.classList.remove('on'); });
+  /* ---------- His arms ---------- */
+  var anchorX = 0, arm1Gen = 0;
+  function arm1Line() { var h = handAt(); bar(arm1, h.x, h.y, anchorX, hh()); }
+  // Shoots up from his hand and clamps the top bar
+  function clampTopBar() {
+    var g = ++arm1Gen, h = handAt();
+    anchorX = h.x;
+    arm1.classList.add('on'); crewEl.classList.add('hang');
+    return anim(reduced ? 0 : GRAB_MS, function (k) { bar(arm1, h.x, h.y, anchorX, lerp(h.y, hh(), easeOut(k))); }, function () { return g === arm1Gen; });
+  }
+  // Unclamps and retracts into his shoulder
+  function retractArm1() {
+    if (!arm1.classList.contains('on')) return;
+    var g = ++arm1Gen, h = handAt(), ax = anchorX, ay = hh();
+    anim(RETRACT_MS, function (k) { var e = easeOut(k); bar(arm1, h.x, h.y, lerp(ax, h.x, e), lerp(ay, h.y, e)); }, function () { return g === arm1Gen; })
+      .then(function (ok) { if (ok) arm1.classList.remove('on'); });
+  }
+  function dropArm2() { arm2.classList.remove('on'); grip.classList.remove('on'); }
+  function jolt() {
+    if (reduced) return;
+    crewEl.classList.remove('jolt'); void crewEl.offsetWidth; crewEl.classList.add('jolt');
+    setTimeout(function () { crewEl.classList.remove('jolt'); }, JOLT_MS);
+  }
+  function squash() {
+    crewEl.style.setProperty('--squash', (1 - SQUASH_PX / ch()).toFixed(4));
+    crewEl.classList.remove('land'); void crewEl.offsetWidth; crewEl.classList.add('land');
+    setTimeout(function () { crewEl.classList.remove('land'); }, 220);
   }
 
-  /* ---------- The moves ---------- */
-  var anchorX = 0;
-  function ropeLine() { var h = handAt(); line(rope, anchorX, hh(), h.x, h.y); }
-  // Caught by the header where he is; rappel to the next box below
-  function caught() {
-    busy = true; perch = null; hush();
+  /* ---------- Never on, over or beside a Contact button (hard rule: the world never sits between a visitor
+     and the Contact button). Hanging there, he pulls himself up into the top bar, out of the way. ---------- */
+  var NEVER = 'main .btn-contact, [data-crew-never]', NEVER_GAP = 32;
+  function nearNever() {
     var r = crewEl.getBoundingClientRect();
-    putFixed(r.left, Math.max(hh() - ch() * 0.05, r.top));
-    crewEl.classList.add('hang');
-    anchorX = handAt().x; rope.classList.add('on'); ropeLine();
-    return descend();
+    return Array.prototype.some.call(doc.querySelectorAll(NEVER), function (el) {
+      var b = el.getBoundingClientRect();
+      return b.width > 0 && r.left < b.right + NEVER_GAP && r.right > b.left - NEVER_GAP && r.top < b.bottom + NEVER_GAP && r.bottom > b.top - NEVER_GAP;
+    });
   }
-  function descend() {
-    var seat = null;
-    function look() { ropeLine(); seat = nearestBelow(anchorX, pos.y); return seat ? go() : sleep(250).then(look); }
-    return look();
-    function go() {
-      var x = seatX(seat, anchorX), straight = Math.abs(x - pos.x) < 24, y0 = pos.y;
-      // Let out rope straight down to the height of the box (tracking it if the page moves)
-      return tween(Math.min(1100, 250 + Math.abs(seat.el.getBoundingClientRect().top - y0) * 0.9), function (e) {
-        var s = seatOf(seat.el), ty = s.top - ch() + dangle();
-        putFixed(pos.x, y0 + (ty - y0) * e); ropeLine();
-      }).then(function () {
-        var s = seatOf(seat.el), tx = seatX(s, anchorX), ty = s.top - ch() + dangle();
-        return straight ? null : pullTo(tx, ty, ropeLine);           // second arm pulls him across
-      }).then(function () { land(seat.el); });
-    }
+  function tuck() {
+    if (moveTok) moveTok.dead = true;
+    mode = 'tucked'; tilt(0); dropArm2(); hush(); clearTimeout(peekT);
+    var x0 = pos.x, y0 = pos.y, y1 = hh() - ch();
+    return tween(reduced ? 1 : 200, easeOut, function (e) { putFixed(x0, lerp(y0, y1, e)); if (arm1.classList.contains('on')) arm1Line(); })
+      .then(function () { arm1.classList.remove('on'); });
   }
-  function land(el) {
-    var s = seatOf(el), x = seatX(s, pos.x + cw() / 2), y = s.top - ch() + dangle();
-    crewEl.classList.remove('hang');
-    if (rope.classList.contains('on')) {                              // the rope zips back up to the header
-      var h = handAt();
-      tween(250, function (e) { line(rope, anchorX, hh(), h.x + (anchorX - h.x) * e, h.y + (hh() - h.y) * e); })
-        .then(function () { rope.classList.remove('on'); });
+
+  /* ---------- Hanging from the top bar ---------- */
+  var peekT = 0;
+  function startHang() {
+    mode = 'hang'; perch = null;
+    clearTimeout(peekT);
+    peekT = setTimeout(function peek() {                     // after 4 s he lifts one track to check his footing
+      if (mode !== 'hang') return;
+      crewEl.classList.add('peek');
+      setTimeout(function () { crewEl.classList.remove('peek'); }, 700);
+    }, PEEK_AFTER_MS);
+  }
+  // Grab: caught by the header where he is (during the scroll)
+  function grab(x, y) {
+    hush(); tilt(0); dropArm2();
+    putFixed(x, y);
+    startHang();
+    clampTopBar(); jolt();
+  }
+  // Scrolling resumed mid-move: hold still on screen, clamp the top bar again
+  function freeze() {
+    if (moveTok) moveTok.dead = true;
+    if (mode !== 'move') return;
+    tilt(0); dropArm2();
+    startHang();
+    clampTopBar();
+  }
+
+  /* ---------- The moves (after the stop and the delay) ---------- */
+  // To a seat ({x?|left,right, top, el}) or home (el === null)
+  function rappelTo(seat, toHome) {
+    mode = 'move'; hush();
+    var tx = toHome ? seat.x : seatX(seat, handAt().x), ty = toHome ? seat.y : seatY(seat);
+    var x0 = pos.x, y0 = pos.y;
+    if (Math.abs(tx - x0) < 24 && arm1.classList.contains('on')) {
+      // Straight down: the arm telescopes out, ease-out
+      return tween(travelMs(ty - y0), easeOut, function (e) { putFixed(lerp(x0, tx, e), lerp(y0, ty, e)); arm1Line(); })
+        .then(function (ok) { if (ok) arrive(seat, toHome); });
     }
+    // Off to one side: the second arm fires straight at the nearest point of the box's top edge and hooks it
+    crewEl.classList.toggle('flip', tx < x0);
+    var hook = toHome ? { x: tx + cw() * 0.5, y: ty + ch() * 0.2 }
+      : { x: Math.max(seat.left !== undefined ? seat.left + 4 : tx, Math.min(seat.right !== undefined ? seat.right - 4 : tx + cw(), shoulderAt().x)), y: seat.top };
+    if (seat.x !== undefined && !toHome) hook = { x: seat.x + cw() / 2, y: seat.top };
+    var land = { x: tx, y: ty };
+    arm2.classList.add('on'); grip.classList.add('on');
+    var s0 = shoulderAt();
+    return tween(FIRE_MS, easeOut, function (e) {
+      var x = lerp(s0.x, hook.x, e), y = lerp(s0.y, hook.y, e);
+      bar(arm2, s0.x, s0.y, x, y); grip.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+    }).then(function (ok) {
+      if (!ok) return false;
+      retractArm1();                                               // the first arm lets go
+      crewEl.classList.remove('hang');
+      var dir = land.x > x0 ? 1 : -1, d = Math.hypot(land.x - x0, land.y - y0);
+      // Reeled in diagonally, tilted into the pull and straightening as he sits
+      return tween(travelMs(d), easeInOut, function (e) {
+        putFixed(lerp(x0, land.x, e), lerp(y0, land.y, e));
+        var s = shoulderAt(); bar(arm2, s.x, s.y, hook.x, hook.y);
+        tilt(dir * 10 * (1 - e));
+      });
+    }).then(function (ok) { if (ok) { dropArm2(); arrive(seat, toHome); } });
+  }
+  function arrive(seat, toHome) {
+    tilt(0); crewEl.classList.remove('hang');
+    retractArm1();
+    if (toHome) { backHome(); return; }
+    sitOn(seat.el);
+    squash();
+  }
+  function sitOn(el) {
+    var s = seatOf(el), x = seatX(s, pos.x + cw() / 2), y = seatY(s);
     putDoc(x + scrollX, y + scrollY);
-    perch = el; busy = false;
+    perch = el; mode = 'perch'; clearTimeout(peekT);
     var k = el.getAttribute('data-crew-stop');
     if (k) job(k, el);
     var room = el.matches('.mon') && el.closest('[data-room]');
     if (room) intro(room);
-    check();
   }
-  // His box went off the bottom: grab the top of the first box above, from where he went out, and pull up onto it
-  function climb() {
-    var outX = perchDoc.x - scrollX + cw() / 2, seat = firstAbove(perchDoc.y + ch(), outX);
-    if (!seat) return;
-    busy = true; perch = null; hush();
-    putFixed(perchDoc.x - scrollX, innerHeight);
-    var tx = seatX(seat, outX), ty = seat.top - ch() + dangle();
-    return pullTo(tx, ty).then(function () { land(seat.el); });
+  // Out of view (his box went off the bottom): he comes down from the top bar, above where he was
+  function fromTopBar(x) {
+    hush(); tilt(0);
+    putFixed(Math.max(8, Math.min(innerWidth - cw() - 8, x)), hh() - ch());   // tucked under the header
+    startHang();
+    anchorX = handAt().x; arm1.classList.add('on'); arm1Line(); ++arm1Gen;
   }
 
   /* ---------- Jobs at the signs ---------- */
@@ -218,14 +306,16 @@
   var queue = Promise.resolve();
   function inRoom(room) { return !!(perch && room.contains(perch)); }
   function enqueue(fn) { queue = queue.then(fn).catch(function () {}); return queue; }
-  // Hop to another monitor along the top edges: second arm out, pull himself across
+  // He never moves while the page moves: tour steps wait for calm
+  function calm() {
+    return new Promise(function (r) { (function w() { if (!scrolling && !touching && mode !== 'move') r(); else setTimeout(w, 150); })(); });
+  }
+  // Hop to another monitor along the top edges: second arm out, reel himself across
   function hop(el) {
-    if (busy || perch === el) return Promise.resolve();
-    busy = true; hush();
+    if (mode !== 'perch' || perch === el) return Promise.resolve();
     var r = crewEl.getBoundingClientRect();
-    perch = null; putFixed(r.left, r.top);
-    var st = seatOf(el), tx = seatX(st, (st.left + st.right) / 2), ty = st.top - ch() + dangle();
-    return pullTo(tx, ty).then(function () { land(el); });
+    putFixed(r.left, r.top);
+    return rappelTo(seatOf(el));
   }
   function point(line) {
     crewEl.classList.add('point'); say(line, 4000);
@@ -233,16 +323,18 @@
   }
   function showRound(room, mon, line) {
     return enqueue(function () {
-      if (!inRoom(room) || !mon) return;
-      if (reduced) { say(line, 4000); return; }
-      // A monitor too close to the header to sit on (the header would catch him): point at it from where he is
-      var st = seatOf(mon);
-      if (st.top - ch() + dangle() < hh() + 8) {
-        var me = crewEl.getBoundingClientRect();
-        crewEl.classList.toggle('flip', (st.left + st.right) / 2 < me.left + me.width / 2);
-        return point(line);
-      }
-      return hop(mon).then(function () { if (inRoom(room)) return point(line); });
+      return calm().then(function () {
+        if (!inRoom(room) || !mon) return;
+        if (reduced) { say(line, 4000); return; }
+        // A monitor too close to the header to sit on (the header would catch him): point at it from where he is
+        var st = seatOf(mon);
+        if (seatY(st) < hh() + hangGap() + 8 || st.top > innerHeight - 24) {
+          var me = crewEl.getBoundingClientRect();
+          crewEl.classList.toggle('flip', (st.left + st.right) / 2 < me.left + me.width / 2);
+          return point(line);
+        }
+        return hop(mon).then(function () { if (inRoom(room)) return point(line); });
+      });
     });
   }
   function nearestToButtons(room) {
@@ -272,6 +364,12 @@
     });
   });
   doc.addEventListener('room:reset', function () { queue = Promise.resolve(); });
+  // Contact page: a short typing motion on the CRT's top edge for each ticked chip
+  doc.addEventListener('change', function (e) {
+    if (reduced || mode !== 'perch' || !perch || !perch.matches('.crt') || !e.target.matches('input[type=checkbox]') || !e.target.checked) return;
+    crewEl.classList.remove('typing'); void crewEl.offsetWidth; crewEl.classList.add('typing');
+    setTimeout(function () { crewEl.classList.remove('typing'); }, 600);
+  });
 
   /* ---------- Tips ---------- */
   var bubbleTimer = 0;
@@ -294,84 +392,134 @@
   crewEl.addEventListener('pointerdown', function (e) { if (e.pointerType !== 'mouse') { e.stopPropagation(); bubble.hidden ? say(tip()) : hush(); } });
   doc.addEventListener('pointerdown', function (e) { if (!bubble.hidden && !crewEl.contains(e.target)) hush(); });
 
-  /* ---------- The hero hands him over, and gets him back ---------- */
-  var withHero = !!heroCrew;
-  function heroRect() { return heroCrew.getBoundingClientRect(); }
-  function takeFromHero() {
-    var r = heroRect();
-    withHero = false;
-    heroCrew.classList.add('away');
+  /* ---------- Home (hero or band) hands him over, and gets him back ---------- */
+  function homeRect() { return homeCrew.getBoundingClientRect(); }
+  function homeReady() { return homeCrew && homeCrew.classList.contains('live') && !homeCrew.classList.contains('held'); }
+  function takeFromHome() {
+    var r = homeRect();
+    homeCrew.classList.add('away');
+    homeEl.classList.add('crew-out');
     crewEl.hidden = false;
-    crewEl.classList.toggle('flip', heroCrew.classList.contains('flip'));
-    putFixed(r.left, r.top);
-    caught();
+    crewEl.classList.toggle('flip', homeCrew.classList.contains('flip'));
+    grab(r.left, Math.max(hh() + hangGap(), r.top));
+    doc.dispatchEvent(new CustomEvent('crew:left'));
   }
-  function giveToHero() {
-    busy = true; perch = null; hush();
-    var r = crewEl.getBoundingClientRect(), h = heroRect();
-    putFixed(r.left, r.top);
-    pullTo(h.left, h.top).then(function () {
-      crewEl.hidden = true; heroCrew.classList.remove('away');
-      withHero = true; busy = false;
-    });
+  function backHome() {
+    crewEl.hidden = true; mode = 'home'; perch = null;
+    homeCrew.classList.remove('away'); homeEl.classList.remove('crew-out');
+    doc.dispatchEvent(new CustomEvent('crew:back'));
+  }
+  function homeInView() {
+    if (!homeCrew) return false;
+    var r = homeRect(), h = homeEl.getBoundingClientRect();
+    if (r.top <= hh() + hangGap() + 4 || r.bottom > innerHeight) return false;
+    return homeEl.hasAttribute('data-hero') ? h.bottom > innerHeight * 0.6 : h.top >= hh() - 4;   // a band: scrolled right back up
   }
 
   /* ---------- Watching the scroll ---------- */
-  function check() {
-    if (busy) return;
-    if (withHero) {
-      if (heroCrew.classList.contains('live') && heroRect().top <= hh()) takeFromHero();
+  var scrolling = false, touching = false, stillT = 0, delayT = 0, ticking = false;
+  // During the scroll: only the grab (and freezing a move)
+  function duringScroll() {
+    if (mode === 'move') { freeze(); return; }
+    if (mode === 'home') {
+      if (homeReady() && homeRect().top <= hh() + hangGap()) takeFromHome();
       return;
     }
-    if (heroCrew && heroEl.getBoundingClientRect().bottom > innerHeight * 0.75 && heroRect().top > hh() + 10) { giveToHero(); return; }
-    if (!perch) return;
-    var top = perchDoc.y - scrollY;
-    if (top <= hh()) caught();                                       // the header has reached him
-    else if (perch.getBoundingClientRect().top > innerHeight) climb();   // his box went off the bottom
+    if (mode === 'perch' && perchDoc.y - scrollY <= hh() + hangGap()) grab(perchDoc.x - scrollX, hh() + hangGap());
+    if (mode === 'hang' && nearNever()) tuck();
   }
-  var ticking = false;
-  function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(function () { ticking = false; check(); }); } }
+  function onScroll() {
+    scrolling = true;
+    clearTimeout(stillT); clearTimeout(delayT);
+    if (!reduced) {
+      if (mode === 'move') freeze();                          // at once, not on the next frame
+      if (!ticking) { ticking = true; requestAnimationFrame(function () { ticking = false; duringScroll(); }); }
+    }
+    if (!touching) stillT = setTimeout(stopped, CREW_STILL_MS);
+  }
+  function stopped() {
+    if (touching) return;
+    clearTimeout(stillT); clearTimeout(delayT);
+    scrolling = false;
+    delayT = setTimeout(act, CREW_DELAY_MS);
+  }
+  // After the stop and the delay: the one move he makes
+  function act() {
+    if (scrolling || touching) return;
+    if (reduced) { sitStill(); return; }
+    if (mode === 'home' || mode === 'move') return;
+    if (mode === 'tucked' && homeInView()) { fromTopBar(pos.x); }
+    if (homeInView()) {                                       // back into the hero / band
+      var r = homeRect();
+      if (mode === 'perch') { var pr = crewEl.getBoundingClientRect(); if (pr.top < innerHeight && pr.bottom > hh()) putFixed(pr.left, pr.top); else fromTopBar(r.left); }
+      rappelTo({ x: r.left, y: r.top }, true);
+      return;
+    }
+    if (mode === 'hang') {
+      var seat = nearestBelow(handAt().x, pos.y);
+      if (seat) rappelTo(seat);                               // otherwise he stays hanging
+      else if (nearNever()) tuck();
+      return;
+    }
+    if (mode === 'tucked') {                                  // up in the top bar: down again once there's a box in view
+      var s3 = nearestBelow(handAt().x, hh() - ch());
+      if (s3) { fromTopBar(pos.x); rappelTo(s3); }
+      return;
+    }
+    if (mode === 'perch') {
+      var b = perch.getBoundingClientRect();
+      if (b.top < innerHeight && b.bottom > hh()) return;     // still in view: he stays put
+      // Scrolling up took his box out of view at the bottom: down from the top bar to a box in view
+      var x = perchDoc.x - scrollX, s2 = nearestBelow(x + cw() * 0.62, hh() - ch());
+      if (!s2) return;                                        // nothing in view to sit on: he stays where he is
+      fromTopBar(x);
+      rappelTo(s2);
+    }
+  }
 
-  // Reduced motion: no moves; after scrolling settles he simply sits, still, on a box near what's on screen
-  var settle = 0;
+  // Reduced motion: no moves; after scrolling stops (and the same delay) he simply sits, still, on a box near the middle
   function sitStill() {
-    // one CREW at a time: while the hero's CREW is on screen, he stays there
-    if (heroCrew && heroRect().bottom > hh()) { crewEl.hidden = true; heroCrew.classList.remove('away'); return; }
+    if (homeCrew && homeRect().bottom > hh()) {               // one CREW at a time: home on screen keeps him
+      crewEl.hidden = true; homeCrew.classList.remove('away'); homeEl.classList.remove('crew-out'); mode = 'home'; perch = null; return;
+    }
     var pick = null;
     candidates().forEach(function (s) { if (!pick || Math.abs(s.top - innerHeight * 0.4) < Math.abs(pick.top - innerHeight * 0.4)) pick = s; });
     if (!pick) return;
-    if (heroCrew) heroCrew.classList.add('away');
-    crewEl.hidden = false;
-    putDoc(seatX(pick, innerWidth * 0.75) + scrollX, pick.top - ch() + dangle() + scrollY);
-    perch = pick.el;
-    var k = pick.el.getAttribute('data-crew-stop'); if (k) job(k, pick.el);
-    var room = pick.el.matches('.mon') && pick.el.closest('[data-room]');
-    if (room) intro(room);
+    if (homeCrew) { homeCrew.classList.add('away'); homeEl.classList.add('crew-out'); }
+    crewEl.hidden = false; arm1.classList.remove('on'); dropArm2();
+    pos.x = seatX(pick, innerWidth * 0.75);
+    sitOn(pick.el);
   }
 
   function begin() {
     fixedEl.hidden = false;
-    if (reduced) {
-      window.addEventListener('scroll', function () { clearTimeout(settle); settle = setTimeout(sitStill, 150); }, { passive: true });
-      sitStill();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    if ('onscrollend' in window) window.addEventListener('scrollend', function () { if (!touching) stopped(); });
+    // A finger on the screen counts as scrolling, however still it is
+    window.addEventListener('touchstart', function () { touching = true; clearTimeout(stillT); clearTimeout(delayT); }, { passive: true });
+    function lift() { if (!touching) return; touching = false; if (scrolling) stillT = setTimeout(stopped, CREW_STILL_MS); }
+    window.addEventListener('touchend', lift, { passive: true });
+    window.addEventListener('touchcancel', lift, { passive: true });
+    window.addEventListener('resize', function () {
+      if (mode === 'perch' && perch) { var s = seatOf(perch); putDoc(seatX(s, perchDoc.x - scrollX + cw() / 2) + scrollX, seatY(s) + scrollY); }
+    });
+    if (reduced) { if (scrollY > 0) sitStill(); return; }
+    if (!homeCrew) {
+      // A page without a home: he arrives on his arm out of the top bar, three-quarters across, then picks a box
+      crewEl.hidden = false;
+      fromTopBar(innerWidth * 0.75 - cw() / 2);
+      putFixed(pos.x, hh() + hangGap()); arm1Line();
+      delayT = setTimeout(act, CREW_DELAY_MS);
       return;
     }
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', function () {
-      if (perch && !busy) { var s = seatOf(perch); putDoc(seatX(s, perchDoc.x - scrollX + cw() / 2) + scrollX, s.top - ch() + dangle() + scrollY); }
-    });
-    if (!heroCrew) {
-      // Other pages: he arrives on his rope out of the header, three-quarters across
-      crewEl.hidden = false;
-      putFixed(innerWidth * 0.75 - cw() / 2, hh() - ch());
-      crewEl.classList.add('hang');
-      anchorX = handAt().x; rope.classList.add('on'); busy = true;
-      descend();
-    } else check();
+    if (scrollY > 0) duringScroll();                          // loaded part-way down the page
+    if (mode !== 'home') delayT = setTimeout(act, CREW_DELAY_MS);
   }
   function whenIdle(fn) {
     var go = function () { if ('requestIdleCallback' in window) requestIdleCallback(fn, { timeout: 2000 }); else setTimeout(fn, 300); };
     if (doc.readyState === 'complete') go(); else window.addEventListener('load', go, { once: true });
   }
-  whenIdle(begin);
+  // Probes (scripts/dev) read his state from here; harmless on the live site
+  fixedEl.crewState = function () { return { mode: mode, scrolling: scrolling, perch: perch && (perch.className || perch.tagName) }; };
+  (window.cussLate || Promise.resolve()).then(function () { whenIdle(begin); });
 })();

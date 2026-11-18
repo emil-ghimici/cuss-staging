@@ -1,0 +1,102 @@
+---
+layout: layouts/inner.njk
+pagination:
+  data: services
+  size: 1
+  alias: service
+  addAllPagesToCollections: true
+permalink: "/services/{{ service.slug }}/"
+section: services
+---
+{#- Service page (design spec section 13). Content: _data/serviceContent.js. Missing copy shows as a marked placeholder. -#}
+{%- from "macros.njk" import faq, steps, contact, ph with context %}
+{%- set sc = serviceContent[service.slug] %}
+{%- set lower = service.talk %}
+<div class="wrap">
+  <div class="intro">
+    <p class="mono eyebrow">Service</p>
+    <h1>{{ sc.h1 }}</h1>
+    {%- if sc.lead %}
+    <p class="lead measure">{{ sc.lead }}</p>
+    {%- else %}
+    <p class="lead measure">{{ service.summary }}</p>{{ ph('a two-sentence lead saying what ' + service.name + ' is, in plain words') }}
+    {%- endif %}
+    <div class="actions"><a class="btn btn-contact bv-md" href="#contact">Talk to us about {{ lower }}</a><a class="btn bv-md" href="#example">See an example</a></div>
+  </div>
+
+  <div class="layout">
+    <div class="body">
+      <div class="toc-m faq"><details class="bv-lg"><summary>On this page<span class="pm">{% icon "plus", "i-plus" %}{% icon "minus", "i-minus" %}</span></summary>
+        <div class="ans"><ol><li><a href="#what">What it is</a></li><li><a href="#who">Who it’s for</a></li><li><a href="#example">A worked example</a></li><li><a href="#how">How it works</a></li><li><a href="#faq">Questions</a></li></ol></div>
+      </details></div>
+
+      <section id="what" aria-labelledby="what-h">
+        <h2 id="what-h">What it is</h2>
+        <div class="measure">
+          {%- if sc.what %}{% for p in sc.what %}<p>{{ p }}</p>{% endfor %}{% else %}{{ ph('short prose on what ' + service.name + ' means for a small business') }}{% endif %}
+          <h3 class="h4 get-h">What you get</h3>
+          {%- if sc.get %}
+          <ul class="getlist">{% for g in sc.get %}<li>{% icon "check", "ico" %}{{ g }}</li>{% endfor %}</ul>
+          {%- else %}{{ ph('3–5 things you get') }}{% endif %}
+        </div>
+      </section>
+
+      <section id="who" aria-labelledby="who-h" data-crew-tip="{{ sc.bandTip }}">
+        <h2 id="who-h">Who it’s for</h2>
+        {%- if sc.who %}
+        <p class="measure muted">{{ sc.whoLead }}</p>
+        <ul class="grid g3 plain who">{% for w in sc.who %}<li class="info bv-lg"><h3 class="h4">{{ w.t }}</h3><p>{{ w.d }}</p></li>{% endfor %}</ul>
+        {%- else %}{{ ph('three recognisable businesses this suits, one line each') }}{% endif %}
+      </section>
+
+      <section id="example" aria-labelledby="ex-h">
+        <h2 id="ex-h">A worked example</h2>
+        {%- if sc.room %}
+        {%- if sc.exampleLead %}<p class="measure muted">{{ sc.exampleLead }}</p>{% else %}{{ ph('one line setting up the example') }}{% endif %}
+        {%- set roomKeys = sc.room %}
+        {% include "partials/room.njk" %}
+        {%- else %}
+        <div class="pair" role="group" aria-label="Example: before and after">
+          {%- for k in ['before', 'after'] %}{% set scr = sc.screens[k] %}
+          <figure class="mon bv-md"><pre class="scr">{{ scr.text | safe }}</pre><figcaption class="label">Example · {{ scr.label }}</figcaption><span class="led2" aria-hidden="true"></span></figure>
+          {%- endfor %}
+        </div>
+        {{ ph('a one-paragraph story of the example') }}
+        {%- endif %}
+      </section>
+
+      <section id="how" aria-labelledby="how-h">
+        <h2 id="how-h">How it works</h2>
+        {%- if sc.steps %}{{ steps(sc.steps, true) }}{% else %}{{ ph('4–5 steps specific to ' + service.name + ', a title and one or two sentences each') }}{% endif %}
+      </section>
+
+      <section id="faq" aria-labelledby="faq-h">
+        <h2 id="faq-h">{{ sc.faqH or 'Questions about ' + lower }}</h2>
+        {%- if sc.faqs %}{{ faq(sc.faqs) }}{% else %}{{ ph('4–6 questions and answers about ' + service.name) }}{% endif %}
+      </section>
+
+      <section class="contact-sec" aria-labelledby="contact-h" data-crew-tip="Tick a few boxes. I’ll do the typing.">
+        {{ contact('Talk to us about ' + lower, service.chip) }}
+      </section>
+
+      <section aria-labelledby="rel-h">
+        <h2 id="rel-h">Related services</h2>
+        <ul class="grid g3 plain rel">
+          {%- for slug in sc.related %}{% for s in services %}{% if s.slug == slug %}
+          <li><a class="card bv-lg" href="/services/{{ s.slug }}/">{% icon s.icon, "ci" %}<h3 class="h4">{{ s.name }}</h3><p>{{ s.summary }}</p><span class="arrow" aria-hidden="true">→</span></a></li>
+          {%- endif %}{% endfor %}{% endfor %}
+        </ul>
+      </section>
+    </div>
+
+    <aside class="aside" aria-label="On this page">
+      <nav class="toc" aria-labelledby="toc-h"><p class="toc-h" id="toc-h">On this page</p>
+        <a href="#what">What it is</a><a href="#who">Who it’s for</a><a href="#example">A worked example</a><a href="#how">How it works</a><a href="#faq">Questions</a>
+      </nav>
+      <div class="side-card bv-lg">
+        {%- if sc.side %}<p class="h4 side-t">{{ sc.side.t }}</p><p>{{ sc.side.d }}</p>{% else %}{{ ph('one line inviting contact') }}{% endif %}
+        <a class="btn btn-contact bv-md" href="#contact">Talk to us</a>
+      </div>
+    </aside>
+  </div>
+</div>

@@ -5,6 +5,7 @@ export default {
   description: 'Custom web apps, automation, dashboards and websites for small businesses in Athlone, the Midlands and across Ireland. Free first call, written quote before work starts.',
   bodyClass: 'home',
   scripts: ['hero', 'room'],
+  css: ['hero', 'room'],
   pains: [
     { icon: 'repeat', t: 'The same order, typed three times', d: 'Into the spreadsheet, the invoice and the courier site, by hand.' },
     { icon: 'grid-3x3', t: 'The spreadsheet only one person gets', d: 'And when they’re off sick, nobody can find anything.' },

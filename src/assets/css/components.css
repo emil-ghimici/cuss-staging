@@ -13,15 +13,12 @@
 .ibtn:hover{border-color:var(--signal)}
 .ibtn:active{transform:translateY(1px)}
 /* Glow belongs to the night city only */
-:root:not([data-theme="light"]) .btn-contact{box-shadow:0 0 12px rgba(255,79,163,.45)}
-:root:not([data-theme="light"]) .btn-contact:hover{box-shadow:0 0 12px rgba(255,79,163,.6),0 0 32px rgba(255,79,163,.25)}
+/* (the --glow-* colours are transparent in Daylight, so one rule serves both themes) */
+.btn-contact{box-shadow:0 0 12px var(--glow-contact)}
+.btn-contact:hover{box-shadow:0 0 12px var(--glow-contact),0 0 32px var(--glow-contact-soft)}
 :root[data-theme="light"] .btn-contact:hover{filter:brightness(.92)}
-@media (prefers-color-scheme: light){
-  :root:not([data-theme]) .btn-contact,:root:not([data-theme]) .btn-contact:hover{box-shadow:none}
-  :root:not([data-theme]) .btn-contact:hover{filter:brightness(.92)}
-}
-:root:not([data-theme="light"]) .logo .led{box-shadow:0 0 8px var(--signal),0 0 20px rgba(62,230,224,.4)}
-@media (prefers-color-scheme: light){:root:not([data-theme]) .logo .led{box-shadow:none}}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .btn-contact:hover{filter:brightness(.92)}}
+.logo .led{box-shadow:0 0 8px var(--glow-signal),0 0 20px var(--glow-signal)}
 
 /* A pair of buttons shares its row evenly; on phones each takes the full width */
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);margin:var(--space-5) 0 var(--space-4);max-width:560px}
@@ -35,7 +32,7 @@
 .g4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .card{--pad:var(--space-5);display:flex;flex-direction:column;height:100%;background:var(--surface-1);padding:var(--pad);border:var(--border-control-w) solid var(--border-control);color:var(--ink);text-decoration:none;transition:border-color .16s,background-color .16s,box-shadow .16s}
 a.card:hover{border-color:var(--signal);background-color:var(--signal-tint)}
-:root:not([data-theme="light"]) a.card:hover{box-shadow:0 0 12px rgba(62,230,224,.25)}
+a.card:hover{box-shadow:0 0 12px var(--glow-signal-soft)}
 .card .ci{width:28px;height:28px;color:var(--signal);margin-bottom:var(--space-3)}
 .card p{margin:0;color:var(--ink-muted);font-size:17px}
 .card .arrow{margin-top:auto;padding-top:var(--space-3);color:var(--signal);font-weight:700}
@@ -43,8 +40,8 @@ a.card:hover{border-color:var(--signal);background-color:var(--signal-tint)}
 .info .ci{width:28px;height:28px;color:var(--amber);margin-bottom:var(--space-3)}
 .info p{margin:0;color:var(--ink-muted);font-size:17px}
 
-/* Work card: screenshot in a dark monitor bezel */
-.work .bezel{background:#262a31;border:2px solid #444b56;padding:10px;margin:calc(var(--pad) * -1) calc(var(--pad) * -1) var(--space-4)}
+/* Work card: screenshot in a monitor bezel (follows the theme) */
+.work .bezel{background:var(--bezel);border:2px solid var(--bezel-edge);padding:10px;margin:calc(var(--pad) * -1) calc(var(--pad) * -1) var(--space-4)}
 .work .shot{aspect-ratio:300/170;background:var(--screen);position:relative;overflow:hidden}
 .work .shot svg{width:100%;height:100%}
 .work .tag{display:inline-block;margin-bottom:var(--space-2);color:var(--amber)}
@@ -99,14 +96,15 @@ a.card:hover{border-color:var(--signal);background-color:var(--signal-tint)}
 .field textarea{min-height:112px;resize:vertical}
 .field ::placeholder{color:var(--ink-muted);opacity:1}
 
-/* The CRT preview of the composed email (screens stay dark in both themes) */
-.crt{background:#262a31;border:2px solid #444b56;padding:12px 12px 32px;position:relative}
+/* The CRT preview of the composed email (dark glass at night, sunlit glass by day) */
+.crt{background:var(--bezel);border:2px solid var(--bezel-edge);padding:12px 12px 32px;position:relative}
 .crt .scr{background:var(--screen);color:var(--phosphor);font:500 15px/1.55 var(--font-mono);padding:var(--space-4);min-height:220px;white-space:pre-wrap;overflow-wrap:anywhere;position:relative;margin:0}
-.crt .scr::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.04) 0 1px,transparent 1px 3px);pointer-events:none}
-.crt .k{color:#7f9ea7}
-.crt .label{position:absolute;left:12px;bottom:6px;font:500 14px/1.4 var(--font-mono);letter-spacing:.06em;color:#9fb0c0;text-transform:uppercase}
+.crt .scr::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to bottom,var(--screen-line) 0 1px,transparent 1px 3px);pointer-events:none}
+.crt .k{color:var(--screen-dim)}
+.crt .label{position:absolute;left:12px;bottom:6px;font:500 14px/1.4 var(--font-mono);letter-spacing:.06em;color:var(--bezel-label);text-transform:uppercase}
 .cursor{display:inline-block;width:9px;height:17px;background:var(--phosphor);vertical-align:-3px;animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion: reduce){.cursor{animation:none}}
 .send-row{display:grid;margin-top:var(--space-5)}
 .assist{margin:var(--space-5) 0 var(--space-3);color:var(--ink-muted);font-size:16px}
 .copy-list{display:grid;gap:var(--space-2);margin:0 0 var(--space-4)}

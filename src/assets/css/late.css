@@ -1,0 +1,77 @@
+/* CREW's moving parts: his telescopic arm, his speech bubble and the site guide. Only scripts use them, so this
+   file is not inlined: site.js loads it (cached across pages) and the crew scripts wait for it. */
+/* His telescopic arm: reaches whatever needs fixing from where he stands (transform only) */
+.reach-arm,.reach-hand{position:absolute;left:0;top:0;z-index:5;pointer-events:none;opacity:0}
+.reach-arm{height:calc(7 * var(--u));margin-top:calc(-3.5 * var(--u));transform-origin:0 50%;border-radius:calc(3 * var(--u));background:repeating-linear-gradient(90deg,#8a93a0 0 calc(16 * var(--u)),#4b525d calc(16 * var(--u)) calc(19 * var(--u)));
+  transform:translate(var(--sx),var(--sy)) rotate(var(--ang)) scaleX(0);transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .1s}
+.reach-hand{width:calc(14 * var(--u));height:calc(14 * var(--u));margin:calc(-7 * var(--u)) 0 0 calc(-7 * var(--u));border-radius:50%;background:#9aa3ae;border:calc(2 * var(--u)) solid #59606b;
+  transform:translate(var(--sx),var(--sy));transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .1s}
+.reach-arm.on,.reach-hand.on{opacity:1}
+.reach-arm.out{transform:translate(var(--sx),var(--sy)) rotate(var(--ang)) scaleX(1)}
+.reach-hand.out{transform:translate(var(--tx),var(--ty))}
+.reach-arm.still,.reach-hand.still{transition:none}
+
+.crew-bubble .who{display:block;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--screen-dim);margin-bottom:2px}
+.crew-bubble{position:absolute;z-index:6;max-width:240px;width:max-content;padding:8px 12px;background:var(--screen);color:var(--phosphor);border:2px solid var(--phosphor);font:500 16px/1.4 var(--font-mono);pointer-events:none;
+  transform:translate(-50%,calc(-100% + 6px));opacity:0;transition:opacity .15s,transform .15s cubic-bezier(.2,.8,.2,1)}
+.crew-bubble.on{opacity:1;transform:translate(-50%,-100%)}
+.crew-bubble p{margin:0}
+.crew-bubble::after{content:"";position:absolute;left:calc(50% + var(--tail,0px) - 7px);bottom:-9px;width:12px;height:12px;background:var(--screen);border:2px solid var(--phosphor);border-top:0;border-left:0;transform:rotate(45deg)}
+.crew-bubble{box-shadow:0 0 12px var(--glow-signal-soft)}
+@media (max-width: 760px){.crew-bubble{max-width:200px}}
+/* Beside his head (no room above inside the scene): tail points sideways at him */
+.crew-bubble.side{transform:translate(6px,0)}
+.crew-bubble.side.on{transform:none}
+.crew-bubble.side.left{transform:translate(calc(-100% - 6px),0)}
+.crew-bubble.side.left.on{transform:translateX(-100%)}
+.crew-bubble.side::after{left:-9px;top:14px;bottom:auto;border:2px solid var(--phosphor);border-right:0;border-top:0}
+.crew-bubble.side.left::after{left:auto;right:-9px;border:2px solid var(--phosphor);border-left:0;border-bottom:0}
+
+/* ---------- CREW the guide: caught by the header where he stands, rappels to the next box ---------- */
+.g-fixed{position:fixed;left:0;top:0;width:0;height:0;z-index:28;pointer-events:none}
+.g-doc{position:absolute;left:0;top:0;width:0;height:0;z-index:20}
+.g-crew{position:absolute;left:0;top:0;width:84px;height:112px;cursor:pointer;will-change:transform}
+.g-crew svg{width:100%;height:100%;overflow:visible}
+.g-crew .eye{fill:var(--phosphor)}
+.g-crew .mug{display:none}
+.g-crew .arm{transform-origin:50px 46px;transition:transform .25s}
+.g-crew.hang .arm{transform:rotate(-150deg)}
+.g-crew.flip svg{transform:scaleX(-1)}
+.g-crew.tapping .arm{transform:rotate(-100deg)}
+.g-fixed.on .g-crew{z-index:28}
+/* His two telescopic arms: 100 px bars stretched and turned with transform only.
+   arm1 clamps the top bar (the header covers its top end); arm2 hooks a box's top edge. */
+.g-line{position:absolute;left:0;top:0;width:100px;transform-origin:0 50%;opacity:0}
+.g-line.on{opacity:1}
+/* Grab: a 3° jolt that settles in 400 ms. Land: a 2 px squash. Hang: the eye watches the page pass;
+   after 4 s one track lifts to check his footing. Individual transform properties, so the flip stays put. */
+.g-crew svg{transform-origin:50% 0}
+.g-crew.jolt svg{animation:gjolt .4s cubic-bezier(.2,.8,.2,1)}
+@keyframes gjolt{0%{rotate:3deg}45%{rotate:-1.2deg}100%{rotate:0deg}}
+.g-crew.land svg{animation:gland .22s ease-out}
+@keyframes gland{40%{scale:1 var(--squash,.98);translate:0 2px}}
+.g-crew .eye,.g-crew .tread{transform-box:fill-box;transition:transform .3s}
+.g-crew.hang .eye{transform:translateY(3px)}
+.g-crew .tread{transform-origin:100% 50%}
+.g-crew.peek .tread{transform:rotate(-7deg)}
+.g-crew.typing .arm{animation:gtype .6s steps(4)}
+@keyframes gtype{0%,50%{transform:rotate(-30deg)}25%,75%{transform:rotate(-45deg)}}
+@media (prefers-reduced-motion: reduce){.g-crew svg,.g-crew .arm{animation:none!important}.g-crew .eye,.g-crew .tread{transition:none}}
+.g-arm{height:7px;margin-top:-3.5px;border-radius:3px;background:repeating-linear-gradient(90deg,#8a93a0 0 16px,#4b525d 16px 19px)}
+.g-grip{position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;background:#9aa3ae;border:2px solid #59606b;opacity:0}
+.g-grip.on{opacity:1}
+/* His bubble rides with him, beside his head */
+.g-bubble{position:absolute;top:0;right:calc(100% + 10px);left:auto;max-width:240px;width:max-content;transform:none}
+.g-bubble.on{transform:none}
+.g-bubble::after{left:auto;right:-9px;top:14px;bottom:auto;border:2px solid var(--phosphor);border-left:0;border-bottom:0}
+.g-bubble.right{right:auto;left:calc(100% + 10px)}
+.g-bubble.right::after{right:auto;left:-9px;border:2px solid var(--phosphor);border-right:0;border-top:0}
+@media (max-width: 760px){
+  .g-crew{width:54px;height:72px}
+  .g-bubble{max-width:200px}
+}
+/* While the guide has him, the hero's CREW is away (one character, never two) */
+.scene .crew.away{visibility:hidden}
+.g-crew{pointer-events:auto}
+/* CREW pointing down into the monitor he sits on */
+.g-crew.point .arm{transform:rotate(-40deg)}

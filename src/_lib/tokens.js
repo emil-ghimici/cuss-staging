@@ -12,6 +12,23 @@ function fluid(min, max) {
   return `clamp(${min}px, ${base.toFixed(2)}px + ${(slope * 100).toFixed(3)}vw, ${max}px)`;
 }
 
+// [name, night, Daylight]. Daylight screen details use the Daylight tokens (README section 4).
+const DERIVED = [
+  ['bezel-edge', '#444b56', '#7d7364'],          // Daylight: border-control, separating glass from page
+  ['bezel-label', '#9fb0c0', '#3d434d'],         // labels printed on the housing
+  ['knob', '#14171c', '#e7e1d6'],
+  ['knob-edge', '#59606b', '#7d7364'],
+  ['screen-dim', '#7f9ea7', '#4a5260'],          // secondary text on a screen (ink-muted by day, 6.1:1)
+  ['screen-hi', 'rgba(62,230,224,.18)', 'rgba(0,82,90,.12)'],
+  ['screen-hi-edge', 'rgba(62,230,224,.5)', 'rgba(0,82,90,.55)'],
+  ['screen-vign', 'rgba(0,0,0,.85)', 'rgba(60,80,72,.22)'],
+  ['glow-signal', 'rgba(62,230,224,.4)', 'transparent'],
+  ['glow-signal-soft', 'rgba(62,230,224,.25)', 'transparent'],
+  ['glow-contact', 'rgba(255,79,163,.45)', 'transparent'],
+  ['glow-contact-soft', 'rgba(255,79,163,.25)', 'transparent'],
+  ['glow-amber', 'rgba(255,181,71,.6)', 'transparent'],
+];
+
 export function tokensCss() {
   const t = JSON.parse(fs.readFileSync('design/tokens.json', 'utf8'));
   const dark = [], light = [];
@@ -20,6 +37,9 @@ export function tokensCss() {
     dark.push(`--${c.name}:${v.dark ?? v.light}`);
     light.push(`--${c.name}:${v.light ?? v.dark}`);
   }
+  // Derived theme values (not design tokens): screen details and glow colours. Glow belongs to the
+  // night city only, so its colours are transparent in Daylight; one selector set below serves both.
+  for (const [name, d, l] of DERIVED) { dark.push(`--${name}:${d}`); light.push(`--${name}:${l}`); }
   const other = [];
   for (const fam of ['spacing', 'radius', 'border']) for (const s of t[fam]?.tokens ?? []) other.push(`--${s.name}:${s.value}`);
 

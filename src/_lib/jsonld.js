@@ -29,10 +29,12 @@ export function jsonld({ site, env, services, url, crumbs, faqs, service }) {
     knowsLanguage: 'en',
     makesOffer: services.map((s) => ({ '@type': 'Offer', itemOffered: { '@type': 'Service', name: s.name, url: abs(`/services/${s.slug}/`) } })),
   }];
-  if (crumbs && crumbs.length) {
+  // A crumb with `ld: false` (the Services level, which links to a home-page anchor) stays out of the structured data
+  const ldCrumbs = (crumbs || []).filter((c) => c.ld !== false);
+  if (ldCrumbs.length) {
     graph.push({
       '@type': 'BreadcrumbList',
-      itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: abs(c.url || url) })),
+      itemListElement: ldCrumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: abs(c.url || url) })),
     });
   }
   if (service) {

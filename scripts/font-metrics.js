@@ -9,14 +9,18 @@ const FS = 'node_modules/@fontsource';
 const SYS = process.env.SYSFONTS || 'C:/Windows/Fonts';
 const sample = 'The quick brown fox jumps over the lazy dog. Custom software that fits the way your business works, 0123456789';
 
-function avgWidth(font) {
-  const run = font.layout(sample);
+// Display headings are matched on heading-like text: mixed case, short words, few digits. Matching them on the
+// body sample left the fallback ~1% too wide, and an H1 that wraps to 3 lines instead of 2 shifts the page when the
+// web font arrives. Check with scripts/dev/font-swap.mjs.
+const headingSample = 'Automation for small businesses in Ireland. Things we’ve built. Tell us what you need. Running a business shouldn’t mean doing the computer’s job. Six tools that don’t talk to each other. Questions about websites';
+function avgWidth(font, text = sample) {
+  const run = font.layout(text);
   const w = run.glyphs.reduce((s, g) => s + g.advanceWidth, 0);
-  return w / sample.length / font.unitsPerEm;
+  return w / text.length / font.unitsPerEm;
 }
-function metrics(webFile, fallbackFile, fallbackName) {
+function metrics(webFile, fallbackFile, fallbackName, text = sample) {
   const web = fontkit.openSync(webFile), fb = fontkit.openSync(fallbackFile);
-  const sizeAdjust = avgWidth(web) / avgWidth(fb);
+  const sizeAdjust = avgWidth(web, text) / avgWidth(fb, text);
   const upm = web.unitsPerEm;
   const pct = (v) => (v * 100).toFixed(2) + '%';
   return {
@@ -28,7 +32,7 @@ function metrics(webFile, fallbackFile, fallbackName) {
   };
 }
 const out = {
-  display: metrics(`${FS}/chakra-petch/files/chakra-petch-latin-600-normal.woff2`, `${SYS}/arialbd.ttf`, 'Arial Bold'),
+  display: metrics(`${FS}/chakra-petch/files/chakra-petch-latin-600-normal.woff2`, `${SYS}/arialbd.ttf`, 'Arial Bold', headingSample),
   sans: metrics(`${FS}/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-400-normal.woff2`, `${SYS}/arial.ttf`, 'Arial'),
   sansBold: metrics(`${FS}/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-700-normal.woff2`, `${SYS}/arialbd.ttf`, 'Arial Bold'),
   mono: metrics(`${FS}/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff2`, `${SYS}/cour.ttf`, 'Courier New'),

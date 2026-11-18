@@ -1,0 +1,43 @@
+---
+layout: layouts/inner.njk
+permalink: /about/
+section: about
+band: about
+bandTip: "Small crew. We pick up the phone."
+crewPerches: ".info, .steps li"
+scripts: [band]
+title: "About CuSS: custom software from Athlone | CuSS"
+description: "CuSS Custom Software Solutions is a small software business in Athlone, Co. Westmeath, building automation, apps, dashboards and websites for Irish businesses."
+crumbs:
+  - { name: "Home", url: "/" }
+  - { name: "About" }
+---
+{#- About (design spec section 1, brief): the business, not a person. No founder photo or name.
+    The trust points and steps reuse the home page's agreed draft copy (index.11tydata.js). PLACEHOLDER: the page's own copy. -#}
+{%- from "macros.njk" import steps, contact, ph with context %}
+<div class="wrap">
+  <div class="intro">
+    <p class="mono eyebrow">About</p>
+    <h1>About CuSS</h1>
+    {{ ph('a short lead: who CuSS is, from Athlone, for Irish businesses (the business, not a person)') }}
+  </div>
+  <section class="sec-tight" aria-labelledby="story-h">
+    <h2 id="story-h">Who we are</h2>
+    {{ ph('two or three paragraphs about the business: what we do, how we work, the partner team for bigger data work') }}
+  </section>
+  <section class="sec-tight" aria-labelledby="why-h" data-crew-tip="Small crew. We pick up the phone.">
+    <h2 id="why-h">Why CuSS</h2>
+    <ul class="grid g4 plain">
+      {%- for w in why %}
+      <li class="info bv-lg">{% icon w.icon, "ci" %}<h3 class="h4">{{ w.t }}</h3><p>{{ w.d }}</p></li>
+      {%- endfor %}
+    </ul>
+  </section>
+  <section class="sec-tight" aria-labelledby="how-h">
+    <h2 id="how-h">How we work</h2>
+    {{ steps(howSteps) }}
+  </section>
+  <section class="contact-sec sec-tight" aria-labelledby="contact-h">
+    {{ contact('Tell us what you need') }}
+  </section>
+</div>

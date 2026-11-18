@@ -1,0 +1,22 @@
+---
+layout: layouts/inner.njk
+permalink: /contact/
+section: contact
+band: contact
+bandTip: "Tick a few boxes. I’ll do the typing."
+crewPerches: ".crt"
+scripts: [band]
+title: "Contact CuSS: free first call | Athlone, Ireland"
+description: "Tell us what you need: tick a few boxes and we’ll write the email for you. Free first call, written quote before work starts. CuSS, Athlone, Co. Westmeath."
+crumbs:
+  - { name: "Home", url: "/" }
+  - { name: "Contact" }
+---
+{#- Contact (design spec section 11, full contact block). CREW sits only on the CRT preview (crewPerches);
+    the "Open email to send" button is never a target. The phone number shows here and in the footer only, never first. -#}
+{%- from "macros.njk" import contact with context %}
+<div class="wrap">
+  <section class="contact-page" aria-labelledby="contact-h" data-crew-tip="Tick a few boxes. I’ll do the typing.">
+    {{ contact('Tell us what you need', 'Not sure yet', true, 'Tick what fits. We’ll write the email for you.', 1) }}
+  </section>
+</div>

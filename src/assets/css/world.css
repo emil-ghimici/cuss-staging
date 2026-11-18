@@ -1,5 +1,6 @@
 /* World zones: the derelict neon street, screens, the crew. Never behind body text,
-   never between a visitor and the Contact button. Screens stay dark in both themes. */
+   never between a visitor and the Contact button. Screens follow the theme: dark glass at night,
+   sunlit glass by day, the same content in both. Glow colours (--glow-*) are transparent by day. */
 
 /* Street line art, drawn with the theme tokens */
 .street .ln{fill:none;stroke:var(--divider);stroke-width:2}
@@ -13,8 +14,8 @@
 .street .cable,.divider .cable{fill:none;stroke:var(--ink-muted);stroke-width:2;opacity:.6}
 .street .win-a{fill:var(--amber);opacity:.55}
 .street .win-h{fill:var(--hazard);opacity:.5}
-:root:not([data-theme="light"]) .street .amb,:root:not([data-theme="light"]) .street .sig{filter:drop-shadow(0 0 6px currentColor)}
-@media (prefers-color-scheme: light){:root:not([data-theme]) .street .amb,:root:not([data-theme]) .street .sig{filter:none}}
+.street .amb{filter:drop-shadow(0 0 6px var(--glow-amber))}
+.street .sig{filter:drop-shadow(0 0 6px var(--glow-signal))}
 
 /* Flicker: at most 3 flashes, ≤ 3 per second, then steady for seconds */
 .flick{animation:flick 6s steps(1) infinite}
@@ -24,37 +25,8 @@
 .spark.on{animation:spark .9s steps(2) 3}
 @keyframes spark{0%{opacity:1}50%{opacity:0}}
 
-/* Hero */
-@media (min-width: 1061px){.hero h1{min-height:5.5em}}
-.hero{position:relative;overflow:hidden;background:var(--surface-0)}
-.hero-in{display:grid;grid-template-columns:6fr 7fr;gap:var(--space-6);align-items:center;min-height:720px;padding-top:var(--space-7);padding-bottom:var(--space-7)}
-.hero-copy{position:relative;z-index:2;align-self:start;padding-top:var(--space-5)}
-.hero-copy .note{font-size:16px;margin:0;color:var(--ink-muted)}
-
-/* The scene is one picture: everything inside is measured in --u, 1/640 of the scene's width,
-   so the street, the TV and the crew keep their proportions and places at any width. */
-.scene{position:relative;container-type:inline-size;aspect-ratio:640/520;clip-path:inset(-100vh -100vw -100vh 0)}
-.scene>*{--u:calc(100cqw / 640)}
-.scene .street{position:absolute;inset:0;width:100%;height:100%}
-.tv{position:absolute;z-index:2;left:calc(134 * var(--u));top:calc(146 * var(--u));width:calc(371 * var(--u));aspect-ratio:4/3.2;background:#2b2f36;padding:calc(22 * var(--u)) calc(92 * var(--u)) calc(22 * var(--u)) calc(22 * var(--u));border:2px solid #4b525d}
-.tv-screen{position:relative;width:100%;height:100%;background:var(--screen);overflow:hidden;border:3px solid #15181d;cursor:crosshair}
-.tv-screen canvas{width:100%;height:100%}
-.scan{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.05) 0 1px,transparent 1px 3px);mix-blend-mode:screen}
-.vign{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 calc(60 * var(--u)) rgba(0,0,0,.85)}
-.dial{position:absolute;right:calc(26 * var(--u));width:calc(44 * var(--u));height:calc(44 * var(--u));border-radius:50%;background:#14171c;border:3px solid #59606b}
-.dial::after{content:"";position:absolute;left:50%;top:calc(4 * var(--u));width:calc(4 * var(--u));height:calc(14 * var(--u));margin-left:calc(-2 * var(--u));background:#ffb547;transform-origin:50% calc(15 * var(--u));transition:transform .35s steps(3)}
-.dial.d1{top:calc(34 * var(--u))}.dial.d2{top:calc(96 * var(--u))}
-.dial.turn::after{transform:rotate(80deg)}
-.tv .grille{position:absolute;right:calc(22 * var(--u));bottom:calc(26 * var(--u));width:calc(52 * var(--u));height:calc(70 * var(--u));background:repeating-linear-gradient(to bottom,#59606b 0 calc(3 * var(--u)),transparent calc(3 * var(--u)) calc(8 * var(--u)))}
-.tv .legs{position:absolute;left:12%;right:12%;bottom:calc(-26 * var(--u));height:calc(26 * var(--u));border-left:calc(6 * var(--u)) solid #3a3f47;border-right:calc(6 * var(--u)) solid #3a3f47}
-.tv.jolt{animation:jolt .3s steps(3)}
-@keyframes jolt{33%{transform:translate(3px,-2px) rotate(.4deg)}66%{transform:translate(-2px,1px)}}
-
 /* The crew: a battered maintenance robot */
 .crew{position:absolute;left:0;bottom:calc(50 * var(--u));width:calc(90 * var(--u));height:calc(120 * var(--u));transform:translate(var(--x,0),var(--y,0));z-index:4}
-/* His tea crate, in front of the TV so he can watch it on his break (desktop) */
-.scene .crate{position:absolute;z-index:3;left:calc(392 * var(--u));bottom:calc(50 * var(--u));width:calc(52 * var(--u));height:calc(40 * var(--u));background:var(--surface-2);border:2px solid var(--divider)}
-.scene .crate::after{content:"";position:absolute;left:0;right:0;top:45%;border-top:2px solid var(--divider)}
 .crew.held{z-index:5;cursor:grabbing}
 .crew.held svg{transform:rotate(-6deg)}
 .crew.sit{translate:0 calc(-38 * var(--u))}
@@ -69,168 +41,9 @@
 .crew.tea .mug{opacity:1}
 .crew.flip svg{transform:scaleX(-1)}
 .crew .eye{fill:var(--phosphor)}
-:root:not([data-theme="light"]) .crew .eye{filter:drop-shadow(0 0 4px var(--phosphor))}
-
-/* His telescopic arm: reaches whatever needs fixing from where he stands (transform only) */
-.reach-arm,.reach-hand{position:absolute;left:0;top:0;z-index:5;pointer-events:none;opacity:0}
-.reach-arm{height:calc(7 * var(--u));margin-top:calc(-3.5 * var(--u));transform-origin:0 50%;border-radius:calc(3 * var(--u));background:repeating-linear-gradient(90deg,#8a93a0 0 calc(16 * var(--u)),#4b525d calc(16 * var(--u)) calc(19 * var(--u)));
-  transform:translate(var(--sx),var(--sy)) rotate(var(--ang)) scaleX(0);transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .1s}
-.reach-hand{width:calc(14 * var(--u));height:calc(14 * var(--u));margin:calc(-7 * var(--u)) 0 0 calc(-7 * var(--u));border-radius:50%;background:#9aa3ae;border:calc(2 * var(--u)) solid #59606b;
-  transform:translate(var(--sx),var(--sy));transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .1s}
-.reach-arm.on,.reach-hand.on{opacity:1}
-.reach-arm.out{transform:translate(var(--sx),var(--sy)) rotate(var(--ang)) scaleX(1)}
-.reach-hand.out{transform:translate(var(--tx),var(--ty))}
-.reach-arm.still,.reach-hand.still{transition:none}
-
-/* Before the crew's script runs (and the reduced-motion still): beside the TV, hand on the dial */
-.scene .crew{left:calc(507 * var(--u))}
-
-/* Section dividers (static SVG; the neon ignites once when seen) */
-.divider{position:relative;height:120px;background:var(--surface-0);overflow:hidden}
-.divider svg{position:absolute;inset:0;width:100%;height:100%}
-.tape{fill:#c6ff3d}
-.tape-bg{fill:#14181e}
-.sign-plate{fill:var(--surface-2);stroke:var(--amber);stroke-width:2}
-.sign-txt{fill:var(--amber);font:600 20px var(--font-display);letter-spacing:.2em}
-.open-txt{fill:none;stroke:var(--amber);stroke-width:3;font:600 46px var(--font-display);letter-spacing:.14em}
-:root:not([data-theme="light"]) .open-txt{filter:drop-shadow(0 0 8px var(--amber))}
-.ignite{animation:ignite 1.2s steps(1) 1}
-@keyframes ignite{0%{opacity:.15}20%{opacity:1}35%{opacity:.3}55%{opacity:1}70%{opacity:.4}85%,100%{opacity:1}}
-
-/* Control room */
-.room{position:relative}
-.room-tag{color:var(--amber)}
-.room-wall{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-7);margin-top:var(--space-6)}
-.mon{position:relative;background:#262a31;padding:14px 14px 32px;border:2px solid #444b56}
-.mon .label{position:absolute;left:14px;bottom:6px;font:500 14px/1.4 var(--font-mono);letter-spacing:.06em;color:#9fb0c0;text-transform:uppercase}
-.mon .led2{position:absolute;right:14px;bottom:11px;width:8px;height:8px;background:#5a2430}
-.mon.live{border-color:#3ee6e0}
-.mon.live .led2{background:var(--phosphor);box-shadow:0 0 6px var(--phosphor)}
-.mon .scr{position:relative;height:200px;margin:0;white-space:pre-wrap;background:var(--screen);color:var(--phosphor);font:500 15px/1.5 var(--font-mono);padding:12px 14px;overflow:hidden}
-.mon .scr::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.04) 0 1px,transparent 1px 3px);pointer-events:none}
-.mon .dim{color:#7f9ea7}
-.mon .amb{color:#ffb547}
-.mon .hz{color:#c6ff3d}
-.mon .hi{background:rgba(62,230,224,.18);outline:1px solid rgba(62,230,224,.5)}
-.mon.flicker .scr{animation:mflick 4s steps(1) infinite}
-@keyframes mflick{0%,100%{opacity:1}48%{opacity:.6}49%{opacity:1}}
-.mon .sticky{position:absolute;right:-10px;top:-14px;transform:rotate(6deg);background:#ffd96a;color:#3a2a00;font:700 14px/1.2 var(--font-sans);padding:8px 10px;box-shadow:2px 3px 0 rgba(0,0,0,.35);z-index:2}
-.room.connected .mon .sticky{display:none}
-:root:not([data-theme="light"]) .mon.live{box-shadow:0 0 14px rgba(62,230,224,.35)}
-.cables{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.cables path{fill:none;stroke:var(--signal);stroke-width:3;stroke-dasharray:6 8;opacity:0;transition:opacity .4s}
-.room.connected .cables path{opacity:.9;animation:flow 1s linear infinite}
-@keyframes flow{to{stroke-dashoffset:-28}}
-.room-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4);margin-top:var(--space-7)}
-.caption{font:500 16px/1.5 var(--font-mono);color:var(--amber);min-height:48px;display:flex;align-items:center;margin:0}
-.room .confirm,.room.awaiting .connect,.room.connected .connect{display:none}
-.room.awaiting .confirm{display:inline-flex}
-/* Without the script the wall simply shows the "before" state with its caption */
-html:not(.js) .room .connect{display:none}
-
-@media (max-width: 1060px){
-  .hero-in{grid-template-columns:1fr 1fr}
-}
-@media (max-width: 760px){
-  .hero-in{grid-template-columns:1fr;min-height:0;padding-top:var(--space-6);padding-bottom:var(--space-5);gap:var(--space-4)}
-  /* Phone composition: a taller picture, a bigger TV, the crew sitting on top of it */
-  .scene{aspect-ratio:640/600;margin:0 calc(var(--space-4) * -1)}
-  .tv{left:calc(70 * var(--u));top:calc(120 * var(--u));width:calc(500 * var(--u));padding:calc(23 * var(--u)) calc(105 * var(--u)) calc(23 * var(--u)) calc(23 * var(--u))}
-  .dial{right:calc(23 * var(--u));width:calc(59 * var(--u));height:calc(59 * var(--u))}.dial.d1{top:calc(33 * var(--u))}.dial.d2{top:calc(115 * var(--u))}
-  .dial::after{transform-origin:50% calc(22 * var(--u));height:calc(18 * var(--u))}
-  .tv .grille{right:calc(23 * var(--u));width:calc(59 * var(--u));height:calc(82 * var(--u));bottom:calc(30 * var(--u))}
-  .scene .crew{left:calc(470 * var(--u));top:calc(14 * var(--u));bottom:auto}
-  .scene .crate{display:none}
-  .room-wall{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5) var(--space-3)}
-  .mon{padding:8px 8px 28px}
-  .mon .scr{height:150px;font-size:12px;padding:8px}
-  .mon .label{left:8px;font-size:14px;letter-spacing:.02em}
-  .mon .sticky{font-size:14px;right:-4px;padding:5px 6px}
-  .room-bar .btn{flex:1 1 100%}
-  .divider{height:96px}
-}
-@media (prefers-reduced-motion: reduce){
-  .flick,.mon.flicker .scr,.cursor{animation:none}
-}
-
-/* Trimmed demo on service pages */
-.room.mini{background:var(--surface-2);padding:var(--space-6);border:var(--border-divider-w) solid var(--divider)}
-.room.mini .room-wall{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-6)}
-.room.mini .mon .scr{height:170px;font-size:14px}
-.room.mini .room-bar{margin-top:var(--space-6)}
-@media (max-width: 760px){
-  .room.mini{padding:var(--space-4);margin:0 calc(var(--space-4) * -1)}
-  .room.mini .room-wall{gap:var(--space-5) var(--space-3)}
-  .room.mini .mon .scr{height:150px;font-size:12px}
-}
-.scene.paused .flick,.scene.paused .spark.on{animation-play-state:paused}
-/* Desktop: the crew stays out of sight until his script brings him in (the still pose stays for reduced motion) */
-@media (min-width: 761px) and (prefers-reduced-motion: no-preference){
-  html.js .scene .crew:not(.live){visibility:hidden}
-}
-@media (min-width: 761px) and (max-width: 1060px){.hero .actions{grid-template-columns:1fr}}
+.crew .eye{filter:drop-shadow(0 0 4px var(--glow-signal))}
 
 /* The crew's speech bubble: a little screen above his head (decoration, hidden from screen readers) */
 .scene .crew{cursor:default}
 @media (min-width: 761px) and (prefers-reduced-motion: no-preference){.scene .crew.live{cursor:grab}}
-.crew-bubble .who{display:block;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#7f9ea7;margin-bottom:2px}
-.crew-bubble{position:absolute;z-index:6;max-width:240px;width:max-content;padding:8px 12px;background:#05080a;color:#3ee6e0;border:2px solid #3ee6e0;font:500 16px/1.4 var(--font-mono);pointer-events:none;
-  transform:translate(-50%,calc(-100% + 6px));opacity:0;transition:opacity .15s,transform .15s cubic-bezier(.2,.8,.2,1)}
-.crew-bubble.on{opacity:1;transform:translate(-50%,-100%)}
-.crew-bubble p{margin:0}
-.crew-bubble::after{content:"";position:absolute;left:calc(50% + var(--tail,0px) - 7px);bottom:-9px;width:12px;height:12px;background:#05080a;border:2px solid #3ee6e0;border-top:0;border-left:0;transform:rotate(45deg)}
-:root:not([data-theme="light"]) .crew-bubble{box-shadow:0 0 12px rgba(62,230,224,.3)}
-@media (max-width: 760px){.crew-bubble{max-width:200px}}
-/* Beside his head (no room above inside the scene): tail points sideways at him */
-.crew-bubble.side{transform:translate(6px,0)}
-.crew-bubble.side.on{transform:none}
-.crew-bubble.side.left{transform:translate(calc(-100% - 6px),0)}
-.crew-bubble.side.left.on{transform:translateX(-100%)}
-.crew-bubble.side::after{left:-9px;top:14px;bottom:auto;border:2px solid #3ee6e0;border-right:0;border-top:0}
-.crew-bubble.side.left::after{left:auto;right:-9px;border:2px solid #3ee6e0;border-left:0;border-bottom:0}
-
-/* ---------- CREW the guide: caught by the header where he stands, rappels to the next box ---------- */
-.g-fixed{position:fixed;left:0;top:0;width:0;height:0;z-index:28;pointer-events:none}
-.g-doc{position:absolute;left:0;top:0;width:0;height:0;z-index:20}
-.g-crew{position:absolute;left:0;top:0;width:84px;height:112px;cursor:pointer;will-change:transform}
-.g-crew svg{width:100%;height:100%;overflow:visible}
-.g-crew .eye{fill:var(--phosphor)}
-.g-crew .mug{display:none}
-.g-crew .arm{transform-origin:50px 46px;transition:transform .25s}
-.g-crew.hang .arm{transform:rotate(-150deg)}
-.g-crew.flip svg{transform:scaleX(-1)}
-.g-crew.tapping .arm{transform:rotate(-100deg)}
-.g-fixed.on .g-crew{z-index:28}
-/* Rope and second arm: 100 px bars stretched and turned with transform only */
-.g-line{position:absolute;left:0;top:0;width:100px;transform-origin:0 50%;opacity:0}
-.g-line.on{opacity:1}
-.g-rope{height:3px;margin-top:-1.5px;background:repeating-linear-gradient(90deg,#8a93a0 0 12px,#4b525d 12px 14px)}
-.g-arm{height:7px;margin-top:-3.5px;border-radius:3px;background:repeating-linear-gradient(90deg,#8a93a0 0 16px,#4b525d 16px 19px)}
-.g-grip{position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;background:#9aa3ae;border:2px solid #59606b;opacity:0}
-.g-grip.on{opacity:1}
-/* His bubble rides with him, beside his head */
-.g-bubble{position:absolute;top:0;right:calc(100% + 10px);left:auto;max-width:240px;width:max-content;transform:none}
-.g-bubble.on{transform:none}
-.g-bubble::after{left:auto;right:-9px;top:14px;bottom:auto;border:2px solid #3ee6e0;border-left:0;border-bottom:0}
-.g-bubble.right{right:auto;left:calc(100% + 10px)}
-.g-bubble.right::after{right:auto;left:-9px;border:2px solid #3ee6e0;border-right:0;border-top:0}
-@media (max-width: 760px){
-  .g-crew{width:54px;height:72px}
-  .g-bubble{max-width:200px}
-}
-/* The OPEN sign hangs from one connector until CREW fixes it */
-.divider .hanging{transform-box:view-box;transform-origin:580px 40px;transform:rotate(6deg);transition:transform .6s cubic-bezier(.3,1.4,.5,1)}
-.divider .hook-r{opacity:0;transition:opacity .2s .45s}
-.divider.fixed .hanging{transform:none}
-.divider.fixed .hook-r{opacity:.6}
-/* While the guide has him, the hero's CREW is away (one character, never two) */
-.scene .crew.away{visibility:hidden}
-.g-crew{pointer-events:auto}
-/* CREW pointing down into the monitor he sits on */
-.g-crew.point .arm{transform:rotate(-40deg)}
-/* The wall's flicker and cable flow pause off screen */
-.room.paused .mon.flicker .scr,.room.paused .cables path{animation-play-state:paused}
-/* Phones: monitor text at 14 px (the floor for small labels); screens grow to fit their lines */
-@media (max-width: 760px){
-  .mon .scr,.room.mini .mon .scr{font-size:14px;height:auto;min-height:150px;line-height:1.45}
-}
+@media (prefers-reduced-motion: reduce){.flick{animation:none}}

@@ -16,6 +16,7 @@
   if (!ctx) return;
   var crewEl = scene.querySelector('.crew'), dial = tv.querySelector('.dial.d1');
   var tube = scene.querySelector('[data-tube]'), spark = scene.querySelector('[data-spark]'), sign = scene.querySelector('[data-sign]');
+  var lamp = scene.querySelector('[data-lamp]'), joint = scene.querySelector('[data-joint]'), drop = scene.querySelector('.drop');
   var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // What the crew says when you hover over him (tap on phones), by what he's doing.
@@ -27,6 +28,8 @@
     tube: ['This light’s been flickering all week.'],
     junction: ['Don’t touch that box. Seriously.'],
     sign: ['This sign’s been loose since Tuesday.'],
+    lamp: ['Bulb’s gone again. Good job I carry spares.'],
+    pipe: ['Drip, drip. Not on my watch.'],
     off: ['Just popping out. Back in a tick.'],
     held: ['Whoa, easy!', 'I can walk, you know.', 'Mind the paintwork.'],
     thanks: ['Cheers, I was getting to that.'],
@@ -35,7 +38,18 @@
     tea: ['Back in a minute, the kettle’s on.', 'Tea break. The telly can mind itself.', 'Ten minutes. Union rules.', 'Don’t tell the boss.'],
     idle: ['Got something that needs fixing? That’s the Contact button.', 'We fix things. That’s the whole job.', 'Spreadsheets held together with tape? Seen worse.', 'The first call’s free, by the way.', 'All quiet. Suspiciously quiet.']
   };
-  var BG = '#05080a', PH = '62,230,224';           // the screen and phosphor tokens (screens stay dark in both themes)
+  // The screen and phosphor tokens, read from the page: dark glass at night, sunlit glass by day.
+  // By day nothing glows: the halo and the static are darker than the glass, not brighter.
+  var BG, BGRGB, PH, HALO, DAY = false;
+  function rgbOf(hex) { hex = hex.trim().replace('#', ''); if (hex.length === 3) hex = hex.replace(/./g, '$&$&'); var n = parseInt(hex, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function readColours() {
+    var cs = getComputedStyle(doc.documentElement), bg = rgbOf(cs.getPropertyValue('--screen') || '#05080a');
+    BG = 'rgb(' + bg + ')'; BGRGB = bg.join(','); PH = rgbOf(cs.getPropertyValue('--phosphor') || '#3ee6e0').join(',');
+    DAY = bg[0] + bg[1] + bg[2] > 384;
+    HALO = DAY ? '0,60,66' : '200,240,240';
+    SHADES = [];
+    for (var i = 0; i < 8; i++) SHADES.push('rgba(' + PH + ',' + (0.24 + i * 0.1).toFixed(2) + ')');
+  }
   var FONT = '"Chakra Petch", "Chakra Petch Fallback", sans-serif';
   var SPRING = 0.09, DAMPING = 0.78;               // from the dot field: pull to target, velocity kept per frame
   var FRAME_MS = 1000 / 30;                        // a CRT doesn't need 60 fps; half the work
@@ -100,20 +114,20 @@
     var x = noiseTex.getContext('2d'), img = x.createImageData(W, H), d = img.data;
     for (var n = (W * H * 0.06) | 0; n > 0; n--) {
       var i = ((Math.random() * W * H) | 0) * 4, v = 150 + Math.random() * 105;
+      if (DAY) v = (255 - v) * 0.5;                 // dark specks on sunlit glass
       d[i] = v * 0.8; d[i + 1] = v; d[i + 2] = v; d[i + 3] = 40 + Math.random() * 150;
     }
     x.putImageData(img, 0, 0);
     noisePat = ctx.createPattern(noiseTex, "repeat");
   }
   // A few fixed phosphor shades, so a frame sets fillStyle a handful of times instead of once per speck
-  var SHADES = [], i0;
-  for (i0 = 0; i0 < 8; i0++) SHADES.push('rgba(' + PH + ',' + (0.24 + i0 * 0.1).toFixed(2) + ')');
+  var SHADES = [];   // filled by readColours() when the show starts (not while the page loads: it forces a style pass)
 
   function draw(dt) {
     var noise = state === 'broken' ? 1 : state === 'weak' ? 0.5 : 0.16;
     // Phosphor persistence: fade the last frame instead of clearing it
     ctx.globalAlpha = 1;
-    ctx.fillStyle = state === 'broken' ? 'rgba(5,8,10,.7)' : 'rgba(5,8,10,.55)';
+    ctx.fillStyle = 'rgba(' + BGRGB + (state === 'broken' ? ',.7)' : ',.55)');
     ctx.fillRect(0, 0, W, H);
     // Static at a level brightness (no flashing): the texture's density does the work
     var R = Math.min(W, H) * 0.3;
@@ -135,7 +149,7 @@
     }
     if (ptr) {
       var g = ctx.createRadialGradient(ptr.x, ptr.y, 0, ptr.x, ptr.y, R);
-      g.addColorStop(0, 'rgba(200,240,240,.14)'); g.addColorStop(1, 'rgba(200,240,240,0)');
+      g.addColorStop(0, 'rgba(' + HALO + ',.14)'); g.addColorStop(1, 'rgba(' + HALO + ',0)');
       ctx.fillStyle = g; ctx.fillRect(ptr.x - R, ptr.y - R, R * 2, R * 2);
     }
 
@@ -176,14 +190,14 @@
     }
     // A faint tear line now and then
     if (Math.random() < (state === 'broken' ? 0.3 : 0.04)) {
-      ctx.fillStyle = 'rgba(200,240,240,.08)';
+      ctx.fillStyle = 'rgba(' + HALO + ',.08)';
       ctx.fillRect(0, (Math.random() * H) | 0, W, 2 + Math.random() * 5);
     }
   }
   function stillFrame() {
     setState('tuned');
     ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = 'rgba(200,240,240,.07)';
+    ctx.fillStyle = 'rgba(' + HALO + ',.07)';
     for (var i = 0; i < W * H / 260; i++) ctx.fillRect((Math.random() * W) | 0, (Math.random() * H) | 0, 2, 2);
     ptsF.forEach(function (q) {
       ctx.fillStyle = 'rgba(' + PH + ',' + (q.h ? 0.95 : 0.4) + ')';
@@ -275,17 +289,50 @@
   function nearTV() { return Math.abs(crew.x - besideTV()) < 140; }
   var THINGS = {
     tube: { at: [550, 96], broken: function () { return tube && !tube.classList.contains('fixed'); },
-      fix: function () { tube.classList.add('fixed'); wait(25000, true).then(function () { tube.classList.remove('fixed'); }); } },
+      fix: function () { tube.classList.add('fixed'); breakLater(25000, 25000, function () { tube.classList.remove('fixed'); }); } },
     junction: { at: [586, 352], broken: function () { return spark && spark.classList.contains('on'); },
       fix: function () { spark.classList.remove('on'); } },
     sign: { at: [72, 270], broken: function () { return sign && sign.getAttribute('transform').indexOf('rotate(0') !== 0; },
-      fix: function () { sign.setAttribute('transform', 'rotate(0 75 270)'); wait(60000, true).then(function () { sign.setAttribute('transform', 'rotate(-9 75 270)'); }); } }
+      fix: function () { sign.setAttribute('transform', 'rotate(0 75 270)'); breakLater(60000, 60000, function () { sign.setAttribute('transform', 'rotate(-9 75 270)'); }); } },
+    // Street lamp: the bulb flickers out (≤ 3 flickers) and goes dark; he unscrews it and fits a spare
+    lamp: { at: [92, 66], broken: function () { return lamp && (lamp.classList.contains('dark') || lamp.classList.contains('failing')); },
+      breakIt: function () { lamp.classList.add('failing'); wait(1200, true).then(function () { lamp.classList.remove('failing'); lamp.classList.add('dark'); }); },
+      fix: function () { lamp.classList.remove('dark', 'failing'); breakLater(30000, 90000, THINGS.lamp.breakIt); } },
+    // Dripping pipe: one drop every 1.5 s into the bucket; two quarter-turns of a wrench, one last drop, then dry
+    pipe: { el: joint, broken: function () { return scene.classList.contains('leak') && !pipeFixing; },
+      breakIt: function () { joint.style.transform = ''; scene.classList.add('leak'); },
+      fix: function () {
+        pipeFixing = true;
+        drop.addEventListener('animationiteration', function () { scene.classList.remove('leak'); pipeFixing = false; }, { once: true });
+        breakLater(30000, 90000, THINGS.pipe.breakIt);
+      } }
   };
+  var pipeFixing = false;
+  // At most two things broken at once, and nothing breaks during the tea break: a break that is due waits its turn
+  function brokenCount() { return Object.keys(THINGS).filter(function (id) { return THINGS[id].broken(); }).length; }
+  var FAST = /crew-fast/.test(location.hash) ? 0.1 : 1;   // dev checks only (scripts/dev/probe-jobs.js): ten times sooner
+  function breakLater(min, max, fn) {
+    return wait((min + Math.random() * (max - min)) * FAST, true).then(function tryBreak() {
+      if (resting || brokenCount() >= 2) return wait(5000, true).then(tryBreak);
+      fn();
+    });
+  }
+  // A thing's point in scene pixels: an element's centre, or a point of the street drawing
+  function ptOf(id) { if (THINGS[id].el) return rel(THINGS[id].el); var a = atOf(id); return { x: vx(a[0]), y: vy(a[1]) }; }
+  // The wrench: two quarter-turns of the joint
+  function wrench() {
+    var p = ptOf('pipe');
+    return reachTo(p.x, p.y)
+      .then(function () { joint.style.transform = 'rotate(90deg)'; return wait(500); })
+      .then(function () { joint.style.transform = 'rotate(180deg)'; return wait(500); })
+      .then(retract);
+  }
   // On phones the sign is reached at its far end, so the arm passes over the bezel, not the screen
   function atOf(id) { var a = THINGS[id].at; return id === 'sign' && phone ? [30, 270] : a; }
   function standFor(id) {
-    if (phone) return id === 'sign' ? tvLeft() - crewW() * 0.25 : tvRight() - crewW() - 4;
-    if (id === 'sign') return Math.max(0, vx(100) - crewW() / 2);
+    if (phone) return id === 'sign' || id === 'lamp' ? tvLeft() - crewW() * 0.25 : tvRight() - crewW() - 4;
+    if (id === 'sign' || id === 'lamp') return Math.max(0, vx(100) - crewW() / 2);
+    if (id === 'pipe') return besideTV();                // reaches up past the set's right-hand side, never across the screen
     return Math.min(sceneW() - crewW(), vx(560) - crewW() / 2);
   }
   var crateEl = scene.querySelector('.crate');
@@ -322,6 +369,7 @@
     // He only reaches the dials from the right-hand side, never across the screen
     return walkTo(besideTV()).then(function () { mutter('tv'); return untilWeak(); }).then(twist);
   }
+  function fixMove(id) { if (id === 'pipe') return wrench(); var p = ptOf(id); return tap(p.x, p.y); }
   function job(id) {
     crew.busy = id;
     return jobInner(id).then(function () { crew.busy = false; });
@@ -338,7 +386,7 @@
     }
     var t = THINGS[id];
     return walkTo(standFor(id))
-      .then(function () { mutter('job'); return tap(vx(atOf(id)[0]), vy(atOf(id)[1])); })
+      .then(function () { mutter('job'); return fixMove(id); })
       .then(function () { t.fix(); });
   }
   // A pause between jobs, cut short (after 2–6 s) if the picture breaks meanwhile
@@ -369,6 +417,7 @@
       if (performance.now() - lastAny > 45000) return rest();
       if (Math.random() < 0.2) mutter('idle');
       var ids = phone ? ['tube', 'junction', 'sign'] : ['tube', 'junction', 'sign', 'off'];
+      ['lamp', 'pipe'].forEach(function (id) { if (THINGS[id].broken()) ids.push(id, id); });   // only when broken, and likelier
       var id = ids[(Math.random() * ids.length) | 0];
       return job(id).then(function () { if (crew.needTV) return wait(2000 + Math.random() * 4000).then(fixTV); });
     }).then(life);
@@ -527,7 +576,7 @@
     var mid = crew.x + crewW() / 2, best = null, bd = 170;
     if ((crew.needTV || state === 'broken') && Math.abs(mid - (tvRight() + crewW() / 2)) < bd) best = 'tv';
     Object.keys(THINGS).forEach(function (id) {
-      var t = THINGS[id], d = Math.abs(mid - vx(atOf(id)[0]));
+      var t = THINGS[id], d = Math.abs(mid - ptOf(id).x);
       if (best !== 'tv' && t.broken() && d < bd) { bd = d; best = id; }
     });
     if (!best) return Promise.resolve();
@@ -535,7 +584,7 @@
     if (best === 'tv') return fixTV();
     var t = THINGS[best];
     crew.busy = best;
-    return tap(vx(atOf(best)[0]), vy(atOf(best)[1])).then(function () { t.fix(); crew.busy = false; });
+    return fixMove(best).then(function () { t.fix(); crew.busy = false; });
   }
 
   /* ---------------- Visitors ---------------- */
@@ -571,7 +620,18 @@
   // The show never delays the message: wait for the fonts (so the letters sample in Chakra Petch)
   // and for the page to settle, then build the picture and let the crew in.
   function begin() {
+    readColours();
     build();
+    // Theme switch (header) or the OS preference changing: the glass changes colour, nothing else
+    function retheme() {
+      readColours();
+      if (reduced) { stillFrame(); return; }
+      if (noiseTex) makeNoise();
+      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+    }
+    doc.addEventListener('cuss:theme', retheme);
+    var mqL = window.matchMedia && matchMedia('(prefers-color-scheme: light)');
+    if (mqL && mqL.addEventListener) mqL.addEventListener('change', retheme);
     if (reduced) {
       stillFrame();
       crewEl.classList.remove('reach');
@@ -602,7 +662,9 @@
         crew.needTV = true;
       }
     });
-    if (spark) setInterval(function () { if (running && !spark.classList.contains('on') && Math.random() < 0.3) spark.classList.add('on'); }, 9000);
+    if (spark) setInterval(function () { if (running && !resting && brokenCount() < 2 && !spark.classList.contains('on') && Math.random() < 0.3) spark.classList.add('on'); }, 9000);
+    if (lamp) breakLater(30000, 90000, THINGS.lamp.breakIt);
+    if (joint) breakLater(30000, 90000, THINGS.pipe.breakIt);
     firstEntrance();
   }
   function whenIdle(fn) {
@@ -610,5 +672,5 @@
     if (doc.readyState === 'complete') go(); else window.addEventListener('load', go, { once: true });
   }
   var fontsReady = doc.fonts && doc.fonts.ready ? doc.fonts.ready : Promise.resolve();
-  Promise.race([fontsReady, new Promise(function (r) { setTimeout(r, 3000); })]).then(function () { whenIdle(begin); });
+  Promise.all([Promise.race([fontsReady, new Promise(function (r) { setTimeout(r, 3000); })]), window.cussLate]).then(function () { whenIdle(begin); });
 })();

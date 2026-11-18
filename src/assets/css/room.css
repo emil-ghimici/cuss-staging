@@ -1,0 +1,57 @@
+/* The Control room wall, its monitors (also the still before/after screens on service pages). Inlined where used. */
+/* Control room */
+.room{position:relative}
+.room-tag{color:var(--amber)}
+.room-wall{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-7);margin-top:var(--space-6)}
+.mon{position:relative;background:var(--bezel);padding:14px 14px 32px;border:2px solid var(--bezel-edge)}
+.mon .label{position:absolute;left:14px;bottom:6px;font:500 14px/1.4 var(--font-mono);letter-spacing:.06em;color:var(--bezel-label);text-transform:uppercase}
+.mon .led2{position:absolute;right:14px;bottom:11px;width:8px;height:8px;background:#5a2430}
+.mon.live{border-color:var(--signal)}
+.mon.live .led2{background:var(--signal);box-shadow:0 0 6px var(--glow-signal)}
+.mon .scr{position:relative;height:200px;margin:0;white-space:pre-wrap;background:var(--screen);color:var(--phosphor);font:500 15px/1.5 var(--font-mono);padding:12px 14px;overflow:hidden}
+.mon .scr::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to bottom,var(--screen-line) 0 1px,transparent 1px 3px);pointer-events:none}
+.mon .dim{color:var(--screen-dim)}
+.mon .amb{color:var(--amber)}
+.mon .hz{color:var(--hazard)}
+.mon .hi{background:var(--screen-hi);outline:1px solid var(--screen-hi-edge)}
+.mon.flicker .scr{animation:mflick 4s steps(1) infinite}
+@keyframes mflick{0%,100%{opacity:1}48%{opacity:.6}49%{opacity:1}}
+.mon .sticky{position:absolute;right:-10px;top:-14px;transform:rotate(6deg);background:#ffd96a;color:#3a2a00;font:700 14px/1.2 var(--font-sans);padding:8px 10px;box-shadow:2px 3px 0 rgba(0,0,0,.35);z-index:2}
+.room.connected .mon .sticky{display:none}
+.mon.live{box-shadow:0 0 14px var(--glow-signal)}
+.cables{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.cables path{fill:none;stroke:var(--signal);stroke-width:3;stroke-dasharray:6 8;opacity:0;transition:opacity .4s}
+.room.connected .cables path{opacity:.9;animation:flow 1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-28}}
+.room-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4);margin-top:var(--space-7)}
+.caption{font:500 16px/1.5 var(--font-mono);color:var(--amber);min-height:48px;display:flex;align-items:center;margin:0}
+.room .confirm,.room.awaiting .connect,.room.connected .connect{display:none}
+.room.awaiting .confirm{display:inline-flex}
+/* Without the script the wall simply shows the "before" state with its caption */
+html:not(.js) .room .connect{display:none}
+
+@media (max-width: 760px){
+  .room-wall{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5) var(--space-3)}
+  .mon{padding:8px 8px 28px}
+  .mon .scr{height:150px;font-size:12px;padding:8px}
+  .mon .label{left:8px;font-size:14px;letter-spacing:.02em}
+  .mon .sticky{font-size:14px;right:-4px;padding:5px 6px}
+  .room-bar .btn{flex:1 1 100%}
+}
+@media (prefers-reduced-motion: reduce){.mon.flicker .scr{animation:none}}
+/* Trimmed demo on service pages */
+.room.mini{background:var(--surface-2);padding:var(--space-6);border:var(--border-divider-w) solid var(--divider)}
+.room.mini .room-wall{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-6)}
+.room.mini .mon .scr{height:170px;font-size:14px}
+.room.mini .room-bar{margin-top:var(--space-6)}
+@media (max-width: 760px){
+  .room.mini{padding:var(--space-4);margin:0 calc(var(--space-4) * -1)}
+  .room.mini .room-wall{gap:var(--space-5) var(--space-3)}
+  .room.mini .mon .scr{height:150px;font-size:12px}
+}
+/* The wall's flicker and cable flow pause off screen */
+.room.paused .mon.flicker .scr,.room.paused .cables path{animation-play-state:paused}
+/* Phones: monitor text at 14 px (the floor for small labels); screens grow to fit their lines */
+@media (max-width: 760px){
+  .mon .scr,.room.mini .mon .scr{font-size:14px;height:auto;min-height:150px;line-height:1.45}
+}

@@ -3,6 +3,16 @@
 (function () {
   'use strict';
   var doc = document, root = doc.documentElement;
+
+  /* ---------- CREW's moving parts (arm, bubble, guide) live in a cached stylesheet, not the inlined one.
+     The crew scripts wait for window.cussLate before they start. ---------- */
+  window.cussLate = new Promise(function (res) {
+    var me = doc.currentScript, link = doc.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = (me && me.src ? me.src.replace(/js\/site\.js.*$/, '') : '/assets/') + 'css/late.css';
+    link.onload = link.onerror = function () { res(); };
+    doc.head.appendChild(link);
+  });
   var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   function $(s, c) { return (c || doc).querySelector(s); }
   function $$(s, c) { return Array.prototype.slice.call((c || doc).querySelectorAll(s)); }

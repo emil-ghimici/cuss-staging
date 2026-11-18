@@ -1,8 +1,4 @@
-/* Inner pages: street band, intro, reading column with the sticky aside */
-.band{position:relative;height:160px;background:var(--surface-0);overflow:hidden;border-bottom:var(--border-divider-w) solid var(--divider)}
-.band svg.street{position:absolute;left:0;right:0;top:0;width:100%;height:calc(100% - var(--target-min))}
-.band .crumbs{position:absolute;left:0;right:0;bottom:0}
-.band .band-crew{left:auto;right:12%;top:8px;bottom:auto;width:64px;height:86px}
+/* Inner pages (the street band is in bands.css): intro, reading column with the sticky aside */
 
 .intro{padding:var(--space-7) 0 var(--space-6);border-bottom:var(--border-divider-w) solid var(--divider)}
 .intro h1{font-size:clamp(36px,26.86px + 2.54vw,56px);max-width:900px}
@@ -37,9 +33,28 @@
   .toc-m{display:block}
 }
 @media (max-width: 760px){
-  .band{height:96px}
-  .band .band-crew{display:none}
   .intro{padding-top:var(--space-6)}
   .layout{padding-top:var(--space-5)}
   .layout>.body>section{padding-bottom:var(--space-7)}
 }
+
+/* Copy still to come: clearly marked, never mistaken for real content */
+.ph{border:2px dashed var(--amber);padding:var(--space-3) var(--space-4);color:var(--ink-muted);margin:var(--space-4) 0;max-width:var(--measure)}
+.ph .mono{display:block;color:var(--amber);font-size:14px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:var(--space-1)}
+.get-h{margin-top:var(--space-6)}
+.side-t{margin:0 0 var(--space-2)}
+.who{gap:var(--space-4)}
+.rel{gap:var(--space-4)}
+.contact-sec{border-top:var(--border-divider-w) solid var(--divider);padding-top:var(--space-7)}
+/* Still before/after pair on two screens (services without the Control room) */
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5);margin:0 0 var(--space-5)}
+.pair .mon{margin:0}
+.pair .mon .scr{height:auto;min-height:170px}
+@media (max-width: 760px){.pair{grid-template-columns:1fr}}
+.sec-tight{padding:var(--space-7) 0}
+.sec-tight>h2{margin-bottom:var(--space-5)}
+.card.static{border:var(--border-divider-w) solid var(--divider)}
+.contact-page{padding:var(--space-7) 0 var(--space-9)}
+.contact-page h1{font-size:clamp(36px,26.86px + 2.54vw,56px)}
+.measure-wrap>*{max-width:var(--measure)}
+.back-home{margin-top:var(--space-7)}
