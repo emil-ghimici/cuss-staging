@@ -48,9 +48,22 @@
 .contact-sec{border-top:var(--border-divider-w) solid var(--divider);padding-top:var(--space-7)}
 /* Still before/after pair on two screens (services without the Control room) */
 .pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5);margin:0 0 var(--space-5)}
-.pair .mon{margin:0}
-.pair .mon .scr{height:auto;min-height:170px}
-@media (max-width: 760px){.pair{grid-template-columns:1fr}}
+/* The monitor frame (it lived with the old monitor wall until the Control room rebuild; restored 2026-11-18):
+   a bezel housing, screen glass with scan lines, a mono label bottom left and a small LED bottom right */
+.pair .mon{position:relative;margin:0;background:var(--bezel);padding:14px 14px 32px;border:2px solid var(--bezel-edge)}
+.pair .mon .label{position:absolute;left:14px;bottom:6px;font:500 14px/1.4 var(--font-mono);letter-spacing:.06em;color:var(--bezel-label);text-transform:uppercase}
+.pair .mon .led2{position:absolute;right:14px;bottom:11px;width:8px;height:8px;background:#5a2430}
+.pair .mon .scr{position:relative;height:auto;min-height:170px;margin:0;white-space:pre-wrap;background:var(--screen);color:var(--phosphor);font:500 15px/1.5 var(--font-mono);padding:12px 14px;overflow:hidden}
+.pair .mon .scr::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to bottom,var(--screen-line) 0 1px,transparent 1px 3px);pointer-events:none}
+.pair .mon .dim{color:var(--screen-dim)}
+.pair .mon .amb{color:var(--amber)}
+.pair .mon .hz{color:var(--hazard)}
+@media (max-width: 760px){
+  .pair{grid-template-columns:1fr}
+  .pair .mon{padding:8px 8px 28px}
+  .pair .mon .scr{font-size:14px;min-height:150px;line-height:1.45;padding:8px}
+  .pair .mon .label{left:8px;letter-spacing:.02em}
+}
 .sec-tight{padding:var(--space-7) 0}
 .sec-tight>h2{margin-bottom:var(--space-5)}
 .card.static{border:var(--border-divider-w) solid var(--divider)}
