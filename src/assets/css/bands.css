@@ -13,7 +13,6 @@
 .band .crew.away{visibility:hidden}
 .band .reach-arm,.band .reach-hand{z-index:5}
 .band .crew-bubble{z-index:6}
-html.js .band:not(.ready) .crew{visibility:visible}
 
 /* Shared states */
 .band .lit{opacity:.12;transition:opacity .4s}

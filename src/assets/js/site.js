@@ -1,4 +1,4 @@
-/* CuSS site script: theme switch, Services panel, phone Menu, neon dividers,
+/* CuSS site script: theme switch, neon dividers,
    the chip-composed email, copy buttons and "On this page". No libraries, no cookies. */
 (function () {
   'use strict';
@@ -13,6 +13,38 @@
     link.onload = link.onerror = function () { res(); };
     doc.head.appendChild(link);
   });
+  /* ---------- CREW's speech bubbles, everywhere (hero, bands, 404, guide, Control room): beside his head on the side
+     with more room, no wider than that room; above his head when neither side has 150 px; always inside the screen
+     (8 px clear of its edges). b: the bubble, absolutely positioned in its offsetParent; crew: his element, or
+     opt.at, a {left, right, top} box in screen pixels. Call it after setting the text. ---------- */
+  window.cussBubble = function (b, crew, opt) {
+    opt = opt || {};
+    var M = 8, G = 10, MIN = 150, vw = root.clientWidth;
+    // No transition while it's placed: otherwise its slide-in starts from the last placement's side and sweeps
+    // across the screen edge. Restored after one style pass, so adding .on still slides it in from the new side.
+    b.style.transition = 'none';
+    b.style.maxWidth = ''; b.style.boxSizing = 'border-box'; b.classList.remove('side', 'left', 'above');   // widths include padding
+    try { place(); } finally { void b.offsetWidth; b.style.transition = ''; }
+    function place() {
+    var host = b.offsetParent ? b.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+    var c = opt.at || crew.getBoundingClientRect(), natural = b.offsetWidth;
+    var roomL = c.left - G - M, roomR = vw - M - c.right - G;
+    if (Math.max(roomL, roomR) >= Math.min(natural, MIN)) {
+      var toLeft = roomL > roomR;
+      b.classList.add('side'); b.classList.toggle('left', toLeft);
+      b.style.maxWidth = Math.floor(Math.min(natural, toLeft ? roomL : roomR)) + 'px';
+      b.style.left = ((toLeft ? c.left - G : c.right + G) - host.left) + 'px';
+      b.style.top = Math.max(opt.minTop === undefined ? -1e9 : opt.minTop, c.top + (opt.dy || 4) - host.top) + 'px';
+      return;
+    }
+    b.classList.add('above');
+    b.style.maxWidth = Math.floor(Math.min(natural, vw - 2 * M)) + 'px';
+    var w = b.offsetWidth, cx = (c.left + c.right) / 2, x = Math.max(M + w / 2, Math.min(vw - M - w / 2, cx));
+    b.style.left = (x - host.left) + 'px';
+    b.style.top = (c.top - 8 - host.top) + 'px';
+    b.style.setProperty('--tail', (cx - x) + 'px');
+    }
+  };
   var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   function $(s, c) { return (c || doc).querySelector(s); }
   function $$(s, c) { return Array.prototype.slice.call((c || doc).querySelectorAll(s)); }
@@ -43,44 +75,6 @@
   });
   if (mqLight && mqLight.addEventListener) mqLight.addEventListener('change', syncThemeButtons);
   syncThemeButtons();
-
-  /* ---------- Services panel: opens on click, closes on Esc, outside click or the tab ---------- */
-  var pbtn = $('[data-panel]'), panel = $('#services-panel');
-  function setPanel(open, refocus) {
-    pbtn.setAttribute('aria-expanded', String(open));
-    panel.hidden = !open;
-    if (open) { var f = $('a', panel); if (f) f.focus({ preventScroll: true }); }
-    else if (refocus) pbtn.focus();
-  }
-  if (pbtn && panel) {
-    pbtn.addEventListener('click', function () { setPanel(panel.hidden); });
-    doc.addEventListener('click', function (e) {
-      if (!panel.hidden && !panel.contains(e.target) && !pbtn.contains(e.target)) setPanel(false);
-    });
-    doc.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) setPanel(false, true); });
-    panel.addEventListener('focusout', function (e) {
-      if (e.relatedTarget && !panel.contains(e.relatedTarget) && e.relatedTarget !== pbtn) setPanel(false);
-    });
-  }
-
-  /* ---------- Phone Menu: a sheet under the header; body scroll locked while open ---------- */
-  var mbtn = $('[data-menu]'), menu = $('#phone-menu');
-  function setMenu(open, refocus) {
-    menu.hidden = !open;
-    mbtn.setAttribute('aria-expanded', String(open));
-    $('.lbl', mbtn).textContent = open ? 'Close' : 'Menu';
-    $('.i-open', mbtn).style.display = open ? 'none' : '';
-    $('.i-close', mbtn).style.display = open ? '' : 'none';
-    doc.body.classList.toggle('menu-open', open);
-    if (!open && refocus) mbtn.focus();
-  }
-  if (mbtn && menu) {
-    $('.i-close', mbtn).style.display = 'none';
-    mbtn.addEventListener('click', function () { setMenu(menu.hidden); });
-    doc.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) setMenu(false, true); });
-    menu.addEventListener('click', function (e) { if (e.target.closest('a')) setMenu(false); });
-    window.addEventListener('resize', function () { if (!menu.hidden && window.innerWidth > 760) setMenu(false); });
-  }
 
   /* ---------- Neon signs ignite once when they come into view ---------- */
   if ('IntersectionObserver' in window && !reduced) {

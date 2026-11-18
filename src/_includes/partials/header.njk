@@ -1,43 +1,14 @@
 <header class="hdr">
   <div class="wrap hdr-in">
     <a class="logo" href="/"><span class="led bv-sm" aria-hidden="true"></span>CuSS<span class="sr"> home</span></a>
-    <nav class="tabs" aria-label="Main">
-      {#- With JavaScript the Services tab opens the panel; without it, it leads to the services list on the home page. #}
-      <button class="tab js-only" type="button" data-panel aria-expanded="false" aria-controls="services-panel"{% if section == 'services' %} aria-current="page"{% endif %}>Services {% icon "chevron-down" %}</button>
-      <a class="tab no-js" href="/#services"{% if section == 'services' %} aria-current="page"{% endif %}>Services</a>
-      <a class="tab" href="/work/"{% if section == 'work' %} aria-current="page"{% endif %}>Work</a>
-      <a class="tab" href="/about/"{% if section == 'about' %} aria-current="page"{% endif %}>About</a>
-    </nav>
+    {#- Contact · About · the theme switch, in the top right corner, on every width (design README, step 3c).
+        Services and Work live on the home page and in the footer; there is no menu. #}
     <div class="hdr-end">
-      <button class="ibtn bv-md js-only only-desk" type="button" data-theme-toggle aria-pressed="false" aria-label="Daylight theme" title="Daylight theme">{% icon "sun", "i-sun" %}{% icon "moon", "i-moon" %}</button>
-      <a class="btn btn-contact btn-hdr bv-md" href="/contact/"{% if section == 'contact' %} aria-current="page"{% endif %}>Contact</a>
-      <button class="btn btn-hdr bv-md js-only only-phone" type="button" data-menu aria-expanded="false" aria-controls="phone-menu">{% icon "menu", "i-open" %}{% icon "x", "i-close" %}<span class="lbl">Menu</span></button>
-      <a class="btn btn-hdr bv-md no-js only-phone" href="#site-footer">{% icon "menu" %}Menu</a>
-    </div>
-  </div>
-  <div class="panel" id="services-panel" hidden>
-    <div class="wrap">
-      <ul class="grid g3 plain">
-        {%- for s in services %}
-        <li><a class="card bv-lg" href="/services/{{ s.slug }}/">{% icon s.icon, "ci" %}<span class="card-t h4">{{ s.name }}</span><p>{{ s.summary }}</p><span class="arrow" aria-hidden="true">→</span></a></li>
-        {%- endfor %}
-      </ul>
-      <p class="panel-foot"><span class="muted">Not sure which you need?</span> <a class="link-tap" href="/contact/">Tell us the problem →</a></p>
+      <nav class="hdr-nav" aria-label="Main">
+        <a class="btn btn-contact btn-hdr bv-md" href="/contact/"{% if section == 'contact' %} aria-current="page"{% endif %}>Contact</a>
+        <a class="btn btn-hdr bv-md" href="/about/"{% if section == 'about' %} aria-current="page"{% endif %}>About</a>
+      </nav>
+      <button class="ibtn bv-md js-only" type="button" data-theme-toggle aria-pressed="false" aria-label="Daylight theme" title="Daylight theme">{% icon "sun", "i-sun" %}{% icon "moon", "i-moon" %}</button>
     </div>
   </div>
 </header>
-<nav class="menu" id="phone-menu" aria-label="Menu" hidden>
-  <p class="grp mono">Services</p>
-  <ul class="plain">
-    {%- for s in services %}
-    <li><a href="/services/{{ s.slug }}/"{% if page.url == '/services/' + s.slug + '/' %} aria-current="page"{% endif %}>{% icon s.icon %}{{ s.name }}</a></li>
-    {%- endfor %}
-  </ul>
-  <p class="grp mono">CuSS</p>
-  <ul class="plain">
-    <li><a href="/work/"{% if section == 'work' %} aria-current="page"{% endif %}>Work</a></li>
-    <li><a href="/about/"{% if section == 'about' %} aria-current="page"{% endif %}>About</a></li>
-    <li><a href="/contact/"{% if section == 'contact' %} aria-current="page"{% endif %}>Contact</a></li>
-  </ul>
-  <div class="row"><span>Daylight theme</span><button class="ibtn bv-md" type="button" data-theme-toggle aria-pressed="false" aria-label="Daylight theme">{% icon "sun", "i-sun" %}{% icon "moon", "i-moon" %}</button></div>
-</nav>

@@ -52,10 +52,8 @@
     b.appendChild(who); b.appendChild(p); scene.appendChild(b);
     function show() {
       clearTimeout(t); p.textContent = lineOf();
-      var sr = scene.getBoundingClientRect(), cr = crew.getBoundingClientRect();
       b.hidden = false;
-      b.style.left = (cr.left - sr.left - 10) + 'px';
-      b.style.top = Math.max(4, cr.top - sr.top + 4) + 'px';
+      window.cussBubble(b, crew, { minTop: 4 });     // beside his head on the side with room; always on screen (site.js)
       void b.offsetWidth; b.classList.add('on');
       t = setTimeout(hide, 5000);
     }

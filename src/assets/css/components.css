@@ -9,6 +9,8 @@
 .btn-contact:hover{border-color:var(--contact)}
 .btn-signal{background:var(--signal);border-color:var(--signal);color:var(--surface-0)}
 .btn-hdr{min-height:var(--target-min);padding:0 var(--space-4);font-size:17px}
+/* Narrow phones: Contact, About and the theme switch fit beside the logo at 360 px */
+@media (max-width: 379px){.btn-hdr{padding:0 var(--space-3)}}
 .ibtn{display:inline-grid;place-items:center;width:var(--target-min);height:var(--target-min);padding:0;border:var(--border-control-w) solid var(--border-control);background:transparent;color:var(--ink);cursor:pointer;transition:border-color .16s,transform .12s}
 .ibtn:hover{border-color:var(--signal)}
 .ibtn:active{transform:translateY(1px)}

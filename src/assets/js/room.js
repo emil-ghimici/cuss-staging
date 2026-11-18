@@ -150,11 +150,10 @@
     bub.appendChild(bubWho); bub.appendChild(bubP); pic.appendChild(bub);
     function speak(text, ms, at) {
       clearTimeout(bubT);
-      var b = box(), left = (at ? at.x : b.x + b.w / 2) > pic.clientWidth / 2;
       bubP.textContent = text; bub.hidden = false;
-      bub.classList.toggle('left', left);
-      bub.style.left = (at ? at.x : left ? b.x - 10 : b.x + b.w + 10) + 'px';
-      bub.style.top = Math.max(4, at ? at.y : b.y + 4) + 'px';
+      var pr = pic.getBoundingClientRect();
+      // Beside his head on the side with room, or above him; always on screen (site.js). `at`: a point in the picture.
+      window.cussBubble(bub, crew, at ? { at: { left: pr.left + at.x, right: pr.left + at.x, top: pr.top + at.y } } : null);
       void bub.offsetWidth; bub.classList.add('on');
       if (ms) bubT = setTimeout(hush, ms);
     }
@@ -205,7 +204,36 @@
         $('.st', li).textContent = done ? ' (done)' : cur ? ' (now)' : ' (to do)';
       });
     }
+    /* ---------- The sign: hangs from two hangers; nudged, the left one gives and its left side drops ---------- */
+    var grip = $('.grip', sign), hangL = $('.hanger.l', shop), tilt = 0, dropped = false, DROP = -9;
+    function setTilt(d) { tilt = d; sign.style.transform = d ? 'rotate(' + d.toFixed(2) + 'deg)' : ''; }
+    function gripAt() { return rel(grip); }
+    // He reaches the sign's left end, gives it a nudge (a little wobble), lets go, and the left side drops
+    function nudgeSign(g) {
+      if (dropped) { setTilt(DROP); hangL.classList.add('snap'); return Promise.resolve(g === gen); }
+      var t = gripAt();
+      return reach(t.x, t.y, g)
+        .then(function (ok) { return ok && tween(420, function (k) { setTilt(Math.sin(k * Math.PI * 2) * 1.6 * (1 - k)); follow(gripAt().x, gripAt().y); }, g); })
+        .then(function (ok) {
+          if (!ok) return false;
+          dropped = true; hangL.classList.add('snap');
+          back(g);                                    // his hand comes back while it drops
+          return tween(650, function (k) { var e = 1 + 2.2 * Math.pow(k - 1, 3) + 1.2 * Math.pow(k - 1, 2); setTilt(DROP * e); }, g);
+        })
+        .then(function (ok) { if (ok) setTilt(DROP); return ok && hold(500, g); });
+    }
+    // Back level: he takes the left end and lifts it, the hanger hooks on again
+    function liftSign(g) {
+      if (!dropped && !tilt) return Promise.resolve(g === gen);
+      var t = gripAt();
+      return reach(t.x, t.y, g)
+        .then(function (ok) { var t0 = tilt; return ok && tween(800, function (k) { setTilt(t0 * (1 - easeInOut(k))); follow(gripAt().x, gripAt().y); }, g); })
+        .then(function (ok) { if (ok) { setTilt(0); dropped = false; hangL.classList.remove('snap'); } return ok; });
+    }
+    function signBroken() { setTilt(0); dropped = false; hangL.classList.remove('snap'); }
+
     function before() {                               // back to the old screens (shutter state untouched)
+      signBroken();
       shop.classList.remove('after', 'lit', 'grind', 'weld', 'puff');
       Object.keys(panel).forEach(function (p) { panel[p].classList.remove('on', 'gone'); });
       setRail(null); say(firstCaption);
@@ -245,12 +273,14 @@
           .then(function (ok) { if (!ok) return false; before(); flicker(false); return back(g); })
           .then(function (ok) { return ok && roll(geo().entry, geo().pave, g); });
       }
-      return chain.then(function (ok) {
-        if (!ok) return false;
-        crew.classList.toggle('flip', rel(sign).x < me.x * U());   // a glance up at the sign
-        speak(L.sign, 2200);
-        return hold(2000, g);
-      });
+      return chain
+        .then(function (ok) { return ok && nudgeSign(g); })            // he tries the sign; its left side drops
+        .then(function (ok) {
+          if (!ok) return false;
+          crew.classList.toggle('flip', rel(sign).x < me.x * U());   // looking at it
+          speak(L.sign, 2200);
+          return hold(2000, g);
+        });
     }
     function beatOpen(g) {
       if (shut >= 1) return Promise.resolve(true);
@@ -328,7 +358,13 @@
       var G = geo();
       if (shop.classList.contains('lit')) return Promise.resolve(true);
       return roll(G.sign, G.pave, g)
-        .then(function (ok) { if (!ok) return false; var t = rel(sign); return reach(t.x, t.y + sign.offsetHeight * 0.2, g); })
+        .then(function (ok) { return ok && liftSign(g); })             // level again first, then a new tube
+        .then(function (ok) {
+          if (!ok) return false;
+          var a = gripAt(), t = rel(sign), y = t.y + sign.offsetHeight * 0.2;
+          if (!arm.classList.contains('on')) return reach(t.x, y, g);   // it was never dropped (Skip ahead came first)
+          return tween(350, function (k) { follow(a.x + (t.x - a.x) * k, a.y + (y - a.y) * k); }, g);
+        })
         .then(function (ok) { return ok && hold(1100, g); })
         .then(function (ok) { if (!ok) return false; shop.classList.add('lit'); return back(g); })
         .then(function (ok) {

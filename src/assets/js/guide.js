@@ -6,7 +6,7 @@
      a finger on the screen counts as scrolling. Then, after CREW_DELAY_MS:
        straight down: the arm telescopes out to the box below; he lands with a squash; the arm retracts.
        off to one side: the second arm hooks the box's top edge and reels him across.
-       no box in view below: he stays hanging.
+       no box below but one on screen: he reels himself up his arm to it; none on screen: up into the top bar.
      Scrolling again mid-move freezes him where he is (he re-clamps the top bar); he picks afresh next time.
    - Scrolling up: his box takes him out of view; after the stop and delay he rappels from the top bar to a box in view.
    - He sits on a box's top edge and rides with the page until the header catches him again.
@@ -58,8 +58,10 @@
   /* ---------- Where he is ---------- */
   // mode: 'home' (in the hero/band), 'perch' (sitting on a box, part of the page), 'hang' (from the top bar),
   //       'move' (on his way somewhere; fixed layer), 'tucked' (up in the top bar, out of view, near a Contact button),
-  //       'shop' (in the Control room's storefront, which runs him)
+  //       'shop' (in the Control room's storefront, which runs him),
+  //       'below' (fell out past the bottom of the screen; fixed layer, out of view, comes back up from there)
   var mode = 'home', perch = null, perchDoc = { x: 0, y: 0 }, pos = { x: 0, y: 0 };
+  var lastFrame = 0;                                       // the last frame any move of his ran (the "never stuck" check)
   var done = {};                                           // sign jobs done on this page
   function putFixed(x, y) {
     if (crewEl.parentNode !== fixedEl) { fixedEl.appendChild(crewEl); fixedEl.classList.add('on'); }
@@ -108,7 +110,7 @@
   function candidates() {
     var out = [], minTop = hh() + ch() - dangle() + hangGap() + 2, maxTop = innerHeight - 24;   // seated, he's fully below the header
     doc.querySelectorAll(PERCHES).forEach(function (el) {
-      if (el.closest('.panel, .menu, [data-crew-home], [data-hero], [data-shop], .g-doc') || el.offsetParent === null) return;
+      if (el.closest('[data-crew-home], [data-hero], [data-shop], .g-doc') || el.offsetParent === null) return;
       if (el.closest('[data-crew-never]')) return;
       var s = seatOf(el);
       if (s.top >= minTop && s.top <= maxTop) out.push(s);
@@ -136,6 +138,7 @@
       function f(t) {
         if (tok.dead) return res(false);
         if (!t0) t0 = t;
+        lastFrame = performance.now();
         var k = Math.min(1, (t - t0) / ms);
         fn(ease(k), k);
         if (k < 1) requestAnimationFrame(f); else res(true);
@@ -150,6 +153,7 @@
       function f(t) {
         if (still && !still()) return res(false);
         if (!t0) t0 = t;
+        lastFrame = performance.now();
         var k = Math.min(1, (t - t0) / ms);
         fn(k);
         if (k < 1) requestAnimationFrame(f); else res(true);
@@ -310,6 +314,58 @@
     return tween(Math.abs(dx) / ROLL_PX_S * 1000, function (k) { return k; }, function (e) { putDoc(x0 + dx * e, y); })
       .then(function () { crewEl.classList.remove('rolling'); });
   }
+
+  /* ---------- Losing his footing (README section 2, 2026-11-18): the page moves under him while he sits (an FAQ
+     above his box opens or closes, the web font rewraps a heading). His box drops away: his tracks wobble, he falls
+     straight down onto the nearest box under him on screen and lands with a squash; nothing under him on screen: he
+     falls out past the bottom edge and comes back up from there later. His box rises: it simply lifts him. ---------- */
+  var SLIP_MS = 400, FALL_G = 2600;                         // the wobble; gravity in px/s²
+  function checkFooting() {
+    if (mode !== 'perch' || !perch) return;
+    if (perch.offsetParent === null) return loseFooting();  // his box is gone
+    var want = seatY(seatOf(perch)) + scrollY, dy = want - perchDoc.y;
+    if (Math.abs(dy) <= 2) return;
+    if (dy < 0) { putDoc(perchDoc.x, want); jolt(); return; }   // it rose: it lifts him
+    loseFooting();
+  }
+  // The box straight under him on screen whose top is nearest below his tracks
+  function boxUnder(x, feetY) {
+    var best = null;
+    candidates().forEach(function (s) {
+      var mid = x + cw() / 2, over = s.x !== undefined ? Math.abs(s.x - x) < cw() / 2 : mid > s.left + 6 && mid < s.right - 6;
+      if (over && s.top >= feetY - 2 && (!best || s.top < best.top)) best = s;
+    });
+    return best;
+  }
+  function landAt(s, x) { return s.x !== undefined ? s.x : Math.max(s.left + 6, Math.min(Math.max(s.left + 6, s.right - cw() - 6), x)); }
+  var slipGen = 0;
+  function loseFooting() {
+    if (moveTok) moveTok.dead = true;                       // a roll along the box stops
+    crewEl.classList.remove('rolling'); hush(); clearTimeout(peekT); tilt(0);
+    var r = crewEl.getBoundingClientRect(), x = r.left, y = r.top, g = ++slipGen;
+    perch = null; mode = 'move';
+    putFixed(x, y);
+    var under = boxUnder(x, y + ch() - dangle());
+    if (reduced) {                                          // no wobble, no fall: he's on that box at once
+      if (under) { pos.x = landAt(under, x); sitOn(under.el); } else { crewEl.hidden = true; mode = 'below'; }
+      return;
+    }
+    crewEl.classList.add('slip');
+    sleep(SLIP_MS).then(function () {
+      crewEl.classList.remove('slip');
+      if (g !== slipGen || mode !== 'move') return;          // scrolling caught him meanwhile
+      under = boxUnder(x, pos.y + ch() - dangle());
+      var x1 = under ? landAt(under, x) : x;
+      var target = function () { return under ? seatY(seatOf(under.el)) : innerHeight + 4; };   // re-read: it may still be moving
+      var ms = Math.min(900, Math.max(120, Math.sqrt(2 * Math.max(0, target() - y) / FALL_G) * 1000));
+      return tween(ms, function (k) { return k * k; }, function (e) { putFixed(lerp(x, x1, e), lerp(y, target(), e)); })
+        .then(function (ok) {
+          if (!ok || mode !== 'move') return;
+          if (under) { squash(); return sitOn(under.el); }
+          mode = 'below';                                   // out of view under the screen; back up after the next stop
+        });
+    });
+  }
   // Just below the bottom edge, where his box took him out of view
   function fromBelow(x) {
     hush(); tilt(0); arm1Off(); dropArm2(); clearTimeout(peekT);
@@ -327,6 +383,14 @@
       return tween(travelMs(y0 - ty), easeOut, function (e) { putFixed(x0, lerp(y0, ty, e)); arm1Line(); })
         .then(function (ok) { if (ok) return rappelTo(toHome ? seat : seatOf(seat.el), toHome); });   // there, or a sideways pull
     });
+  }
+  // Hanging on his arm with nothing below him: he reels himself up the arm to a box above, then the usual finish
+  function reelUp(seat) {
+    if (!arm1.classList.contains('on')) return riseTo(seat);
+    mode = 'move'; hush(); tilt(0); clearTimeout(peekT);
+    var x0 = pos.x, y0 = pos.y, ty = seatY(seat);
+    return tween(travelMs(y0 - ty), easeOut, function (e) { putFixed(x0, lerp(y0, ty, e)); arm1Line(); })
+      .then(function (ok) { if (ok) return rappelTo(seatOf(seat.el)); });
   }
   // The box in view nearest to where he went out at the bottom: close to his column, low on the screen
   function nearestAbove(fromX) {
@@ -439,6 +503,7 @@
     var r = shopRect(), target = { x: r.left, y: r.top };
     if (mode === 'home') { takeFromHome(); return rappelTo(target, 'shop'); }
     if (mode === 'tucked') fromTopBar(pos.x);
+    if (mode === 'below') { fromBelow(pos.x); return riseTo(target, 'shop'); }
     if (mode === 'perch') {
       var pr = crewEl.getBoundingClientRect();
       if (pr.top >= innerHeight) { fromBelow(perchDoc.x - scrollX); return riseTo(target, 'shop'); }
@@ -477,7 +542,7 @@
     clearTimeout(bubbleTimer);
     bubbleText.textContent = text;
     bubble.hidden = false;
-    bubble.classList.toggle('right', crewEl.getBoundingClientRect().left < Math.min(250, innerWidth / 2));
+    window.cussBubble(bubble, crewEl);              // beside his head on the side with room, or above; on screen (site.js)
     void bubble.offsetWidth; bubble.classList.add('on');
     bubbleTimer = setTimeout(hush, ms || 5000);
   }
@@ -535,7 +600,13 @@
     if (mode === 'perch' && perchDoc.y - scrollY <= hh() + hangGap()) grab(perchDoc.x - scrollX, hh() + hangGap());
     if (mode === 'hang' && nearNever()) tuck();
   }
+  var lastSY = null;
   function onScroll() {
+    // Only a page that actually moved counts: a layout change can fire a scroll event with nothing moved, and that
+    // must not freeze him (mid-fall, say) as if the visitor had scrolled
+    var sy = Math.round(scrollY);
+    if (sy === lastSY) return;
+    lastSY = sy;
     scrolling = true;
     tvAbort();
     clearTimeout(stillT); clearTimeout(delayT);
@@ -557,9 +628,17 @@
     if (scrolling || touching) return;
     if (reduced) { sitStill(); return; }
     if (mode === 'shop') { outOfShop(); return; }
+    // Never stuck: "on his way" with no move running for a second (a move cut off without a scroll) counts as hanging
+    if (mode === 'move' && performance.now() - lastFrame > 1000) startHang();
     // The Control room's shop on screen and its story unfinished: that's where he goes
     if (mode !== 'move' && shopWants() && shopInView() && (mode !== 'home' || homeReady())) { goShop(); return; }
     if (mode === 'home' || mode === 'move') return;
+    if (mode === 'below') {                                   // fell out at the bottom: back up from there, as usual
+      var xb = pos.x, sb = !homeInView() && nearestAbove(xb + cw() / 2);
+      if (homeInView()) { var hb = homeRect(); fromBelow(xb); riseTo({ x: hb.left, y: hb.top }, true); }
+      else if (sb) { fromBelow(xb); riseTo(sb); }
+      return;
+    }
     if (mode === 'tucked' && homeInView()) { fromTopBar(pos.x); }
     if (homeInView()) {                                       // back into the hero / band
       var r = homeRect();
@@ -573,9 +652,13 @@
       return;
     }
     if (mode === 'hang') {
-      var seat = nearestBelow(handAt().x, pos.y);
-      if (seat) rappelTo(seat);                               // otherwise he stays hanging
-      else if (nearNever()) tuck();
+      // Never stuck (2026-11-18): a box below him, he goes down to it; none below but one on screen, he reels himself
+      // up his arm to it; none on screen, he goes up into the top bar (at once and unseen if he's under the screen)
+      var seat = nearestBelow(handAt().x, pos.y), up = !seat && nearestAbove(handAt().x);
+      if (seat) rappelTo(seat);
+      else if (up) reelUp(up);
+      else if (pos.y >= innerHeight) { arm1Off(); dropArm2(); putFixed(pos.x, hh() - ch()); mode = 'tucked'; clearTimeout(peekT); }
+      else tuck();
       return;
     }
     if (mode === 'tucked') {                                  // up in the top bar: down again once there's a box in view
@@ -620,6 +703,7 @@
 
   function begin() {
     fixedEl.hidden = false;
+    lastSY = Math.round(scrollY);
     window.addEventListener('scroll', onScroll, { passive: true });
     if ('onscrollend' in window) window.addEventListener('scrollend', function () { if (!touching) stopped(); });
     // A finger on the screen counts as scrolling, however still it is
@@ -630,6 +714,9 @@
     window.addEventListener('resize', function () {
       if (mode === 'perch' && perch) { var s = seatOf(perch); putDoc(seatX(s, perchDoc.x - scrollX + cw() / 2) + scrollX, seatY(s) + scrollY); }
     });
+    // The page moving under him while he sits (not a resize: that's handled above, first): he loses his footing
+    if ('ResizeObserver' in window) new ResizeObserver(function () { checkFooting(); }).observe(doc.body);
+    doc.addEventListener('toggle', function () { requestAnimationFrame(checkFooting); }, true);
     if (reduced) { if (scrollY > 0) sitStill(); return; }
     if (!homeCrew) {
       // A page without a home: he arrives on his arm out of the top bar, three-quarters across, then picks a box

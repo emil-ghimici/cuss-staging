@@ -470,16 +470,13 @@
   // Above his head when there's room inside the scene; otherwise beside his head, so the bubble
   // never spills out of the picture over the page's text or buttons (phones: he sits at the top)
   function placeBubble() {
+    bubble.style.maxWidth = ''; bubble.classList.remove('left', 'above');
     var sr = scene.getBoundingClientRect(), cr = crewEl.getBoundingClientRect();
     var bw = bubble.offsetWidth, bh = bubble.offsetHeight, cx = cr.left - sr.left + cr.width / 2, top = cr.top - sr.top;
     var side = top - 8 - bh < 0;
     bubble.classList.toggle('side', side);
-    if (side) {
-      var toLeft = cx > sr.width / 2;
-      bubble.classList.toggle('left', toLeft);
-      var x = toLeft ? cr.left - sr.left - 10 : cr.right - sr.left + 10;
-      bubble.style.left = x + 'px';
-      bubble.style.top = Math.max(4, top + cr.height * 0.12) + 'px';
+    if (side) {                                      // the side with room, never off screen (site.js)
+      window.cussBubble(bubble, crewEl, { dy: cr.height * 0.12, minTop: 4 });
       return;
     }
     var left = Math.max(bw / 2 + 4, Math.min(sr.width - bw / 2 - 4, cx));

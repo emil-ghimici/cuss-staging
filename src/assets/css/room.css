@@ -14,8 +14,13 @@
 .shop-art.p{display:none}
 
 /* The sign: two dead letters and a flickering one, until CREW fits a new tube */
-.sign{position:absolute;left:calc(380 * var(--u));top:calc(20 * var(--u));width:calc(440 * var(--u));height:calc(86 * var(--u));margin:0;display:flex;align-items:center;justify-content:center;gap:calc(12 * var(--u));
+.sign{position:absolute;z-index:3;left:calc(380 * var(--u));top:calc(20 * var(--u));width:calc(440 * var(--u));height:calc(86 * var(--u));margin:0;display:flex;align-items:center;justify-content:center;gap:calc(12 * var(--u));
+  box-sizing:border-box;background:var(--surface-1);border:2px solid var(--amber);transform-origin:calc(380 * var(--u)) 0;
   font:600 calc(58 * var(--u))/1 var(--font-display);color:var(--amber);text-shadow:0 0 calc(10 * var(--u)) var(--glow-amber)}
+.sign .grip{position:absolute;left:calc(24 * var(--u));bottom:0;width:1px;height:1px}
+/* Its two hangers, from the top of the picture to the sign's top edge (the right one is its hinge) */
+.hanger{position:absolute;z-index:3;top:0;width:2px;height:calc(20 * var(--u));background:var(--divider);transform-origin:50% 0}
+.hanger.l{left:calc(440 * var(--u))}.hanger.r{left:calc(760 * var(--u))}
 .sign .dead{opacity:.16;text-shadow:none;transition:opacity .2s}
 .sign .flk{animation:flick 6s steps(1) infinite}
 
@@ -85,7 +90,9 @@ html.js .shop .acts[hidden]{display:grid;visibility:hidden}
   .shop-pic{aspect-ratio:640/880}
   .shop-pic>*{--u:calc(100cqw / 640)}
   .shop-art.d{display:none}.shop-art.p{display:block}
-  .sign{left:calc(90 * var(--u));top:calc(8 * var(--u));width:calc(460 * var(--u));height:calc(80 * var(--u));font-size:calc(58 * var(--u))}
+  .sign{left:calc(90 * var(--u));top:calc(8 * var(--u));width:calc(460 * var(--u));height:calc(80 * var(--u));font-size:calc(58 * var(--u));transform-origin:calc(400 * var(--u)) 0}
+  .hanger{height:calc(8 * var(--u))}
+  .hanger.l{left:calc(150 * var(--u))}.hanger.r{left:calc(490 * var(--u))}
   .opening{left:calc(34 * var(--u));top:calc(130 * var(--u));width:calc(572 * var(--u));height:calc(660 * var(--u))}
   .wall-before,.shop.n4 .wall-before{left:calc(10 * var(--u));top:calc(10 * var(--u));width:calc(552 * var(--u));grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:calc(150 * var(--u));gap:calc(12 * var(--u)) calc(12 * var(--u))}
   .shop.n4 .wall-before{grid-auto-rows:calc(200 * var(--u))}
