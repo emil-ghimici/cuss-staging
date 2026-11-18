@@ -1,6 +1,6 @@
 /* Inner pages (the street band is in bands.css): intro, reading column with the sticky aside */
 
-.intro{padding:var(--space-7) 0 var(--space-6);border-bottom:var(--border-divider-w) solid var(--divider)}
+.intro{padding:var(--space-7) 0 var(--space-6)}
 .intro h1{font-size:clamp(36px,26.86px + 2.54vw,56px);max-width:900px}
 .intro .lead{margin:0}
 
@@ -45,7 +45,7 @@
 .side-t{margin:0 0 var(--space-2)}
 .who{gap:var(--space-4)}
 .rel{gap:var(--space-4)}
-.contact-sec{border-top:var(--border-divider-w) solid var(--divider);padding-top:var(--space-7)}
+.contact-sec{padding-top:var(--space-7)}
 /* Still before/after pair on two screens (services without the Control room) */
 .pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5);margin:0 0 var(--space-5)}
 /* The monitor frame (it lived with the old monitor wall until the Control room rebuild; restored 2026-11-18):

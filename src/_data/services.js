@@ -1,4 +1,4 @@
-// The six services. Order is the order used everywhere (Services panel, Menu, footer, home cards).
+// The six services. Order is the order used everywhere (footer, home cards).
 // `talk` finishes "Talk to us about …". `chip` is the "What do you need?" option that service pages pre-tick.
 export default [
   { slug: 'custom-software', talk: 'custom web apps', name: 'Custom web apps & internal tools', short: 'Custom apps', icon: 'app-window',

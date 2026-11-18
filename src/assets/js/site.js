@@ -77,11 +77,30 @@
   syncThemeButtons();
 
   /* ---------- Neon signs ignite once when they come into view ---------- */
-  if ('IntersectionObserver' in window && !reduced) {
-    var io = new IntersectionObserver(function (es) {
-      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('ignite'); io.unobserve(e.target); } });
-    }, { threshold: 0.6 });
-    $$('[data-neon]').forEach(function (n) { io.observe(n); });
+  var io = 'IntersectionObserver' in window && !reduced && new IntersectionObserver(function (es) {
+    es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('ignite'); io.unobserve(e.target); } });
+  }, { threshold: 0.6 });
+  function neonIn(root) { if (io) $$('[data-neon]', root).forEach(function (n) { io.observe(n); }); }
+  neonIn(doc);
+
+  /* ---------- Junk strips: the page has their slots; the drawings come from one cached file once the page is idle
+     (src/_lib/junk.js). Their loops run only while on screen; reduced motion shows them fixed and still. ---------- */
+  var junk = $$('[data-junk]');
+  if (junk.length) {
+    if (reduced) junk.forEach(function (j) { j.classList.add('fixed'); });
+    var fillJunk = function () {
+      var me = doc.querySelector('script[src*="js/site.js"]');
+      fetch((me ? me.src.replace(/js\/site\.js.*$/, '') : '/assets/') + 'junk.json').then(function (r) { return r.json(); }).then(function (art) {
+        function draw(j) { if (!j.firstChild && art[j.dataset.junk]) { j.innerHTML = art[j.dataset.junk]; neonIn(j); } }
+        if (!('IntersectionObserver' in window)) return junk.forEach(draw);
+        // Each strip is drawn as it nears the screen (one at a time, never all at once), and moves only while on it
+        var near = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { draw(e.target); near.unobserve(e.target); } }); }, { rootMargin: '600px 0px' });
+        var jo = !reduced && new IntersectionObserver(function (es) { es.forEach(function (e) { e.target.classList.toggle('live', e.isIntersecting); }); });
+        junk.forEach(function (j) { near.observe(j); if (jo) jo.observe(j); });
+      }).catch(function () {});
+    };
+    var idleJunk = function () { if ('requestIdleCallback' in window) requestIdleCallback(fillJunk, { timeout: 2000 }); else setTimeout(fillJunk, 300); };
+    if (doc.readyState === 'complete') idleJunk(); else addEventListener('load', idleJunk);
   }
 
   /* ---------- Free text: first letter of each sentence in capitals, as it's typed ---------- */

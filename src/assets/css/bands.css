@@ -2,8 +2,12 @@
    CREW stands at its right-hand end on the band's bottom edge (in front of the breadcrumb strip's empty end).
    Each vignette has a broken look and a done look (.band.done); motion is transform/opacity only and
    pauses off screen (.band.paused). Reduced motion: the done still. */
-.band{position:relative;height:160px;background:var(--surface-0);overflow:hidden;border-bottom:var(--border-divider-w) solid var(--divider)}
-.band .crumbs{position:absolute;left:0;right:0;bottom:0;z-index:1}
+.band{position:relative;height:160px;background:var(--surface-0);overflow:hidden}
+/* The band ends on a kerb (the same pavement as the junk strips), and the breadcrumbs sit on the pavement */
+.band .crumbs{position:absolute;left:0;right:0;bottom:0;z-index:1;
+  background:linear-gradient(var(--border-control),var(--border-control)) 0 0/100% 2px no-repeat,
+  repeating-linear-gradient(90deg,transparent 0 70px,var(--divider) 70px 72px) 0 2px/100% 10px no-repeat,
+  linear-gradient(var(--surface-2),var(--surface-2)) 0 2px/100% 10px no-repeat,var(--surface-0)}
 .band-world{position:absolute;inset:0;z-index:2;pointer-events:none}
 .band-sky{position:absolute;left:0;top:0;width:100%;height:112px;opacity:.7}
 .band-in{height:100%}

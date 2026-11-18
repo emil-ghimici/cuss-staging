@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { tokensCss } from './tokens.js';
 
 // Always inlined; a page adds the parts it uses with `css` in its data (hero, room, bands, lost).
-const FILES = ['base', 'layout', 'components', 'world', 'pages'];
+const FILES = ['base', 'layout', 'components', 'world', 'junk', 'pages'];
 const PARTS = ['hero', 'room', 'bands', 'lost'];
 export const minify = (css) =>
   css

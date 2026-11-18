@@ -4,8 +4,7 @@
 <div class="band band-{{ band }}" data-crew-home data-band="{{ band }}"{% if crewStay %} data-crew-stay{% endif %} data-crew-tip="{{ bandTip }}">
   <div class="band-world" aria-hidden="true">
     <svg class="band-sky street" viewBox="0 0 1280 112" preserveAspectRatio="xMidYMax slice" focusable="false">
-      <path class="ln2" d="M0 112V62h70V40h60v42h50V30h90v82M330 112V70h40V50h70v62M900 112V54h70v34h60V24h100v48h60v40h90"/>
-      <path class="cable" d="M0 12Q300 52 640 8T1280 18"/>
+      {% junkSky %}
     </svg>
     <div class="wrap band-in"><div class="band-scene">
       <svg class="band-art street" viewBox="0 0 420 112" focusable="false">{% include "bands/" + band + ".njk" %}</svg>

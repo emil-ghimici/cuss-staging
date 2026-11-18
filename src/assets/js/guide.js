@@ -39,11 +39,14 @@
   var mqPhone = matchMedia('(max-width: 760px)');
 
   var IDLE = ['We fix things. That’s the whole job.', 'The first call’s free, by the way.', 'Got something that needs fixing? That’s the Contact button.'];
-  // What he says at each showpiece stop (approved 2026-11-17)
-  var STOP_LINES = { open: 'Hang on, I’ll straighten that.', workshop: 'Mind the tape.' };
-  // Where he sits on each sign: a point of the divider drawing (viewBox 1280×120, "xMidYMid slice")
-  var STOP_SEAT = { open: [700, 40], workshop: [700, 22] };
-  // Boxes he sits on; a page can narrow them (Contact: only the CRT preview; Work: the work cards)
+  // What he says at each junk strip's job (open, workshop approved 2026-11-17; the rest 2026-11-19)
+  var STOP_LINES = {
+    spark: 'Live wires. Not any more.', workshop: 'Mind the tape.', dish: 'Better reception already.',
+    fan: 'There. Breathing again.', crates: 'Stacked properly now.', monitor: 'Still works. They always do.',
+    cable: 'Plugged in. Lights on.', open: 'Hang on, I’ll straighten that.', valve: 'Valve’s shut. Mind your feet.'
+  };
+  // Boxes he sits on, junk strips included (the footer's valve is on every page). A page with a job of its own
+  // narrows them to that job (Contact: only the CRT preview; Work: the work cards), and the valve isn't one there.
   var PERCHES = doc.body.getAttribute('data-crew-perches') || '.info, .card, .steps li, .vsteps li, .faq details, .crt, .mon, [data-crew-stop]';
 
   function hh() { return hdr.offsetHeight; }
@@ -93,9 +96,10 @@
   /* ---------- Boxes he can sit on ---------- */
   function seatOf(el) {
     var r = el.getBoundingClientRect(), k = el.getAttribute('data-crew-stop');
-    if (k) {
-      var s = Math.max(r.width / 1280, r.height / 120), p = STOP_SEAT[k];
-      return { x: r.left + (p[0] - 640) * s + r.width / 2 - cw() / 2, top: r.top + (p[1] - 60) * s + r.height / 2, el: el };
+    if (k) {   // a junk strip: its seat is a point of its drawing (data-seat, in its viewBox data-vb; "xMidYMid slice")
+      var vb = el.getAttribute('data-vb').split(' ').map(Number), p = el.getAttribute('data-seat').split(' ').map(Number);
+      var s = Math.max(r.width / vb[0], r.height / vb[1]);
+      return { x: r.left + r.width / 2 + (p[0] - vb[0] / 2) * s - cw() / 2, top: r.top + r.height / 2 + (p[1] - vb[1] / 2) * s, el: el };
     }
     return { left: r.left, right: r.right, top: r.top, el: el };
   }
@@ -123,7 +127,8 @@
       if (s.top < fromY + ch() * 0.5) return;
       var x = seatX(s, fromX), d = Math.abs(x + cw() / 2 - fromX) + (s.top - fromY) * 0.5;
       var k = s.el.getAttribute('data-crew-stop');
-      if (k && !done[k]) d *= 0.2;                                   // a sign with a job waiting pulls him in
+      if (k && !done[k]) d *= +(s.el.getAttribute('data-pull') || 0.5);   // a strip with a job waiting pulls him in (2×, so cards still get visits;
+                                                                          // the one just under the hero 5×: he passes it only once, on his way out)
       if (d < bd) { bd = d; best = s; }
     });
     return best;
@@ -456,16 +461,16 @@
     if (tvWant) setTimeout(tryTvFix, 1500);
   }
 
-  /* ---------- Jobs at the signs ---------- */
+  /* ---------- Jobs at the junk strips: he says his line, taps, and the strip shows its fixed look (late.css) ---------- */
   function job(k, el) {
-    if (done[k]) return;
+    if (done[k] || el.classList.contains('fixed')) { done[k] = true; return; }   // reduced motion: already fixed
     done[k] = true;
     say(STOP_LINES[k], 3000);
     crewEl.classList.add('tapping');
     setTimeout(function () {
       crewEl.classList.remove('tapping');
-      if (k === 'open') el.classList.add('fixed');
-      var neon = el.querySelector('[data-neon]');
+      el.classList.add('fixed');
+      var neon = el.querySelector('[data-neon], .j-neon');
       if (neon && !reduced) { neon.classList.remove('ignite'); void neon.getBBox(); neon.classList.add('ignite'); }
     }, reduced ? 0 : 450);
   }

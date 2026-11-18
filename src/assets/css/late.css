@@ -173,3 +173,34 @@
 .g-bubble.above{right:auto;transform:translate(-50%,calc(-100% + 6px))}
 .g-bubble.above.on{transform:translate(-50%,-100%)}
 .g-bubble.above::after{left:calc(50% + var(--tail,0px) - 7px);right:auto;top:auto;bottom:-9px;border:2px solid var(--phosphor);border-top:0;border-left:0}
+
+/* ---------- Junk strips: the fixed look (CREW's jobs, guide.js) and their motion (site.js adds .live on screen) ----------
+   Reduced motion: site.js shows every strip fixed and nothing moves. */
+.j-door,.j-flap,.j-dish,.j-lean,.j-hang,.j-wheel{transition:transform .6s cubic-bezier(.3,1.4,.5,1)}
+.j-wheel{transition-duration:1.2s;transition-timing-function:cubic-bezier(.4,0,.2,1)}
+.j-fix,.j-brk,.j-dim,.j-spk,.j-steam,.j-hookr,.j-bulb{transition:opacity .3s,fill .3s}
+.j-hookr{transition-delay:.45s}
+.junk.fixed .j-fix{opacity:1}
+.junk.fixed .j-brk,.junk.fixed .j-spk,.junk.fixed .j-steam{opacity:0}
+.junk.fixed .j-dim{opacity:1}
+.junk.fixed .j-door,.junk.fixed .j-flap,.junk.fixed .j-dish,.junk.fixed .j-lean,.junk.fixed .j-hang{transform:none}
+.junk.fixed .j-wheel{transform:rotate(180deg)}
+.junk.fixed .j-hookr{opacity:.6}
+.junk.fixed .j-bulb{fill:var(--amber);filter:drop-shadow(0 0 5px var(--glow-amber))}
+@media (prefers-reduced-motion: no-preference){
+  .junk.live .j-flk{animation:jflk 6s steps(1) infinite}
+  .junk.live .j-flk:nth-of-type(3n){animation-delay:-2.3s}
+  .junk.live:not(.fixed) .j-spk{animation:jspk .8s steps(2) infinite}
+  .junk.live:not(.fixed) .j-flap{animation:jflap 1.6s ease-in-out infinite alternate}
+  .junk.live:not(.fixed) .j-sway{animation:jsway 2.4s ease-in-out infinite alternate}
+  .junk.live:not(.fixed) .j-steam circle{animation:jsteam 1.8s ease-out infinite}
+  .junk.live:not(.fixed) .j-steam circle:nth-child(2){animation-delay:-.6s}
+  .junk.live:not(.fixed) .j-steam circle:nth-child(3){animation-delay:-1.2s}
+  .junk.live.fixed .j-blades{animation:jspin .9s linear infinite}
+}
+@keyframes jflk{0%,100%{opacity:1}61%{opacity:.2}62%{opacity:1}64%{opacity:.3}65%{opacity:1}}
+@keyframes jspk{50%{opacity:0}}
+@keyframes jflap{from{transform:rotate(60deg)}to{transform:rotate(74deg)}}
+@keyframes jsway{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+@keyframes jsteam{from{opacity:.5;transform:translateY(6px)}to{opacity:0;transform:translateY(-10px)}}
+@keyframes jspin{to{transform:rotate(360deg)}}

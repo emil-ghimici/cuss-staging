@@ -11,7 +11,7 @@
 .street .txt-amb{fill:var(--amber);font:600 18px var(--font-display);letter-spacing:.12em}
 .street .blk{fill:var(--surface-1)}
 .street .blk2{fill:var(--surface-2)}
-.street .cable,.divider .cable{fill:none;stroke:var(--ink-muted);stroke-width:2;opacity:.6}
+.street .cable{fill:none;stroke:var(--ink-muted);stroke-width:2;opacity:.6}
 .street .win-a{fill:var(--amber);opacity:.55}
 .street .win-h{fill:var(--hazard);opacity:.5}
 .street .amb{filter:drop-shadow(0 0 6px var(--glow-amber))}

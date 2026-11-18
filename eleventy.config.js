@@ -3,6 +3,7 @@ import { inlineCss } from './src/_lib/css.js';
 import { icon } from './src/_lib/icons.js';
 import { jsonld } from './src/_lib/jsonld.js';
 import { compose } from './src/_lib/compose.js';
+import { junk, junkSky } from './src/_lib/junk.js';
 import chips from './src/_data/chips.js';
 import { writeOgImages, ogSlug } from './src/_lib/og.js';
 
@@ -30,6 +31,9 @@ export default function (cfg) {
   const prefix = process.env.PATH_PREFIX || '/';
   cfg.addShortcode('inlineCss', (parts) => inlineCss(prefix, parts));
   cfg.addShortcode('icon', icon);
+  cfg.addShortcode('junk', junk);
+  cfg.addShortcode('junkSky', junkSky);
+  cfg.addWatchTarget('src/_lib/');
   cfg.addFilter('jsonld', jsonld);
   // The first frame of the composed email for a page's pre-ticked chip.
   cfg.addFilter('composeMail', (label, email) => {
