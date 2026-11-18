@@ -405,6 +405,7 @@
     doc.dispatchEvent(new CustomEvent('crew:left'));
   }
   function backHome() {
+    homeCrew.classList.toggle('flip', crewEl.classList.contains('flip'));   // facing the same way: no flip on the swap
     crewEl.hidden = true; mode = 'home'; perch = null;
     homeCrew.classList.remove('away'); homeEl.classList.remove('crew-out');
     doc.dispatchEvent(new CustomEvent('crew:back'));

@@ -31,6 +31,9 @@
 .scene .crate::after{content:"";position:absolute;left:0;right:0;top:45%;border-top:2px solid var(--divider)}
 /* Before the crew's script runs (and the reduced-motion still): beside the TV, hand on the dial */
 .scene .crew{left:calc(507 * var(--u))}
+/* One CREW, always the same size: the hero's CREW matches the guide's (84 × 112, phones 54 × 72) at every width,
+   rather than scaling with the scene, so nothing changes size when the header catches him or hands him back */
+.scene .crew{width:84px;height:112px}
 
 /* Section dividers (static SVG; the neon ignites once when seen) */
 .divider{position:relative;height:120px;background:var(--surface-0);overflow:hidden}
@@ -55,7 +58,7 @@
   .dial{right:calc(23 * var(--u));width:calc(59 * var(--u));height:calc(59 * var(--u))}.dial.d1{top:calc(33 * var(--u))}.dial.d2{top:calc(115 * var(--u))}
   .dial::after{transform-origin:50% calc(22 * var(--u));height:calc(18 * var(--u))}
   .tv .grille{right:calc(23 * var(--u));width:calc(59 * var(--u));height:calc(82 * var(--u));bottom:calc(30 * var(--u))}
-  .scene .crew{left:calc(470 * var(--u));top:calc(14 * var(--u));bottom:auto}
+  .scene .crew{left:calc(470 * var(--u));top:calc(134 * var(--u) - 72px);bottom:auto;width:54px;height:72px}   /* tracks on the TV's top */
   .scene .crate{display:none}
   .divider{height:96px}
 }

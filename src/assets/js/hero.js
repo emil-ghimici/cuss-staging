@@ -521,6 +521,14 @@
   // A short drag picks him up; he follows the pointer inside the scene and drops to the ground on release.
   // Dropped near something broken, he fixes it straight away. He is on the top layer, so he can be left anywhere.
   var drag = null;
+  // While the site guide has him, his routine here stops where it is (he doesn't wander about unseen), so the guide
+  // can hand him back exactly where he left; he carries on once he's back.
+  doc.addEventListener('crew:left', function () { freezeWalk(); walkTarget = null; hideBubble(); chatting = false; stopEverything(); });
+  doc.addEventListener('crew:back', function () {
+    poke();
+    var my = gen;
+    wait(600).then(function () { if (my === gen) return life(); });
+  });
   function stopEverything() {
     gen++;                                  // ends whatever he was in the middle of
     armOff(); dial.classList.remove('turn');
