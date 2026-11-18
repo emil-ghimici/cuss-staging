@@ -344,6 +344,53 @@
     anchorX = shoulder1().x; arm1On(); arm1Line(); ++arm1Gen;
   }
 
+  /* ---------- The telly, fixed from wherever he is (added 2026-11-18). He's the top layer, with full access: his
+     arm may reach over anything on the page. When the hero's picture breaks while he's away and its dial is on
+     screen, he gets to it in 2–6 s (as on the TV), reaches the dial, twists it twice and pulls the arm back in.
+     Scrolling meanwhile: the arm comes back at once and he tries again after the next stop. ---------- */
+  var tvWant = false, tvBusy = false, tvGen = 0;
+  var TV_LINES = ['Hang on, I’ll give it a twist.', 'Who’s been touching the telly?', 'It’s grand. A twist and it’ll come back.'];
+  doc.addEventListener('tv:needs-fix', function () { tvWant = true; setTimeout(tryTvFix, 2000 + Math.random() * 4000); });
+  function dialEl() { return doc.querySelector('[data-hero] .dial.d1'); }
+  function tryTvFix() {
+    if (!tvWant || tvBusy || mode === 'home') return;
+    var dial = dialEl(); if (!dial) return;
+    var d = dial.getBoundingClientRect();
+    if (!(mode === 'perch' || mode === 'hang') || scrolling || touching || d.top < hh() || d.bottom > innerHeight) { setTimeout(tryTvFix, 1000); return; }
+    tvBusy = true; var g = ++tvGen;
+    var useArm1Side = !arm1.classList.contains('on');            // his free shoulder: the main one unless he's hanging from it
+    if (useArm1Side) crewEl.classList.toggle('flip', d.left + d.width / 2 < at().x + cw() / 2);
+    var from = function () { return useArm1Side ? shoulder1() : shoulderAt(); };
+    var target = function () { var r = dialEl().getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+    if (useArm1Side) crewEl.classList.add('extend');
+    arm2.classList.add('on'); grip.classList.add('on');
+    say(TV_LINES[(Math.random() * TV_LINES.length) | 0], 3000);
+    var alive = function () { return g === tvGen; };
+    anim(reduced ? 0 : 450, function (k) { var s0 = from(), t = target(), e = easeOut(k); bar(arm2, grip, s0.x, s0.y, lerp(s0.x, t.x, e), lerp(s0.y, t.y, e)); }, alive)
+      .then(function (ok) {
+        if (!ok) return;
+        var s0 = from(), t = target(); bar(arm2, grip, s0.x, s0.y, t.x, t.y);
+        doc.addEventListener('tv:fixed', function done() {
+          if (!alive()) return;
+          setTimeout(function () { if (alive()) tvRetract(g, from); }, 300);
+        }, { once: true });
+        doc.dispatchEvent(new CustomEvent('tv:twist'));
+      });
+  }
+  function tvRetract(g, from) {
+    var t0 = grip.getBoundingClientRect(), tx = t0.left + t0.width / 2, ty = t0.top + t0.height / 2;
+    anim(reduced ? 0 : RETRACT_MS, function (k) { var s0 = from(), e = easeOut(k); bar(arm2, grip, s0.x, s0.y, lerp(tx, s0.x, e), lerp(ty, s0.y, e)); }, function () { return g === tvGen; })
+      .then(function () { tvDone(); });
+  }
+  function tvDone() { dropArm2(); if (!arm1.classList.contains('on')) crewEl.classList.remove('extend'); tvBusy = false; tvWant = false; }
+  doc.addEventListener('tv:fixed', function () { tvWant = false; });
+  // Scrolling, a move or going home interrupts him: the arm comes straight back, and he tries again later
+  function tvAbort() {
+    if (!tvBusy) return;
+    ++tvGen; dropArm2(); if (!arm1.classList.contains('on')) crewEl.classList.remove('extend'); tvBusy = false;
+    if (tvWant) setTimeout(tryTvFix, 1500);
+  }
+
   /* ---------- Jobs at the signs ---------- */
   function job(k, el) {
     if (done[k]) return;
@@ -470,6 +517,7 @@
     doc.dispatchEvent(new CustomEvent('crew:left'));
   }
   function backHome() {
+    tvAbort(); tvWant = false;
     ++arm1Gen; arm1Off(); dropArm2();                                         // nothing of his left on screen
     homeCrew.classList.toggle('flip', crewEl.classList.contains('flip'));   // facing the same way: no flip on the swap
     crewEl.hidden = true; mode = 'home'; perch = null;
@@ -497,6 +545,7 @@
   }
   function onScroll() {
     scrolling = true;
+    tvAbort();
     clearTimeout(stillT); clearTimeout(delayT);
     if (!reduced) {
       if (mode === 'move') freeze();                          // at once, not on the next frame
@@ -512,6 +561,7 @@
   }
   // After the stop and the delay: the one move he makes
   function act() {
+    tvAbort();                                                // a move comes first; the telly can wait a moment
     if (scrolling || touching) return;
     if (reduced) { sitStill(); return; }
     if (mode === 'home' || mode === 'move') return;

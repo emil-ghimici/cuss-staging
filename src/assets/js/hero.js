@@ -229,7 +229,11 @@
     }
     if (acc < (resting ? FRAME_MS * 3 : FRAME_MS)) return;
     var dt = Math.min(3, acc / 16.667); acc = 0;
-    if (state === 'broken' && performance.now() - lastMove > 1000) setState('weak');
+    if (state === 'broken' && performance.now() - lastMove > 1000) {
+      setState('weak');
+      // Away down the page (the guide has him), he still fixes the telly: from wherever he is (guide.js)
+      if (crewEl.classList.contains('away') && crew.needTV && !remoteAsked) { remoteAsked = true; doc.dispatchEvent(new CustomEvent('tv:needs-fix')); }
+    }
     draw(dt);
   }
   function start() { if (!raf) { lastT = 0; raf = requestAnimationFrame(loop); } }
@@ -534,7 +538,20 @@
   // While the site guide has him, his routine here stops where it is (he doesn't wander about unseen), so the guide
   // can hand him back exactly where he left; he carries on once he's back.
   doc.addEventListener('crew:left', function () { freezeWalk(); walkTarget = null; hideBubble(); chatting = false; stopEverything(); });
+  // The guide's CREW has reached the dial from where he is: two clicks, the full name tunes in
+  var remoteAsked = false;
+  doc.addEventListener('tv:twist', function () {
+    if (!crewEl.classList.contains('away')) return;
+    dial.classList.add('turn');
+    wait(380, true).then(function () { dial.classList.remove('turn'); return wait(250, true); })
+      .then(function () { dial.classList.add('turn'); return wait(300, true); })
+      .then(function () {
+        dial.classList.remove('turn'); setState('tuned'); crew.needTV = false; remoteAsked = false;
+        doc.dispatchEvent(new CustomEvent('tv:fixed'));
+      });
+  });
   doc.addEventListener('crew:back', function () {
+    remoteAsked = false;
     poke();
     var my = gen;
     wait(600).then(function () { if (my === gen) return life(); });
