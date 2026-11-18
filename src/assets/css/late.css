@@ -1,13 +1,18 @@
 /* CREW's moving parts: his telescopic arm, his speech bubble and the site guide. Only scripts use them, so this
    file is not inlined: site.js loads it (cached across pages) and the crew scripts wait for it. */
-/* His telescopic arm: reaches whatever needs fixing from where he stands (transform only) */
+/* His telescopic arm: reaches whatever needs fixing from where he stands. Every arm (this one, and the guide's two)
+   looks the same: rounded at the shoulder, steel segments of a fixed size, a round hand. Growing out, the arm is
+   revealed from the shoulder (clip-path), never stretched, so its segments keep their size. Sized to CREW:
+   --u is 1px with his 84 px body, 0.643px with his 54 px phone body. */
+.scene .reach-arm,.scene .reach-hand{--u:1px}
+@media (max-width: 760px){.scene .reach-arm,.scene .reach-hand,.band .reach-arm,.band .reach-hand{--u:.643px}}
 .reach-arm,.reach-hand{position:absolute;left:0;top:0;z-index:5;pointer-events:none;opacity:0}
-.reach-arm{height:calc(7 * var(--u));margin-top:calc(-3.5 * var(--u));transform-origin:0 50%;border-radius:calc(3 * var(--u));background:repeating-linear-gradient(90deg,#8a93a0 0 calc(16 * var(--u)),#4b525d calc(16 * var(--u)) calc(19 * var(--u)));
-  transform:translate(var(--sx),var(--sy)) rotate(var(--ang)) scaleX(0);transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .1s}
+.reach-arm{height:calc(7 * var(--u));margin-top:calc(-3.5 * var(--u));transform-origin:0 50%;border-radius:999px;background:repeating-linear-gradient(90deg,#8a93a0 0 calc(16 * var(--u)),#4b525d calc(16 * var(--u)) calc(19 * var(--u)));
+  transform:translate(var(--sx),var(--sy)) rotate(var(--ang));clip-path:inset(0 100% 0 0 round 999px);transition:clip-path .45s cubic-bezier(.2,.8,.2,1),opacity .1s}
 .reach-hand{width:calc(14 * var(--u));height:calc(14 * var(--u));margin:calc(-7 * var(--u)) 0 0 calc(-7 * var(--u));border-radius:50%;background:#9aa3ae;border:calc(2 * var(--u)) solid #59606b;
   transform:translate(var(--sx),var(--sy));transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .1s}
 .reach-arm.on,.reach-hand.on{opacity:1}
-.reach-arm.out{transform:translate(var(--sx),var(--sy)) rotate(var(--ang)) scaleX(1)}
+.reach-arm.out{clip-path:inset(0 0 0 0 round 999px)}
 .reach-hand.out{transform:translate(var(--tx),var(--ty))}
 .reach-arm.still,.reach-hand.still{transition:none}
 
@@ -35,14 +40,19 @@
 .g-crew .eye{fill:var(--phosphor)}
 .g-crew .mug{display:none}
 .g-crew .arm{transform-origin:50px 46px;transition:transform .25s}
-.g-crew.hang .arm{transform:rotate(-150deg)}
 .g-crew.flip svg{transform:scaleX(-1)}
 .g-crew.tapping .arm{transform:rotate(-100deg)}
 .g-fixed.on .g-crew{z-index:28}
 /* His two telescopic arms: 100 px bars stretched and turned with transform only.
    arm1 clamps the top bar (the header covers its top end); arm2 hooks a box's top edge. */
-.g-line{position:absolute;left:0;top:0;width:100px;transform-origin:0 50%;opacity:0}
-.g-line.on{opacity:1}
+.g-fixed{--gs:1}
+@media (max-width: 760px){.g-fixed{--gs:.643}}
+.g-arm{position:absolute;left:0;top:0;width:0;height:calc(7px * var(--gs));margin-top:calc(-3.5px * var(--gs));transform-origin:0 50%;border-radius:999px;opacity:0;
+  background:repeating-linear-gradient(90deg,#8a93a0 0 calc(16px * var(--gs)),#4b525d calc(16px * var(--gs)) calc(19px * var(--gs)))}
+.g-hand{position:absolute;left:0;top:0;width:calc(14px * var(--gs));height:calc(14px * var(--gs));margin:calc(-7px * var(--gs)) 0 0 calc(-7px * var(--gs));border-radius:50%;background:#9aa3ae;border:calc(2px * var(--gs)) solid #59606b;opacity:0}
+.g-arm.on,.g-hand.on{opacity:1}
+.g-arm,.g-hand{z-index:29}   /* in front of him, like the arm on the TV */
+.g-crew.extend .arm{opacity:0}
 /* Grab: a 3° jolt that settles in 400 ms. Land: a 2 px squash. Hang: the eye watches the page pass;
    after 4 s one track lifts to check his footing. Individual transform properties, so the flip stays put. */
 .g-crew svg{transform-origin:50% 0}
@@ -57,9 +67,6 @@
 .g-crew.typing .arm{animation:gtype .6s steps(4)}
 @keyframes gtype{0%,50%{transform:rotate(-30deg)}25%,75%{transform:rotate(-45deg)}}
 @media (prefers-reduced-motion: reduce){.g-crew svg,.g-crew .arm{animation:none!important}.g-crew .eye,.g-crew .tread{transition:none}}
-.g-arm{height:7px;margin-top:-3.5px;border-radius:3px;background:repeating-linear-gradient(90deg,#8a93a0 0 16px,#4b525d 16px 19px)}
-.g-grip{position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;background:#9aa3ae;border:2px solid #59606b;opacity:0}
-.g-grip.on{opacity:1}
 /* His bubble rides with him, beside his head */
 .g-bubble{position:absolute;top:0;right:calc(100% + 10px);left:auto;max-width:240px;width:max-content;transform:none}
 .g-bubble.on{transform:none}

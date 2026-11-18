@@ -140,6 +140,7 @@
         lost.classList.add('sweeping');
         var dx = -(w * 0.35);
         lcrew.style.setProperty('--x', dx + 'px'); broom.style.setProperty('--x', dx + 'px');
+        lcrew.classList.add('rolling'); setTimeout(function () { lcrew.classList.remove('rolling'); }, 1400);
         glyphs.forEach(function (g, i) {
           g.style.setProperty('--x', (w * 0.42 + (i % 4) * 14) + 'px');
           g.style.setProperty('--y', (h - 80 - Math.floor(i / 4) * 16) + 'px');

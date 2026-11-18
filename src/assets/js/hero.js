@@ -348,7 +348,8 @@
     if (d < 2) return wait(60);
     crewEl.classList.toggle('flip', x < crew.x);
     place(x, dur);
-    return wait(dur * 1000 + 60);
+    crewEl.classList.add('rolling');                                // his tracks turn while he trundles
+    return wait(dur * 1000 + 60).then(function () { crewEl.classList.remove('rolling'); });
   }
   function act(cls, ms) { crewEl.classList.add(cls); return wait(ms).then(function () { crewEl.classList.remove(cls); }); }
   function twist() {
@@ -492,11 +493,11 @@
   function freezeWalk() {
     // Stop him where he is: read his current position off the running transition
     var m = new DOMMatrixReadOnly(getComputedStyle(crewEl).transform), x = m.m41;
-    if (Math.abs(x - crew.x) > 1) { walkTarget = crew.x; place(x, 0); crew.x = x; }
+    if (Math.abs(x - crew.x) > 1) { walkTarget = crew.x; place(x, 0); crew.x = x; crewEl.classList.remove('rolling'); }
   }
   function resumeWalk() {
     if (walkTarget === null) return;
-    var d = Math.abs(walkTarget - crew.x); place(walkTarget, Math.max(0.2, d / 90)); walkTarget = null;
+    var d = Math.abs(walkTarget - crew.x); place(walkTarget, Math.max(0.2, d / 90)); walkTarget = null; crewEl.classList.add('rolling');
   }
   function openChat() {
     if (held) return;
@@ -530,7 +531,7 @@
     wait(600).then(function () { if (my === gen) return life(); });
   });
   function stopEverything() {
-    gen++;                                  // ends whatever he was in the middle of
+    gen++; crewEl.classList.remove('rolling');                                  // ends whatever he was in the middle of
     armOff(); dial.classList.remove('turn');
     crewEl.classList.remove('tea', 'sit', 'reach', 'up', 'flinch');
     if (resting) { resting = false; teaLong = false; crew.wake = null; sync(); }

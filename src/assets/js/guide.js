@@ -26,7 +26,8 @@
   function travelMs(px) { return Math.min(1200, 400 + Math.abs(px)); }   // 400 ms + 1 ms per px, max 1200 ms
 
   var docEl = doc.querySelector('.g-doc'), crewEl = docEl.querySelector('.g-crew'), svg = crewEl.querySelector('svg');
-  var arm1 = fixedEl.querySelector('.g-arm1'), arm2 = fixedEl.querySelector('.g-arm2'), grip = fixedEl.querySelector('.g-grip');
+  var arm1 = fixedEl.querySelector('.g-arm1'), arm2 = fixedEl.querySelector('.g-arm2');
+  var hand1 = fixedEl.querySelector('.g-hand1'), grip = fixedEl.querySelector('.g-hand2');
   var bubble = crewEl.querySelector('.g-bubble'), bubbleText = bubble.querySelector('p');
   var hdr = doc.querySelector('.hdr');
   // His home: the home hero, or an inner page's street band
@@ -67,13 +68,19 @@
     perchDoc.x = x; perchDoc.y = y;
     crewEl.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
   }
-  function bar(el, x1, y1, x2, y2) {                        // a 100 px bar stretched and turned (transform only)
+  // A telescopic arm from (x1,y1) to (x2,y2): the bar grows in length (its segments keep their size, never
+  // stretched) and its round hand sits at the far end. It lives in the fixed layer, so its width costs no page layout.
+  function bar(el, hand, x1, y1, x2, y2) {
     var len = Math.hypot(x2 - x1, y2 - y1), ang = Math.atan2(y2 - y1, x2 - x1);
-    el.style.transform = 'translate(' + x1.toFixed(1) + 'px,' + y1.toFixed(1) + 'px) rotate(' + ang.toFixed(4) + 'rad) scaleX(' + (len / 100).toFixed(3) + ')';
+    el.style.width = len.toFixed(1) + 'px';
+    el.style.transform = 'translate(' + x1.toFixed(1) + 'px,' + y1.toFixed(1) + 'px) rotate(' + ang.toFixed(4) + 'rad)';
+    if (hand) hand.style.transform = 'translate(' + x2.toFixed(1) + 'px,' + y2.toFixed(1) + 'px)';
   }
   function flipped() { return crewEl.classList.contains('flip'); }
   function handAt() { return { x: pos.x + cw() * (flipped() ? 0.38 : 0.62), y: pos.y + ch() * 0.04 }; }
-  function shoulderAt() { return { x: pos.x + cw() * (flipped() ? 0.34 : 0.66), y: pos.y + ch() * 0.5 }; }
+  // His main arm's shoulder (the same point the hero's telescopic arm grows from) and the second arm's (the stub on his other side)
+  function shoulder1() { return { x: pos.x + cw() * (flipped() ? 12 : 66) / 78, y: pos.y + ch() * 54 / 104 }; }   // body's edge: straight up clears his head
+  function shoulderAt() { return { x: pos.x + cw() * (flipped() ? 65.5 : 12.5) / 78, y: pos.y + ch() * 54 / 104 }; }
   function tilt(deg) { svg.style.rotate = deg ? deg.toFixed(2) + 'deg' : ''; }
 
   /* ---------- Boxes he can sit on ---------- */
@@ -149,20 +156,22 @@
 
   /* ---------- His arms ---------- */
   var anchorX = 0, arm1Gen = 0;
-  function arm1Line() { var h = handAt(); bar(arm1, h.x, h.y, anchorX, hh()); }
+  function arm1Line() { var s = shoulder1(); bar(arm1, hand1, s.x, s.y, anchorX, hh()); }
+  function arm1On() { arm1.classList.add('on'); hand1.classList.add('on'); crewEl.classList.add('extend'); }   // his own arm folds away
+  function arm1Off() { arm1.classList.remove('on'); hand1.classList.remove('on'); crewEl.classList.remove('extend'); }
   // Shoots up from his hand and clamps the top bar
   function clampTopBar() {
-    var g = ++arm1Gen, h = handAt();
+    var g = ++arm1Gen, h = shoulder1();
     anchorX = h.x;
-    arm1.classList.add('on'); crewEl.classList.add('hang');
-    return anim(reduced ? 0 : GRAB_MS, function (k) { bar(arm1, h.x, h.y, anchorX, lerp(h.y, hh(), easeOut(k))); }, function () { return g === arm1Gen; });
+    arm1On(); crewEl.classList.add('hang');
+    return anim(reduced ? 0 : GRAB_MS, function (k) { var s = shoulder1(); bar(arm1, hand1, s.x, s.y, anchorX, lerp(s.y, hh(), easeOut(k))); }, function () { return g === arm1Gen; });
   }
   // Unclamps and retracts into his shoulder
   function retractArm1() {
     if (!arm1.classList.contains('on')) return;
-    var g = ++arm1Gen, h = handAt(), ax = anchorX, ay = hh();
-    anim(RETRACT_MS, function (k) { var e = easeOut(k); bar(arm1, h.x, h.y, lerp(ax, h.x, e), lerp(ay, h.y, e)); }, function () { return g === arm1Gen; })
-      .then(function (ok) { if (ok) arm1.classList.remove('on'); });
+    var g = ++arm1Gen, ax = anchorX, ay = hh();
+    anim(RETRACT_MS, function (k) { var e = easeOut(k), s = shoulder1(); bar(arm1, hand1, s.x, s.y, lerp(ax, s.x, e), lerp(ay, s.y, e)); }, function () { return g === arm1Gen; })
+      .then(function (ok) { if (ok) arm1Off(); });
   }
   function dropArm2() { arm2.classList.remove('on'); grip.classList.remove('on'); }
   function jolt() {
@@ -191,7 +200,7 @@
     mode = 'tucked'; tilt(0); dropArm2(); hush(); clearTimeout(peekT);
     var x0 = pos.x, y0 = pos.y, y1 = hh() - ch();
     return tween(reduced ? 1 : 200, easeOut, function (e) { putFixed(x0, lerp(y0, y1, e)); if (arm1.classList.contains('on')) arm1Line(); })
-      .then(function () { arm1.classList.remove('on'); });
+      .then(function () { arm1Off(); });
   }
 
   /* ---------- Hanging from the top bar ---------- */
@@ -225,24 +234,30 @@
   // To a seat ({x?|left,right, top, el}) or home (el === null)
   function rappelTo(seat, toHome) {
     mode = 'move'; hush();
-    var tx = toHome ? seat.x : seatX(seat, handAt().x), ty = toHome ? seat.y : seatY(seat);
+    // tx: where he wants to end up (wantX: a set spot, like a monitor's middle); he gets there by pulling, then rolling
+    var tx = toHome ? seat.x : seat.wantX !== undefined ? seat.wantX : seatX(seat, handAt().x), ty = toHome ? seat.y : seatY(seat);
     var x0 = pos.x, y0 = pos.y;
-    if (Math.abs(tx - x0) < 24 && arm1.classList.contains('on')) {
-      // Straight down: the arm telescopes out, ease-out
-      return tween(travelMs(ty - y0), easeOut, function (e) { putFixed(lerp(x0, tx, e), lerp(y0, ty, e)); arm1Line(); })
-        .then(function (ok) { if (ok) arrive(seat, toHome); });
+    // The nearest spot on the box he can sit on, from where he is
+    var landX = toHome ? tx : seat.x !== undefined ? seat.x : Math.max(seat.left + 6, Math.min(Math.max(seat.left + 6, seat.right - cw() - 6), x0));
+    if (Math.abs(landX - x0) < 24 && arm1.classList.contains('on')) {
+      // Straight up or down: on the arm clamped to the top bar (his only grappling point, up or down), ease-out;
+      // then he rolls along the box to where he wants to be
+      if (Math.abs(ty - y0) < 2) { putFixed(landX, ty); return arrive(seat, toHome, tx); }
+      return tween(travelMs(ty - y0), easeOut, function (e) { putFixed(lerp(x0, landX, e), lerp(y0, ty, e)); arm1Line(); })
+        .then(function (ok) { if (ok) return arrive(seat, toHome, tx); });
     }
-    // Off to one side: the second arm fires straight at the nearest point of the box's top edge and hooks it
-    crewEl.classList.toggle('flip', tx < x0);
-    var hook = toHome ? { x: tx + cw() * 0.5, y: ty + ch() * 0.2 }
-      : { x: Math.max(seat.left !== undefined ? seat.left + 4 : tx, Math.min(seat.right !== undefined ? seat.right - 4 : tx + cw(), shoulderAt().x)), y: seat.top };
-    if (seat.x !== undefined && !toHome) hook = { x: seat.x + cw() / 2, y: seat.top };
-    var land = { x: tx, y: ty };
+    // Off to one side: a grappling hook, never a pole. He lands at the nearest spot on the box he can sit on, and the
+    // second arm hooks the top edge right where his leading shoulder will end up, so it only ever pulls him towards
+    // the hook. Anything further along, he covers on his tracks (roll).
+    crewEl.classList.toggle('flip', landX < x0);
+    var lead = cw() * (flipped() ? 12 : 66) / 78;                   // his leading shoulder, in the direction of the pull
+    var hook = { x: landX + lead, y: toHome ? ty + ch() * 54 / 104 : seat.top };
+    var land = { x: landX, y: ty };
     arm2.classList.add('on'); grip.classList.add('on');
     var s0 = shoulderAt();
     return tween(FIRE_MS, easeOut, function (e) {
       var x = lerp(s0.x, hook.x, e), y = lerp(s0.y, hook.y, e);
-      bar(arm2, s0.x, s0.y, x, y); grip.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+      bar(arm2, grip, s0.x, s0.y, x, y);
     }).then(function (ok) {
       if (!ok) return false;
       retractArm1();                                               // the first arm lets go
@@ -251,33 +266,74 @@
       // Reeled in diagonally, tilted into the pull and straightening as he sits
       return tween(travelMs(d), easeInOut, function (e) {
         putFixed(lerp(x0, land.x, e), lerp(y0, land.y, e));
-        var s = shoulderAt(); bar(arm2, s.x, s.y, hook.x, hook.y);
+        var s = shoulderAt(); bar(arm2, grip, s.x, s.y, hook.x, hook.y);
         tilt(dir * 10 * (1 - e));
       });
-    }).then(function (ok) { if (ok) { dropArm2(); arrive(seat, toHome); } });
+    }).then(function (ok) { if (ok) { dropArm2(); return arrive(seat, toHome, tx); } });
   }
-  function arrive(seat, toHome) {
+  function arrive(seat, toHome, wantX) {
     tilt(0); crewEl.classList.remove('hang');
     retractArm1();
     if (toHome) { backHome(); return; }
-    sitOn(seat.el);
     squash();
+    return sitOn(seat.el, wantX);
   }
-  function sitOn(el) {
+  // Sits where he landed; if he wants to be further along the box, he rolls there on his tracks
+  function sitOn(el, wantX) {
     var s = seatOf(el), x = seatX(s, pos.x + cw() / 2), y = seatY(s);
     putDoc(x + scrollX, y + scrollY);
     perch = el; mode = 'perch'; clearTimeout(peekT);
-    var k = el.getAttribute('data-crew-stop');
-    if (k) job(k, el);
-    var room = el.matches('.mon') && el.closest('[data-room]');
-    if (room) intro(room);
+    var go = wantX !== undefined && Math.abs(wantX - x) > 4 && !reduced ? roll(wantX - x) : Promise.resolve();
+    return go.then(function () {
+      if (perch !== el) return;
+      var k = el.getAttribute('data-crew-stop');
+      if (k) job(k, el);
+      var room = el.matches('.mon') && el.closest('[data-room]');
+      if (room) intro(room);
+    });
   }
-  // Out of view (his box went off the bottom): he comes down from the top bar, above where he was
+  // Rolling along the top of a box (part of the page, so it rides with it): about 90 px a second, tracks turning
+  var ROLL_PX_S = 90;
+  function roll(dx) {
+    var x0 = perchDoc.x, y = perchDoc.y;
+    crewEl.classList.toggle('flip', dx < 0);
+    crewEl.classList.add('rolling');
+    return tween(Math.abs(dx) / ROLL_PX_S * 1000, function (k) { return k; }, function (e) { putDoc(x0 + dx * e, y); })
+      .then(function () { crewEl.classList.remove('rolling'); });
+  }
+  // Just below the bottom edge, where his box took him out of view
+  function fromBelow(x) {
+    hush(); tilt(0); arm1Off(); dropArm2(); clearTimeout(peekT);
+    crewEl.hidden = false;
+    putFixed(Math.max(8, Math.min(innerWidth - cw() - 8, x)), innerHeight + 4);
+    mode = 'move';
+  }
+  // Up from below the screen: the arm shoots up and clamps the top bar, then reels him up to the box's height
+  // (ease-out, the same timing as going down); a sideways finish is the usual second-arm pull
+  function riseTo(seat, toHome) {
+    mode = 'move';
+    return clampTopBar().then(function () {
+      if (mode !== 'move') return;                            // scrolling again froze him meanwhile
+      var x0 = pos.x, y0 = pos.y, ty = toHome ? seat.y : seatY(seat);
+      return tween(travelMs(y0 - ty), easeOut, function (e) { putFixed(x0, lerp(y0, ty, e)); arm1Line(); })
+        .then(function (ok) { if (ok) return rappelTo(toHome ? seat : seatOf(seat.el), toHome); });   // there, or a sideways pull
+    });
+  }
+  // The box in view nearest to where he went out at the bottom: close to his column, low on the screen
+  function nearestAbove(fromX) {
+    var best = null, bd = Infinity;
+    candidates().forEach(function (s) {
+      var d = Math.abs(seatX(s, fromX) + cw() / 2 - fromX) + (innerHeight - s.top) * 0.5;
+      if (d < bd) { bd = d; best = s; }
+    });
+    return best;
+  }
+  // Out of view in the top bar (tucked, or a page without a home): he comes down from it
   function fromTopBar(x) {
     hush(); tilt(0);
     putFixed(Math.max(8, Math.min(innerWidth - cw() - 8, x)), hh() - ch());   // tucked under the header
     startHang();
-    anchorX = handAt().x; arm1.classList.add('on'); arm1Line(); ++arm1Gen;
+    anchorX = shoulder1().x; arm1On(); arm1Line(); ++arm1Gen;
   }
 
   /* ---------- Jobs at the signs ---------- */
@@ -315,7 +371,8 @@
     if (mode !== 'perch' || perch === el) return Promise.resolve();
     var r = crewEl.getBoundingClientRect();
     putFixed(r.left, r.top);
-    return rappelTo(seatOf(el));
+    var st = seatOf(el); st.wantX = (st.left + st.right) / 2 - cw() / 2;   // the monitor's middle
+    return rappelTo(st);
   }
   function point(line) {
     crewEl.classList.add('point'); say(line, 4000);
@@ -452,7 +509,12 @@
     if (mode === 'tucked' && homeInView()) { fromTopBar(pos.x); }
     if (homeInView()) {                                       // back into the hero / band
       var r = homeRect();
-      if (mode === 'perch') { var pr = crewEl.getBoundingClientRect(); if (pr.top < innerHeight && pr.bottom > hh()) putFixed(pr.left, pr.top); else fromTopBar(r.left); }
+      if (mode === 'perch') {
+        var pr = crewEl.getBoundingClientRect();
+        if (pr.top < innerHeight && pr.bottom > hh()) putFixed(pr.left, pr.top);
+        else if (pr.top >= innerHeight) { fromBelow(perchDoc.x - scrollX); riseTo({ x: r.left, y: r.top }, true); return; }   // back up from where he went out
+        else fromTopBar(r.left);
+      }
       rappelTo({ x: r.left, y: r.top }, true);
       return;
     }
@@ -470,11 +532,12 @@
     if (mode === 'perch') {
       var b = perch.getBoundingClientRect();
       if (b.top < innerHeight && b.bottom > hh()) return;     // still in view: he stays put
-      // Scrolling up took his box out of view at the bottom: down from the top bar to a box in view
-      var x = perchDoc.x - scrollX, s2 = nearestBelow(x + cw() * 0.62, hh() - ch());
+      // Scrolling up took his box out of view at the bottom: he comes back up from where he went out, on his arm
+      // clamped to the top bar (his only grappling point, up or down), to the nearest box in view
+      var x = perchDoc.x - scrollX, s2 = nearestAbove(x + cw() / 2);
       if (!s2) return;                                        // nothing in view to sit on: he stays where he is
-      fromTopBar(x);
-      rappelTo(s2);
+      fromBelow(x);
+      riseTo(s2);
     }
   }
 
@@ -487,7 +550,7 @@
     candidates().forEach(function (s) { if (!pick || Math.abs(s.top - innerHeight * 0.4) < Math.abs(pick.top - innerHeight * 0.4)) pick = s; });
     if (!pick) return;
     if (homeCrew) { homeCrew.classList.add('away'); homeEl.classList.add('crew-out'); }
-    crewEl.hidden = false; arm1.classList.remove('on'); dropArm2();
+    crewEl.hidden = false; arm1Off(); dropArm2();
     pos.x = seatX(pick, innerWidth * 0.75);
     sitOn(pick.el);
   }

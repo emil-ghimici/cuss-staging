@@ -47,3 +47,9 @@
 .scene .crew{cursor:default}
 @media (min-width: 761px) and (prefers-reduced-motion: no-preference){.scene .crew.live{cursor:grab}}
 @media (prefers-reduced-motion: reduce){.flick{animation:none}}
+/* His tracks: darker links on the belt that run while he rolls (one link every 6 units, so a 6-unit loop is seamless) */
+.crew .links,.g-crew .links{transform-box:view-box}
+.crew.rolling .links,.g-crew.rolling .links{animation:links .28s linear infinite}
+@keyframes links{to{transform:translateX(6px)}}
+@media (prefers-reduced-motion: reduce){.crew .links,.g-crew .links{animation:none!important}}
+
