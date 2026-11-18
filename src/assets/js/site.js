@@ -112,8 +112,13 @@
       try { doc.execCommand('copy') ? res() : rej(); } catch (e) { rej(e); } finally { doc.body.removeChild(ta); }
     });
   }
+  // A link can ask for a chip (/contact/?need=Automate%20a%20task, from the Control room): it's ticked instead of the default
+  var need = null;
+  try { need = new URLSearchParams(location.search).get('need'); } catch (e) {}
   $$('[data-compose]').forEach(function (f) {
     var grid = f.closest('.contact-grid'), to = f.getAttribute('data-to');
+    var asked = need && $$('input[name="need"]', f).filter(function (i) { return i.value === need; })[0];
+    if (asked) { $$('input[name="need"]', f).forEach(function (i) { i.checked = i === asked; }); }
     var out = $('[data-preview]', grid), send = $('[data-send]', grid), text = '';
     function upd() {
       var picked = $$('input[name="need"]:checked', f);

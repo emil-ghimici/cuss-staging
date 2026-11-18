@@ -27,7 +27,7 @@ export default {
       { t: 'A pharmacy re-keying supplier invoices', d: 'Invoices read, checked and filed, with a person confirming anything unusual.' },
     ],
     exampleLead: 'A small bakery (fictional) takes wholesale orders by email. Here is the same order before and after.',
-    room: ['inbox', 'sheet', 'inv', 'bank'],
+    room: ['inbox', 'sheet', 'inv', 'del', 'bank', 'dash'],
     steps: [
       { t: 'Free first call', d: 'You walk us through the task as it’s done today: who types what, where, and how often.' },
       { t: 'We map it and quote', d: 'A short written plan: what gets automated, where a person still confirms, and the price.' },

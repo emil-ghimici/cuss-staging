@@ -27,6 +27,14 @@ const DERIVED = [
   ['glow-contact', 'rgba(255,79,163,.45)', 'transparent'],
   ['glow-contact-soft', 'rgba(255,79,163,.25)', 'transparent'],
   ['glow-amber', 'rgba(255,181,71,.6)', 'transparent'],
+  // The Control room's roller shutter (2026-11-18): steel slats, the dark behind their gaps, and the welding
+  // light that leaks through them (a pale flash by day, with no glow)
+  ['shutter', '#3a414c', '#bdb6a8'],
+  ['shutter-edge', '#262b33', '#7d7364'],
+  ['shutter-back', '#07090c', '#3d434d'],
+  ['weld', '#e6f8ff', '#ffffff'],
+  ['glow-weld', 'rgba(190,235,255,.45)', 'transparent'],
+  ['paper', '#f4f1ea', '#ffffff'],               // an invoice page on a screen is white in both themes
 ];
 
 export function tokensCss() {

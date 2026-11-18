@@ -32,6 +32,8 @@
   var hdr = doc.querySelector('.hdr');
   // His home: the home hero, or an inner page's street band
   var homeEl = doc.querySelector('[data-crew-home], [data-hero]'), homeCrew = homeEl && homeEl.querySelector('.crew');
+  // The Control room's storefront (room.js): a scene of its own, like the hero. He's handed in on its pavement.
+  var shopEl = doc.querySelector('[data-shop]'), shopCrew = shopEl && shopEl.querySelector('.shop-crew');
   if (homeEl && homeEl.hasAttribute('data-crew-stay')) return;            // Privacy, 404: he stays in the band
   var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var mqPhone = matchMedia('(max-width: 760px)');
@@ -55,7 +57,8 @@
 
   /* ---------- Where he is ---------- */
   // mode: 'home' (in the hero/band), 'perch' (sitting on a box, part of the page), 'hang' (from the top bar),
-  //       'move' (on his way somewhere; fixed layer), 'tucked' (up in the top bar, out of view, near a Contact button)
+  //       'move' (on his way somewhere; fixed layer), 'tucked' (up in the top bar, out of view, near a Contact button),
+  //       'shop' (in the Control room's storefront, which runs him)
   var mode = 'home', perch = null, perchDoc = { x: 0, y: 0 }, pos = { x: 0, y: 0 };
   var done = {};                                           // sign jobs done on this page
   function putFixed(x, y) {
@@ -105,7 +108,7 @@
   function candidates() {
     var out = [], minTop = hh() + ch() - dangle() + hangGap() + 2, maxTop = innerHeight - 24;   // seated, he's fully below the header
     doc.querySelectorAll(PERCHES).forEach(function (el) {
-      if (el.closest('.panel, .menu, [data-crew-home], [data-hero], .g-doc') || el.offsetParent === null) return;
+      if (el.closest('.panel, .menu, [data-crew-home], [data-hero], [data-shop], .g-doc') || el.offsetParent === null) return;
       if (el.closest('[data-crew-never]')) return;
       var s = seatOf(el);
       if (s.top >= minTop && s.top <= maxTop) out.push(s);
@@ -277,8 +280,8 @@
     tilt(0); crewEl.classList.remove('hang');
     var armOut = arm1.classList.contains('on');
     retractArm1();
-    // Home: the arm comes all the way in before the hero's (or band's) CREW takes over, never left floating
-    if (toHome) return sleep(armOut ? RETRACT_MS + 30 : 0).then(backHome);
+    // Home: the arm comes all the way in before the hero's (or band's, or the shop's) CREW takes over, never left floating
+    if (toHome) return sleep(armOut ? RETRACT_MS + 30 : 0).then(toHome === 'shop' ? intoShop : backHome);
     squash();
     return sitOn(seat.el, wantX);
   }
@@ -296,8 +299,6 @@
       if (perch !== el) return;
       var k = el.getAttribute('data-crew-stop');
       if (k) job(k, el);
-      var room = el.matches('.mon') && el.closest('[data-room]');
-      if (room) intro(room);
     });
   }
   // Rolling along the top of a box (part of the page, so it rides with it): about 90 px a second, tracks turning
@@ -405,77 +406,64 @@
     }, reduced ? 0 : 450);
   }
 
-  /* ---------- In the Control room: he shows the visitor round, monitor by monitor ---------- */
-  // Lines approved 2026-11-17 (the bank and invoice lines quote what is on those screens)
-  var ROOM_LINES = {
-    bank: 'Someone’s left a note. Check who paid??',
-    sheet: '#REF! means a formula’s broken somewhere.',
-    inv: 'Sourdouhg. One typo, wrong invoice.',
-    hello: 'That’s the Control room. Press Connect them.',
-    confirm: 'Your call. Have a look, then press Confirm.'
-  };
-  var queue = Promise.resolve();
-  function inRoom(room) { return !!(perch && room.contains(perch)); }
-  function enqueue(fn) { queue = queue.then(fn).catch(function () {}); return queue; }
-  // He never moves while the page moves: tour steps wait for calm
-  function calm() {
-    return new Promise(function (r) { (function w() { if (!scrolling && !touching && mode !== 'move') r(); else setTimeout(w, 150); })(); });
+  /* ---------- The Control room's storefront (added 2026-11-18): a scene of its own, like the hero ----------
+     While it wants him (its story isn't finished) and it's on screen, he's brought down onto its pavement once
+     scrolling stops, and the shop's CREW takes over. Outside the shop (on the pavement, or inside with the shutter
+     up) the header catches him as usual. Behind the shutter it never does: he stays in until the shop leaves the
+     screen, then comes in from the top bar (scrolled down past it) or up from below (scrolled up past it). */
+  function shopWants() { return !!(shopCrew && shopEl.hasAttribute('data-want')); }
+  function shopInside() { return shopEl.classList.contains('crew-inside'); }
+  function shopRect() { return shopCrew.getBoundingClientRect(); }
+  // On screen: the picture's top below the header, and the spot where he lands above the bottom edge
+  function shopInView() {
+    var p = shopEl.querySelector('.shop-pic').getBoundingClientRect(), r = shopRect();
+    return p.top >= hh() - 2 && r.bottom <= innerHeight - 4;
   }
-  // Hop to another monitor along the top edges: second arm out, reel himself across
-  function hop(el) {
-    if (mode !== 'perch' || perch === el) return Promise.resolve();
-    var r = crewEl.getBoundingClientRect();
-    putFixed(r.left, r.top);
-    var st = seatOf(el); st.wantX = (st.left + st.right) / 2 - cw() / 2;   // the monitor's middle
-    return rappelTo(st);
+  function intoShop() {
+    tvAbort();
+    ++arm1Gen; arm1Off(); dropArm2();
+    shopCrew.classList.toggle('flip', crewEl.classList.contains('flip'));
+    crewEl.hidden = true; mode = 'shop'; perch = null;
+    shopEl.dispatchEvent(new CustomEvent('crew:enter'));
   }
-  function point(line) {
-    crewEl.classList.add('point'); say(line, 4000);
-    return sleep(reduced ? 0 : 700).then(function () { crewEl.classList.remove('point'); });
+  function leaveShop() { shopEl.dispatchEvent(new CustomEvent('crew:leave')); crewEl.hidden = false; }
+  // Caught by the header while outside the shop
+  function takeFromShop() {
+    var r = shopRect();
+    crewEl.classList.toggle('flip', shopCrew.classList.contains('flip'));
+    leaveShop();
+    grab(r.left, Math.max(hh() + hangGap(), r.top));
   }
-  function showRound(room, mon, line) {
-    return enqueue(function () {
-      return calm().then(function () {
-        if (!inRoom(room) || !mon) return;
-        if (reduced) { say(line, 4000); return; }
-        // A monitor too close to the header to sit on (the header would catch him): point at it from where he is
-        var st = seatOf(mon);
-        if (seatY(st) < hh() + hangGap() + 8 || st.top > innerHeight - 24) {
-          var me = crewEl.getBoundingClientRect();
-          crewEl.classList.toggle('flip', (st.left + st.right) / 2 < me.left + me.width / 2);
-          return point(line);
-        }
-        return hop(mon).then(function () { if (inRoom(room)) return point(line); });
-      });
-    });
+  // From wherever he is to the shop's pavement (after the stop and the delay)
+  function goShop() {
+    var r = shopRect(), target = { x: r.left, y: r.top };
+    if (mode === 'home') { takeFromHome(); return rappelTo(target, 'shop'); }
+    if (mode === 'tucked') fromTopBar(pos.x);
+    if (mode === 'perch') {
+      var pr = crewEl.getBoundingClientRect();
+      if (pr.top >= innerHeight) { fromBelow(perchDoc.x - scrollX); return riseTo(target, 'shop'); }
+      if (pr.bottom <= hh()) fromTopBar(pr.left); else putFixed(pr.left, pr.top);
+    }
+    return rappelTo(target, 'shop');
   }
-  function nearestToButtons(room) {
-    var b = room.querySelector('.room-bar').getBoundingClientRect(), best = null, bd = Infinity;
-    room.querySelectorAll('.mon').forEach(function (m) {
-      var r = m.getBoundingClientRect(), d = Math.hypot(r.left - b.left, r.bottom - b.top);
-      if (d < bd) { bd = d; best = m; }
-    });
-    return best;
+  // The shop has left the screen while he was in it
+  function outOfShop() {
+    var p = shopEl.querySelector('.shop-pic').getBoundingClientRect(), r = shopRect();
+    if (p.bottom <= hh()) {                                     // scrolled down past it: in from the top bar
+      leaveShop(); fromTopBar(r.left);
+      var seat = nearestBelow(handAt().x, pos.y);
+      if (seat) rappelTo(seat);
+      return true;
+    }
+    if (p.top >= innerHeight) {                                 // scrolled up past it: up from below, the usual way
+      var home = homeInView(), s2 = !home && nearestAbove(r.left + cw() / 2);
+      if (!home && !s2) return false;                           // nothing in view to go to: he stays in the shop
+      leaveShop(); fromBelow(r.left);
+      if (home) { var h = homeRect(); riseTo({ x: h.left, y: h.top }, true); } else riseTo(s2);
+      return true;
+    }
+    return false;
   }
-  // First time he lands on the wall: point out what's wrong, then hand over to the visitor
-  function intro(room) {
-    if (room.dataset.crewIntro || room.classList.contains('connected')) return;
-    room.dataset.crewIntro = '1';
-    ['bank', 'sheet', 'inv'].forEach(function (k) {
-      var m = room.querySelector('.mon[data-k="' + k + '"]');
-      if (m) { showRound(room, m, ROOM_LINES[k]); enqueue(function () { return sleep(reduced ? 0 : 1800); }); }
-    });
-    showRound(room, nearestToButtons(room), ROOM_LINES.hello);
-  }
-  doc.addEventListener('room:step', function (e) { showRound(e.detail.room, e.detail.mon, e.detail.line); });
-  doc.addEventListener('room:await', function (e) { showRound(e.detail.room, e.detail.mon, ROOM_LINES.confirm); });
-  doc.addEventListener('room:done', function (e) {
-    showRound(e.detail.room, e.detail.mon, e.detail.line).then(function () {
-      if (!inRoom(e.detail.room) || reduced) return;
-      crewEl.classList.add('tapping'); return sleep(400).then(function () { crewEl.classList.remove('tapping'); });   // the nod
-    });
-  });
-  doc.addEventListener('room:reset', function () { queue = Promise.resolve(); });
   // Contact page: a short typing motion on the CRT's top edge for each ticked chip
   doc.addEventListener('change', function (e) {
     if (reduced || mode !== 'perch' || !perch || !perch.matches('.crt') || !e.target.matches('input[type=checkbox]') || !e.target.checked) return;
@@ -536,6 +524,10 @@
   // During the scroll: only the grab (and freezing a move)
   function duringScroll() {
     if (mode === 'move') { freeze(); return; }
+    if (mode === 'shop') {                                    // behind the shutter the header never catches him
+      if (!shopInside() && shopRect().top <= hh() + hangGap()) takeFromShop();
+      return;
+    }
     if (mode === 'home') {
       if (homeReady() && homeRect().top <= hh() + hangGap()) takeFromHome();
       return;
@@ -564,6 +556,9 @@
     tvAbort();                                                // a move comes first; the telly can wait a moment
     if (scrolling || touching) return;
     if (reduced) { sitStill(); return; }
+    if (mode === 'shop') { outOfShop(); return; }
+    // The Control room's shop on screen and its story unfinished: that's where he goes
+    if (mode !== 'move' && shopWants() && shopInView() && (mode !== 'home' || homeReady())) { goShop(); return; }
     if (mode === 'home' || mode === 'move') return;
     if (mode === 'tucked' && homeInView()) { fromTopBar(pos.x); }
     if (homeInView()) {                                       // back into the hero / band
@@ -602,8 +597,17 @@
 
   // Reduced motion: no moves; after scrolling stops (and the same delay) he simply sits, still, on a box near the middle
   function sitStill() {
+    if (mode === 'shop') {                                    // in the shop he stays while any of it is on screen
+      var sp = shopEl.querySelector('.shop-pic').getBoundingClientRect();
+      if (sp.bottom > hh() && sp.top < innerHeight) return;
+      leaveShop(); crewEl.hidden = true; mode = 'move';
+    }
     if (homeCrew && homeRect().bottom > hh()) {               // one CREW at a time: home on screen keeps him
       crewEl.hidden = true; homeCrew.classList.remove('away'); homeEl.classList.remove('crew-out'); mode = 'home'; perch = null; return;
+    }
+    if (shopWants() && shopInView()) {                        // he simply appears in the shop, still
+      if (homeCrew) { homeCrew.classList.add('away'); homeEl.classList.add('crew-out'); }
+      intoShop(); return;
     }
     var pick = null;
     candidates().forEach(function (s) { if (!pick || Math.abs(s.top - innerHeight * 0.4) < Math.abs(pick.top - innerHeight * 0.4)) pick = s; });

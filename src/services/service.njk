@@ -53,7 +53,7 @@ section: services
         <h2 id="ex-h">A worked example</h2>
         {%- if sc.room %}
         {%- if sc.exampleLead %}<p class="measure muted">{{ sc.exampleLead }}</p>{% else %}{{ ph('one line setting up the example') }}{% endif %}
-        {%- set roomKeys = sc.room %}
+        {%- set roomKeys = sc.room %}{% set shopChip = service.chip %}
         {% include "partials/room.njk" %}
         {%- else %}
         <div class="pair" role="group" aria-label="Example: before and after">

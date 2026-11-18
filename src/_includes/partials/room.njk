@@ -1,16 +1,81 @@
-{#- Control room demo. Set `roomKeys` before including to show only some monitors (service pages). -#}
-<div class="room{% if roomKeys %} mini bv-lg{% endif %}" data-room>
+{#- The Control room demo (design spec section 3, rebuilt 2026-11-18): a bakery's storefront, one unit that fits one
+    screen. CREW lands on the pavement, opens the shutter, checks the six old screens, pulls the shutter down, works
+    behind it (sparks, welding light), and it lifts on one big screen running the order through, tables and chairs
+    in the freed space. The visitor confirms the last step. Without JavaScript (and with reduced motion) the shop
+    shows open on the old screens. Set `roomKeys` to show only some screens (service pages), `shopChip` for the
+    Contact chip the closing button ticks. The street, shutter, sparks and CREW are decoration; the screens' text,
+    the caption and the buttons are real. -#}
+{%- set keys = roomKeys or ['inbox', 'sheet', 'inv', 'del', 'bank', 'dash'] %}
+<div class="shop n{{ keys.length }}{% if roomKeys %} mini{% endif %}" data-shop data-keys="{{ keys | join(' ') }}">
   {%- if roomKeys %}<span class="mono room-tag">Demo · fictional business</span>{% endif %}
-  <div class="room-wall">
-    {%- for m in room.monitors %}{% if not roomKeys or m.k in roomKeys %}
-    <div class="mon flicker bv-md" data-k="{{ m.k }}">{% if m.sticky %}<span class="sticky">{{ m.sticky }}</span>{% endif %}<pre class="scr">{{ m.before | safe }}</pre><span class="label">{{ m.label }}</span><span class="led2" aria-hidden="true"></span></div>
-    {%- endif %}{% endfor %}
-    <svg class="cables" aria-hidden="true" focusable="false"></svg>
+  <div class="shop-unit">
+  <div class="shop-pic">
+    <svg class="shop-art street d" viewBox="0 0 1200 660" aria-hidden="true" focusable="false">
+      <path class="ln2" d="M0 150h150M0 250h150M0 350h150M0 450h150M0 550h150M1050 150h150M1050 250h150M1050 350h150M1050 450h150M1050 550h150M60 150v100M110 250v100M40 350v100M90 450v100M1110 150v100M1160 250v100M1090 350v100M1140 450v100"/>
+      <path class="cable" d="M0 26Q240 70 400 40M800 40Q1000 80 1200 30"/>
+      <path class="ln" d="M440 104V0M760 104V0"/>
+      <rect class="blk2" x="150" y="112" width="900" height="472" stroke="var(--divider)" stroke-width="2"/>
+      <rect class="blk" x="168" y="118" width="864" height="44" stroke="var(--ink-muted)" stroke-width="2"/>
+      <path class="ln2" d="M180 140h840"/>
+      <rect class="blk" x="380" y="20" width="440" height="86" stroke="var(--amber)" stroke-width="2"/>
+      <path class="ln" d="M0 592h1200"/>
+      <path class="ln2" d="M60 620h80M300 640h60M820 630h90M1060 616h70"/>
+      <rect class="blk2" x="1100" y="470" width="56" height="114" stroke="var(--divider)" stroke-width="2"/><path class="ln2" d="M1100 500h56"/>
+    </svg>
+    <svg class="shop-art street p" viewBox="0 0 640 880" aria-hidden="true" focusable="false">
+      <path class="cable" d="M0 14Q160 56 300 22M340 22Q500 60 640 16"/>
+      <path class="ln" d="M150 90V0M490 90V0"/>
+      <rect class="blk2" x="14" y="92" width="612" height="712" stroke="var(--divider)" stroke-width="2"/>
+      <rect class="blk" x="24" y="96" width="592" height="34" stroke="var(--ink-muted)" stroke-width="2"/>
+      <path class="ln2" d="M34 113h572"/>
+      <rect class="blk" x="90" y="8" width="460" height="80" stroke="var(--amber)" stroke-width="2"/>
+      <path class="ln" d="M0 808h640"/>
+      <path class="ln2" d="M40 836h80M300 860h60M500 832h90"/>
+    </svg>
+    <p class="sign" aria-hidden="true"><span>B</span><span>A</span><span class="dead" data-dead>K</span><span>E</span><span class="dead" data-dead>R</span><span class="flk">Y</span></p>
+    <div class="opening">
+      <div class="interior">
+        <div class="wall-before">
+          {%- for m in room.monitors %}{% if m.k in keys %}
+          <figure class="scrn s-{{ m.k }}" data-k="{{ m.k }}"><figcaption class="sr">{{ m.label }}</figcaption><div class="glass">{{ m.html | safe }}</div>{% if m.sticky %}<span class="sticky" aria-hidden="true">{{ m.sticky }}</span>{% endif %}{% if m.k == 'dash' %}<svg class="web" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path d="M40 0L4 36M40 0L18 38M40 0L2 22M30 0q-2 10 10 10M20 0q-4 18 20 20M8 0q-4 28 32 32"/></svg>{% endif %}</figure>
+          {%- endif %}{% endfor %}
+        </div>
+        <div class="wall-after">
+          <figure class="big"><figcaption class="sr">The same order, connected</figcaption>
+            <ol class="rail">
+              {%- for s in room.steps %}{% if not s.needs or s.needs in keys %}<li data-s="{{ s.k }}"><span class="tick" aria-hidden="true">✓</span>{{ s.t }}<span class="sr st"> (to do)</span></li>{% endif %}{% endfor %}
+            </ol>
+            <div class="bpanes">
+              {%- for s in room.steps.concat(room.after) %}{% if not s.needs or s.needs in keys %}
+              <div class="bpane" data-p="{{ s.k }}" data-say="{{ s.say }}">{{ s.html | safe }}</div>
+              {%- endif %}{% endfor %}
+            </div>
+          </figure>
+          <svg class="cafe" viewBox="0 0 280 200" aria-hidden="true" focusable="false">
+            <path class="lampcord" d="M140 -700V40"/><path class="lampshade" d="M122 40h36l10 16h-56z"/><ellipse class="lampbulb" cx="140" cy="58" rx="7" ry="3.5"/>
+            <path d="M45 130h50M70 130v66M56 196h28M28 106v90M28 150h18M46 150v46M112 106v90M112 150h-18M94 150v46"/>
+            <path d="M185 130h50M210 130v66M196 196h28M168 106v90M168 150h18M186 150v46M252 106v90M252 150h-18M234 150v46"/>
+            <path class="cup" d="M60 120h12v9h-12zM200 120h12v9h-12z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="shutter" aria-hidden="true"><span class="leak"></span><span class="slats"></span><span class="handle"></span></div>
+    </div>
+    <div class="sparks" aria-hidden="true">{% for i in range(0, 20) %}<i></i>{% endfor %}</div>
+    <div class="dust" aria-hidden="true">{% for i in range(0, 8) %}<i></i>{% endfor %}</div>
+    <div class="crew shop-crew" aria-hidden="true"></div>{#- his drawing is copied in by room.js: he only appears with it #}
   </div>
-  <div class="room-bar">
-    <button class="btn bv-md connect" type="button">{% icon "workflow" %}Connect them</button>
-    <button class="btn btn-signal bv-md confirm" type="button">{% icon "check" %}Confirm invoice</button>
-    <button class="btn bv-md again" type="button" hidden>Run again</button>
+  <div class="shop-strip">
     <p class="caption" aria-live="polite">{{ room.caption }}</p>
+    <div class="acts" hidden>
+      <button class="btn bv-md" data-act="skip" type="button" hidden>Skip ahead</button>
+      <button class="btn bv-md" data-act="finish" type="button" hidden>Show the finished shop</button>
+      <button class="btn btn-signal bv-md" data-act="confirm" type="button" hidden>{% icon "check" %}Confirm and send</button>
+      <button class="btn bv-md" data-act="yes" type="button" hidden>Yes</button>
+      <button class="btn bv-md" data-act="again" type="button" hidden>Show me again</button>
+      <a class="btn btn-contact bv-md" data-act="talk" href="/contact/?need={{ (shopChip or 'Automate a task') | urlencode }}" hidden>Talk to us about yours</a>
+    </div>
   </div>
+  </div>
+  <script type="application/json" data-shop-text>{{ room.text | dump | safe }}</script>
 </div>
