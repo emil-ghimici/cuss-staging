@@ -6,7 +6,8 @@ bandTip: "No cookies, no trackers. I checked."
 crewStay: true
 scripts: [band]
 title: "Privacy notice | CuSS"
-description: "CuSS uses no cookies, no analytics and no trackers. How emails you send us are handled, including our automatic first reply, who is responsible, and your rights."
+eleventyComputed:
+  description: "CuSS uses no cookies, no analytics and no trackers. How emails you send us are handled{% if site.assistantLive %}, including our automatic first reply{% endif %}, who is responsible, and your rights."
 crumbs:
   - { name: "Home", url: "/" }
   - { name: "Privacy" }
@@ -31,9 +32,11 @@ crumbs:
   <p>The “What do you need?” boxes on this site only write an email in your own email app. Nothing is sent until you send it yourself.</p>
   <p>Emails you send to <a href="mailto:{{ site.email }}">{{ site.email }}</a> are held by our email provider, Zoho Mail, in its EU data centres. They are used only to reply to you and to do business with you. They are kept for as long as needed for that, and for as long as tax records must be kept.</p>
 
+  {%- if site.assistantLive %}{#- shown once the assistant is built and verified (site.js) #}
   <h2>Our automatic first reply</h2>
-  <p>An automatic assistant reads new emails to {{ site.email }} and replies within minutes with a few first questions. It is not a person, and its reply says so. A person from CuSS follows up within one working day. Your email is used only to write that reply.</p>
-  {{ ph('the service the assistant runs on, where it processes emails (EU or not), how long it keeps them, and whether the provider may use them to train its models') }}
+  <p>An automatic assistant, CREW, reads new emails sent to {{ site.crewEmail }} and replies within minutes with a few first questions. It is not a person, and its reply says so. A person from CuSS follows up within two working days. Your email is used only to write that reply. Emails to {{ site.email }} are read only by people.</p>
+  {{ ph('verified facts from the assistant build: the service it runs on, where it processes emails, what is kept where and for how long, whether the provider may use them for training, and the alerts that go to Gmail') }}
+  {%- endif %}
 
   <h2>Hosting</h2>
   <p>This website is hosted on GitHub Pages, run by GitHub, Inc. Like any web host, GitHub records visitors’ IP addresses in its server logs to keep the service secure. We don’t receive or use those logs.</p>

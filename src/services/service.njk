@@ -61,7 +61,7 @@ section: services
           <figure class="mon bv-md"><pre class="scr">{{ scr.text | safe }}</pre><figcaption class="label">Example · {{ scr.label }}</figcaption><span class="led2" aria-hidden="true"></span></figure>
           {%- endfor %}
         </div>
-        {{ ph('a one-paragraph story of the example') }}
+        {%- if sc.story %}<p class="measure muted">{{ sc.story }}</p>{% else %}{{ ph('a one-paragraph story of the example') }}{% endif %}
         {%- endif %}
       </section>
 

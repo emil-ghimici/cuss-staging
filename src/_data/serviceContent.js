@@ -1,7 +1,11 @@
 // Service page content (design spec section 13), keyed by the slug in services.js.
-// COPY STATUS: Automation carries the design chat's draft copy from the agreed mock-up (final copy still to come).
-// The other five services have no copy yet: every missing field renders as a clearly marked placeholder
-// (dashed amber outline, "[Copy to come: …]") and is left out of the FAQPage structured data. Don't fill them by guessing.
+// COPY STATUS: Automation carries the design chat's draft copy from the agreed mock-up. The other five were drafted and
+// agreed with the user on 2026-11-18 (our proposals; business facts from the user's answers that day). Any field left
+// out still renders as a clearly marked placeholder (dashed amber outline, "Copy to come") and is left out of the
+// FAQPage structured data. Don't fill fields by guessing.
+// Hosting line, the same on every page (agreed 2026-11-18): Microsoft's Irish data centre, backed up in the
+// Netherlands; anything outside the EU only if absolutely necessary and the law allows.
+// story: the one-paragraph story beside the before/after screens (pages without the Control room).
 // H1s and titles follow the README pattern "<Service> for small businesses in Ireland".
 // bandTip: CREW's band tip line (README section 7, approved 2026-11-17).
 export default {
@@ -41,7 +45,7 @@ export default {
       { q: 'Do I have to change the software I use?', a: 'Usually not. We connect the tools you already have where we can, and only suggest a change if it clearly saves you money or time.' },
       { q: 'What happens if something goes wrong?', a: 'Every automation logs what it did, stops and tells you when something looks unusual, and can be switched off with one click.' },
       { q: 'How much does it cost?', a: 'It depends on what’s being connected. The first call is free and you get a written quote before any work starts.' },
-      { q: 'Is my data safe?', a: 'We use EU hosting, give the automation only the access it needs, and never sell or share your data.' },
+      { q: 'Is my data safe?', a: 'Your data stays in Microsoft’s Irish data centre, backed up in the Netherlands. We’d only use a service outside the EU if absolutely necessary and the law allows. The automation gets only the access it needs, and we never sell or share your data.' },
     ],
     side: { t: 'Got a task in mind?', d: 'Tell us how it’s done today. The first call is free.' },
     related: ['custom-software', 'dashboards', 'ai-data'],
@@ -49,13 +53,85 @@ export default {
   'custom-software': {
     h1: 'Custom web apps & internal tools for small businesses in Ireland',
     seoTitle: 'Custom web apps & internal tools for Irish businesses',
+    lead: 'We build simple web apps around the way your business already works: one place for the jobs now spread across spreadsheets, email and paper. Your team uses it in a browser, on a computer or a phone.',
     bandTip: 'Built around how you already work.',
+    what: [
+      'Many small businesses run on a spreadsheet that started small and grew: one tab for orders, one for stock, a few columns only one person understands. It works until two people edit it at once, or someone is off and nobody knows where things stand.',
+      'A custom web app gives that work a proper home. Everyone sees the same up-to-date information, each person gets the screens they need, and the steps you always follow are built in, so nothing gets skipped. When your business changes, the app changes with it.',
+    ],
+    get: [
+      'One app for the jobs now spread across spreadsheets, email and paper',
+      'Screens for each role, so everyone sees what they need and nothing else',
+      'Your usual steps built in, with a person approving the important ones',
+      'Works in the browser on a computer, tablet or phone, with nothing to install',
+      'Connected to the tools you keep, like email, Excel or your accounts package',
+    ],
+    whoLead: 'Any business that has outgrown its spreadsheet. For example:',
+    who: [
+      { t: 'A trades business booking jobs on a whiteboard', d: 'Jobs, crews and materials in one place, visible from the van.' },
+      { t: 'A wholesaler tracking orders across three spreadsheets', d: 'One order list everyone works from, with stock updated as it goes.' },
+      { t: 'A training company running courses from an inbox', d: 'Sign-ups, attendance and certificates handled in one place.' },
+    ],
+    exampleLead: 'A small bakery (fictional) takes wholesale orders by email. Here is the same order, before and after it has one app to live in.',
     room: ['inbox', 'sheet', 'inv', 'dash'],
+    steps: [
+      { t: 'Free first call', d: 'You show us how the work is done today: the spreadsheets, the forms, who does what.' },
+      { t: 'We map it and quote', d: 'A short written plan: the screens, who uses each one, what gets built first, and the price.' },
+      { t: 'Built in stages', d: 'We build the screen you’ll use most first and put it in your hands early, then add the rest a piece at a time.' },
+      { t: 'Your data moved across', d: 'What’s in your spreadsheets comes over, checked with you, so nobody starts from a blank screen.' },
+      { t: 'Looked after', d: 'We keep it running and make the changes your business needs as it grows.' },
+    ],
+    faqH: 'Questions about custom web apps',
+    faqs: [
+      { q: 'Why not just use an off-the-shelf app?', a: 'Often you should, and we’ll tell you so. A custom app makes sense when the way you work is what sets you apart, or when you’re paying for several tools that each do half the job.' },
+      { q: 'Can my team use it on their phones?', a: 'Yes. It runs in the browser on computers, tablets and phones, with nothing to install.' },
+      { q: 'What happens to our spreadsheets?', a: 'We move the data into the app and check it with you. You can still export to Excel whenever you need to.' },
+      { q: 'How long does it take?', a: 'You get the first part early and the rest follows in stages. The written quote sets out what comes when.' },
+      { q: 'Who owns the app, and where does it run?', a: 'You do. We usually run it in Microsoft’s Irish data centre, backed up in the Netherlands. If what the app does calls for it, it can run on your own computers instead: the recommendation follows what you need. Anything outside the EU only if absolutely necessary and the law allows.' },
+      { q: 'How much does it cost?', a: 'It depends on what the app needs to do. The first call is free and you get a written quote before any work starts.' },
+    ],
+    side: { t: 'Outgrown your spreadsheet?', d: 'Show us how it works today. The first call is free.' },
     related: ['automation', 'dashboards', 'cloud-it-consulting'],
   },
   dashboards: {
     h1: 'Dashboards & reports for small businesses in Ireland',
+    lead: 'We bring the numbers scattered across your till, spreadsheets and accounts into one page that’s always up to date. You see how the business is doing without building the report yourself.',
     bandTip: 'Every number in one place. No digging.',
+    what: [
+      'Most owners can find any number they need, eventually. Sales are in the till system, costs in the accounts package, orders in a spreadsheet, and the weekly report is whatever someone had time to put together on a Sunday night.',
+      'A dashboard gathers those numbers for you and shows the handful that matter on one screen: what came in, what went out, what’s owed, what’s running low. It updates on its own, so the figures you look at on Monday morning are Monday morning’s.',
+    ],
+    get: [
+      'One page with the numbers that matter, updated on its own',
+      'Figures pulled from the tools you already use: till, accounts, spreadsheets',
+      'A flag when something needs a look, like an unpaid invoice or low stock',
+      'On a computer or a phone, shared only with the people you choose',
+      'Everything still exportable to Excel or PDF',
+    ],
+    whoLead: 'Any business where the weekly figures take an evening to put together. For example:',
+    who: [
+      { t: 'A café with two locations', d: 'Sales, wages and waste for both, side by side, every morning.' },
+      { t: 'A builders’ merchant chasing unpaid accounts', d: 'Who owes what, and for how long, without opening the ledger.' },
+      { t: 'An online shop selling on three platforms', d: 'Orders and stock from every channel added up in one place.' },
+    ],
+    story: 'A small wholesaler (fictional) ends every week with an evening in a spreadsheet: copying sales from the till, costs from the accounts package, and asking around for the figures that are missing. By the time the report is done, it’s out of date. With a dashboard, the same figures gather themselves overnight, and Monday starts with one page that shows the week.',
+    steps: [
+      { t: 'Free first call', d: 'Tell us which numbers you look for, and where you find them today.' },
+      { t: 'We map it and quote', d: 'A short written plan: the figures, where each one comes from, who sees what, and the price.' },
+      { t: 'The first page goes live', d: 'We start with the figures you check most, so the page earns its keep from the first stage.' },
+      { t: 'Add the rest', d: 'More sources and views, one at a time, each checked against your own figures.' },
+      { t: 'Looked after', d: 'We keep the figures flowing. If a tool you use changes, we adjust it.' },
+    ],
+    faqH: 'Questions about dashboards & reports',
+    faqs: [
+      { q: 'Do I need to change my accounts software?', a: 'Usually not. We read the figures from the tools you already use, and only suggest a change if it clearly saves you time or money.' },
+      { q: 'How up to date are the numbers?', a: 'As fresh as the sources allow: some update every few minutes, some once a night. The written plan says which is which.' },
+      { q: 'Can my accountant see it too?', a: 'Yes, if you want them to. You choose who sees what, and you can still export the figures to Excel or PDF.' },
+      { q: 'What if a number looks wrong?', a: 'Each figure shows where it came from, so you can check it against the source. Before we hand it over, we check the totals with you.' },
+      { q: 'Where is my data kept?', a: 'In Microsoft’s Irish data centre, backed up in the Netherlands. Anything outside the EU only if absolutely necessary and the law allows.' },
+      { q: 'How much does it cost?', a: 'It depends on how many places the figures come from. The first call is free and you get a written quote before any work starts.' },
+    ],
+    side: { t: 'Spending your Sundays on spreadsheets?', d: 'Tell us which numbers you need. The first call is free.' },
     // Before/after screens: illustrative only (labelled Example), draft wording for review
     screens: {
       before: { label: 'Before', text: '<span class="dim">SALES_final(2).xlsx</span>\nTab 1   Tab 2   Tab 2 (old)\nMon   =SUM(B2:B9) <span class="amb">#REF!</span>\nTue   ask Mary\n<span class="amb">updated: 3 weeks ago</span>' },
@@ -65,7 +141,44 @@ export default {
   },
   websites: {
     h1: 'Websites for small businesses in Ireland',
+    lead: 'We build fast, clear websites that tell people what you do, where you are and how to reach you, on any phone. Built to load in a second and to be found on Google.',
     bandTip: 'Open for business, even at 3 a.m.',
+    what: [
+      'For most local businesses, the website is the first thing a new customer sees: usually on a phone, often in a hurry. If it’s slow, hard to read or out of date, they go back to Google and pick the next one.',
+      'A good small-business website doesn’t need to be big. It needs to load in a second, answer the questions people actually have (what you do, where you are, when you’re open, how to get in touch) and make calling or finding you one tap away. That’s what we build.',
+    ],
+    get: [
+      'A site that loads fast on any phone, tablet or computer',
+      'Call, directions and contact one tap away',
+      'Set up to be found on Google, including your Google Business Profile for local searches',
+      'Plain, clear pages that answer what your customers ask',
+      'Yours: the domain, the content and the accounts',
+    ],
+    whoLead: 'Any business people look up before they call. For example:',
+    who: [
+      { t: 'A plumber who gets most work by word of mouth', d: 'Somewhere to send people that makes the phone ring, with the areas you cover.' },
+      { t: 'A restaurant with its menu in a PDF', d: 'Menu, opening hours and a booking link, readable on a phone in one tap.' },
+      { t: 'A shop with a site nobody has touched since 2019', d: 'A fresh site that loads fast and shows today’s hours and offers.' },
+    ],
+    story: 'A small hardware shop (fictional) has a website built years ago. It takes eight seconds to load on a phone, still shows last year’s opening hours, and the phone number is a picture you can’t tap. People searching for a hardware shop nearby give up and go elsewhere. The new site loads in under a second, puts Call and Directions at the top and shows today’s hours, so the people who find it are the people who call.',
+    steps: [
+      { t: 'Free first call', d: 'Tell us who your customers are and what they ask before they buy.' },
+      { t: 'We map it and quote', d: 'A short written plan: the pages, what each one says, how people will find you, and the price.' },
+      { t: 'A first version to try', d: 'You try it on your own phone early, and we change it until it’s right.' },
+      { t: 'Live and found', d: 'We put it online, connect your domain, set up the basics Google looks for, and set up your Google Business Profile, so you show up on Maps and in local searches.' },
+      { t: 'Looked after', d: 'We keep it fast and secure, and make changes when your business changes.' },
+    ],
+    faqH: 'Questions about websites',
+    faqs: [
+      { q: 'How long does a website take?', a: 'It depends on how many pages you need. The written quote sets out what comes when, and you see a first version early.' },
+      { q: 'Will it show up on Google?', a: 'Every site gets the basics Google looks for: fast pages, clear headings, your location and services spelled out, and a sitemap. We also set up your Google Business Profile, which is what puts you on Maps. Nobody can honestly promise the top spot, but a fast, clear site gives you the best start.' },
+      { q: 'I already have a website. Can you fix it instead?', a: 'Sometimes, yes. We’ll look at what you have on the first call and tell you honestly whether it’s worth fixing or quicker to start again.' },
+      { q: 'Do I own the website?', a: 'Yes. The domain, the content and the accounts are in your name, so you can move on whenever you like.' },
+      { q: 'Can I update it myself?', a: 'It depends on the site. Simple changes like opening hours, prices or photos can go in a small settings panel you manage yourself. Anything bigger goes through us, or whoever you choose for the job: it’s your site, so you’re never tied to us. The written plan says which is which for yours.' },
+      { q: 'Where will my website be hosted?', a: 'It depends on your budget, the size of the site and what it needs to do. The written plan recommends a host, says where it is and what it costs, before anything is set up. Anything outside the EU only if absolutely necessary and the law allows.' },
+      { q: 'How much does it cost?', a: 'It depends on the pages and features you need. The first call is free and you get a written quote before any work starts.' },
+    ],
+    side: { t: 'Is your website costing you calls?', d: 'Send us the link. The first call is free.' },
     screens: {
       before: { label: 'Before', text: '<span class="dim">yourbusiness.ie</span>\n<span class="amb">loading… 8.4 s</span>\n\nWelcome to our website!\n<span class="dim">(last updated 2019)</span>' },
       after: { label: 'After', text: '<span class="dim">yourbusiness.ie</span>\nLoaded in 0.9 s\n\n<span class="hz">[ Call us ]  [ Directions ]</span>\nOpen today 9–6' },
@@ -74,7 +187,44 @@ export default {
   },
   'cloud-it-consulting': {
     h1: 'Cloud & IT consulting for small businesses in Ireland',
+    lead: 'We sort out the IT behind a small business: email, accounts, backups, sign-ins and the cloud services you pay for. Set up properly once, explained in plain words, and looked after.',
     bandTip: 'Keeping everything up and pointed the right way.',
+    what: [
+      'Most small businesses never set out to design their IT. It grew: a shared email password, a laptop nobody has backed up, three subscriptions doing the same job, and one person who knows how it all fits together.',
+      'Cloud & IT consulting means looking at all of that with you, keeping what works, fixing what’s risky and cutting what you pay for twice. You end up with an account for each person, backups that actually run, and a clear note of what you have and why.',
+    ],
+    get: [
+      'A plain-words review of what you have, what’s risky and what costs too much',
+      'Microsoft 365 or Google Workspace set up properly: an account for each person, shared mailboxes, two-step sign-in',
+      'Backups that run on their own, with a restore tested, not just hoped for',
+      'Moves to the cloud planned so work carries on while they happen',
+      'A written record of your set-up in plain words, so you know what you have and why, and never depend on one person',
+    ],
+    whoLead: 'Any business that has grown faster than its IT. For example:',
+    who: [
+      { t: 'An office of eight sharing one email login', d: 'Everyone with their own account, and the shared inbox still shared.' },
+      { t: 'A practice with its files on one ageing PC', d: 'Files in the cloud, backed up nightly, reachable from wherever they’re allowed.' },
+      { t: 'A shop paying for software nobody remembers signing up for', d: 'Subscriptions reviewed and trimmed, so you pay for what you use.' },
+    ],
+    story: 'A small accountancy office (fictional) runs on a shared email login, an old PC in the back room and passwords on a sticky note. The last backup ran 214 days ago, and nobody noticed. After the work, each person has their own account with two-step sign-in, files live in the cloud with nightly backups in the EU, and the sticky note is gone.',
+    steps: [
+      { t: 'Free first call', d: 'Tell us what you use, what worries you, and what you pay for.' },
+      { t: 'We map it and quote', d: 'A short written plan: what we’ll check, what we’d change first, and the price.' },
+      { t: 'The risky things first', d: 'Backups, sign-ins and shared passwords come first, because they hurt most when they go wrong.' },
+      { t: 'Move and tidy', d: 'Files, email and subscriptions moved or trimmed step by step, while work carries on.' },
+      { t: 'Looked after', d: 'We keep an eye on backups, updates and sign-ins, on a monthly plan or simply when you need us.' },
+    ],
+    faqH: 'Questions about cloud & IT',
+    faqs: [
+      { q: 'Do you come to us?', a: 'Yes, anywhere around the Midlands, at the points where being in the room matters: when the work starts, when we map out how things are done today, when we show you what we’ve built, and on delivery. The work in between happens remotely, across Ireland.' },
+      { q: 'Do we have to move everything to the cloud?', a: 'No. We recommend the cloud where it saves you money or risk, and keep things local where that suits you better. The recommendation follows what you need.' },
+      { q: 'Will you sell us more software?', a: 'Only if it’s absolutely needed. Most businesses already pay for more than they use, so we’d rather cut what you pay for than add to it.' },
+      { q: 'Do we need a monthly support plan?', a: 'Not necessarily. We can look after things on a monthly plan or just when you need us, and the written plan recommends whichever costs you less for what you have.' },
+      { q: 'We already have an IT person. Can you work with them?', a: 'Yes. We can take on the parts they don’t cover, or go through a plan together. Nobody gets pushed out.' },
+      { q: 'Is our data safe in the cloud?', a: 'Set up properly, it’s safer than one PC in the back room: two-step sign-in, an account for each person, and backups that are checked. We host in Microsoft’s Irish data centre, backed up in the Netherlands. Anything outside the EU only if absolutely necessary and the law allows.' },
+      { q: 'How much does it cost?', a: 'It depends on how many people and devices are involved. The first call is free and you get a written quote before any work starts.' },
+    ],
+    side: { t: 'Not sure what you’re paying for?', d: 'Tell us what you use today. The first call is free.' },
     screens: {
       before: { label: 'Before', text: '<span class="dim">BACKUPS</span>\nLast run: <span class="amb">214 days ago</span>\nPasswords: on a sticky note\nEmail: shared login' },
       after: { label: 'After', text: '<span class="dim">BACKUPS</span>\nNightly, EU  <span class="hz">✓</span>\nSign-in: two-step  <span class="hz">✓</span>\nEmail: one account each <span class="hz">✓</span>' },
@@ -83,7 +233,42 @@ export default {
   },
   'ai-data': {
     h1: 'AI & data projects for small businesses in Ireland',
+    lead: 'We put AI to work on the jobs that eat your week, like answering the same email questions or reading details off forms, with a person checking anything that matters. For bigger data work we bring in partners we trust.',
     bandTip: 'This one’s a team job. We bring in partners.',
+    what: [
+      'AI is useful to a small business when it takes a dull, repetitive job off someone’s desk: drafting replies to the questions you get every day, reading invoices or forms, sorting what comes in, or spotting patterns in your sales.',
+      'It isn’t magic, and it shouldn’t run unsupervised. We start with one clear job, set it up so it drafts and a person approves, and check that it really saves time. Where a project needs deeper data or machine-learning skills, we bring in partners and stay your one point of contact.',
+    ],
+    get: [
+      'One clear job handed to AI, chosen for the time it saves',
+      'Drafts and suggestions a person approves, so nothing goes out unchecked',
+      'Invoices and forms read and filed, with anything unusual flagged for you',
+      'Running costs set out in the quote, so there are no surprises later',
+      'Partners for the bigger data work, with us as your one point of contact',
+    ],
+    whoLead: 'Any business where the same question, form or document turns up again and again. For example:',
+    who: [
+      { t: 'A delivery business answering “Do you deliver to…?” all day', d: 'Replies drafted from your own answers, ready to check and send.' },
+      { t: 'An office keying in details from paper forms', d: 'Forms read and the details filled in, with anything unclear flagged.' },
+      { t: 'A retailer with years of sales figures and no time to look', d: 'What sells, when and to whom, spelled out in plain words.' },
+    ],
+    story: 'A small farm shop (fictional) gets around two hundred emails a week, and most ask the same few things: do you deliver to Moate, are you open on Sunday, can I order for Friday. Answering them takes an afternoon. With an assistant drafting replies from the shop’s own answers, most are ready after a quick look, and the few that need a person stand out at the top. Nothing goes out without someone reading it.',
+    steps: [
+      { t: 'Free first call', d: 'Tell us which job eats the most time, and show us a few real examples.' },
+      { t: 'We map it and quote', d: 'A short written plan: the job, what the AI does, where a person checks, what it costs to run, and the price.' },
+      { t: 'A small trial', d: 'We try it on copies of your real examples first, so you see how well it does before you rely on it.' },
+      { t: 'Into daily use', d: 'It goes live with a person approving its work, and we fine-tune it as you use it.' },
+      { t: 'Looked after', d: 'We keep an eye on its quality and adjust it as your business changes.' },
+    ],
+    faqH: 'Questions about AI & data projects',
+    faqs: [
+      { q: 'Will AI send things to my customers on its own?', a: 'Not unless you want it to. We set it up to draft and suggest, and a person approves anything that goes out.' },
+      { q: 'Do I need lots of data to start?', a: 'No. Jobs like drafting replies or reading forms work from a handful of examples. Bigger analysis needs more history, and the first call tells you which yours is.' },
+      { q: 'Who are your partners?', a: 'Specialists in data and machine learning we’ve worked with and trust, brought in for the bigger projects. You deal with us throughout, and the written plan says who else is involved.' },
+      { q: 'Is my data used to train AI models?', a: 'It depends on the AI service the job runs on: each provider’s own terms apply. The written plan names the service and says plainly whether it may use your data for training, so you decide with the facts in front of you. Anything outside the EU only if absolutely necessary and the law allows.' },
+      { q: 'How much does it cost?', a: 'It depends on the job and the AI service it runs on. The first call is free, and the written quote covers both the build and the running costs before any work starts.' },
+    ],
+    side: { t: 'Got a job that repeats all day?', d: 'Show us a few examples. The first call is free.' },
     screens: {
       before: { label: 'Before', text: '<span class="dim">INBOX</span>\n212 unread\n<span class="amb">"Do you deliver to Moate?"</span>\n<span class="amb">"Do you deliver to Moate??"</span>' },
       after: { label: 'After', text: '<span class="dim">INBOX</span>\n180 replies drafted\n32 need you\n<span class="hz">Nothing sent without a look</span>' },

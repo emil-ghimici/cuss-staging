@@ -22,11 +22,12 @@ export default {
     { icon: 'map-pin', t: 'Local, and happy to meet', d: 'Based in Athlone. We’ll come to you anywhere around the Midlands, and work remotely across Ireland.' },
     { icon: 'message-circle', t: 'Plain English', d: 'No jargon, no 40-page proposals. You’ll always know what you’re paying for and why.' },
     { icon: 'key', t: 'You own it', d: 'Your software, your data, your accounts. No lock-in if you ever want to move on.' },
-    { icon: 'shield', t: 'Careful with your data', d: 'Hosted in the EU, GDPR-minded from day one, and only the access we actually need.' },
+    { icon: 'shield', t: 'Careful with your data', d: 'Hosted in Microsoft’s Irish data centre, backed up in the Netherlands. Outside the EU only if absolutely necessary and the law allows. GDPR-minded from day one.' },
   ],
   faqs: [
     { q: 'How much does it cost?', a: 'It depends on the job, so we don’t publish prices. The first call is free, and you get a written quote before any work starts. No surprises.' },
     { q: 'We’re a small business. Is this for us?', a: 'Yes. Most of our work is for businesses with a handful of people, where a few hours saved every week makes a real difference.' },
+    { q: 'Do you come to us?', a: 'Yes, anywhere around the Midlands, at the points where being in the room matters: when the work starts, when we map out how things are done today, when we show you what we’ve built, and on delivery. The work in between happens remotely, across Ireland.' },
     { q: 'How long does a project take?', a: 'Small automations can be running within a couple of weeks; bigger apps are built in stages so you can use the first parts early.' },
     { q: 'What if you’re not around one day?', a: 'You own the code, the data and the accounts, and everything is documented, so another developer can pick it up.' },
     { q: 'Do you do AI?', a: 'Where it genuinely helps, yes: sorting emails, reading invoices, answering common questions. For bigger data projects we work with a partner team.' },
