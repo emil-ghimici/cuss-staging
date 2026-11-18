@@ -3,7 +3,7 @@
 .lost-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-7);align-items:center}
 .lost-scene{position:relative;height:300px;--u:1px}
 .lost-scene .street{position:absolute;inset:0;width:100%;height:100%}
-.glyph{position:absolute;left:0;top:0;font:600 34px/1 var(--font-display);color:var(--hazard);transform:translate(var(--x),var(--y)) rotate(var(--r));transition:transform 1.1s cubic-bezier(.3,1.2,.5,1),opacity .4s}
+.glyph{position:absolute;font:600 34px/1 var(--font-display);color:var(--hazard);transform:translate(var(--x,0px),var(--y,0px)) rotate(var(--r,0deg));transition:transform 1.1s cubic-bezier(.3,1.2,.5,1),opacity .4s}
 .lost-404{position:absolute;left:50%;top:60px;transform:translateX(-50%);font:600 120px/1 var(--font-display);color:var(--amber);opacity:0;letter-spacing:.06em;transition:opacity .6s .9s}
 .lost.swept .lost-404{opacity:1;filter:drop-shadow(0 0 10px var(--glow-amber))}
 .lost.swept .glyph{opacity:0}

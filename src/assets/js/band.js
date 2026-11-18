@@ -125,25 +125,19 @@
     var lines = (lost.getAttribute('data-crew-tip') || '').split(' · ');
     var n = 0;
     makeBubble(ls, lcrew, function () { return lines[n++ % lines.length]; });
-    // Scatter the glyphs across the floor of the scene
-    var w = ls.clientWidth, h = ls.clientHeight;
-    glyphs.forEach(function (g, i) {
-      g.style.setProperty('--x', (w * (0.08 + 0.7 * ((i * 37) % 11) / 11)) + 'px');
-      g.style.setProperty('--y', (h - 60 - ((i * 53) % 5) * 22) + 'px');
-      g.style.setProperty('--r', (((i * 71) % 9) - 4) * 9 + 'deg');
-    });
+    // The glyphs start scattered across the floor (placed in the HTML); measured only when he sweeps, after load
     function swept() { lost.classList.add('swept'); lost.classList.remove('sweeping'); }
     if (reduced) { swept(); return; }
     (window.cussLate || Promise.resolve()).then(function () { whenIdle(function () {
       sleep(800).then(function () {
         // He sweeps towards the middle; the glyphs gather into a pile, which settles into "404"
         lost.classList.add('sweeping');
-        var dx = -(w * 0.35);
+        var w = ls.clientWidth, h = ls.clientHeight, dx = -(w * 0.35);
         lcrew.style.setProperty('--x', dx + 'px'); broom.style.setProperty('--x', dx + 'px');
         lcrew.classList.add('rolling'); setTimeout(function () { lcrew.classList.remove('rolling'); }, 1400);
-        glyphs.forEach(function (g, i) {
-          g.style.setProperty('--x', (w * 0.42 + (i % 4) * 14) + 'px');
-          g.style.setProperty('--y', (h - 80 - Math.floor(i / 4) * 16) + 'px');
+        glyphs.forEach(function (g, i) {   // into a pile in the middle: moved from where each one lies
+          g.style.setProperty('--x', (w * 0.42 + (i % 4) * 14 - g.offsetLeft) + 'px');
+          g.style.setProperty('--y', (h - 80 - Math.floor(i / 4) * 16 - g.offsetTop) + 'px');
           g.style.setProperty('--r', '0deg');
         });
         return sleep(1500);

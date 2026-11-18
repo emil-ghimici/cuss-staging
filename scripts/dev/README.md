@@ -1,8 +1,27 @@
 # Dev checks (not part of the site)
 
 The app's browser pane throttles animation frames, so timing has to be checked in a real headless Chrome.
+Every script here talks to Chrome over the DevTools protocol (no packages) and turns the HTTP cache off: a reused
+headless profile otherwise serves a stale page after a rebuild.
 
-- `node scripts/dev/serve.mjs _site 8090` serves the production build with gzip and Pages-like caching (run after `npx @11ty/eleventy`). Lighthouse runs against it: `npx -y lighthouse@12.6.1 http://localhost:8090/ --quiet [--preset=desktop] --chrome-flags="--headless=new" --output=json --output-path=<file>`.
-- `node scripts/dev/watch-crew.mjs <url> <seconds> <width> [reduce] [probe.js]` opens the page in headless Chrome (DevTools protocol, no packages), optionally with reduced motion, runs a probe script in the page and prints what it returns. Width 500 is the narrowest headless window (phone layout below 761).
-- Probes: `crew-probe.js` (hero CREW's routine), `probe-arm.js` (reach starts at the shoulder; bubbles), `probe-drag.js` (carrying him), `probe-tea.js` (tea in front of the TV), `probe-rappel.js` (scrolling down and up, where he sits), `probe-room.js` (the Control room tour).
-- Git Bash on Windows: prefix staging builds with `MSYS_NO_PATHCONV=1` or `PATH_PREFIX=/cuss-staging/` gets mangled.
+## Serving and Lighthouse
+
+- `node scripts/dev/serve.mjs _site <port>` serves the production build with gzip and Pages-like caching (run after `npx @11ty/eleventy`). Lighthouse runs against it: `npx -y lighthouse@12.6.1 http://localhost:<port>/ --quiet [--preset=desktop] --chrome-flags="--headless=new" --output=json --output-path=<file>`.
+- Mobile scores move by a point between runs and machines. Before chasing a lost point, build the last commit side by side (a `git worktree`) and score both the same way.
+
+## Animation probes
+
+- `node scripts/dev/watch-crew.mjs <url> <seconds> <width> [reduce] [probe.js]` opens the page, optionally with reduced motion, runs a probe in the page and prints what it returns. Width 500 is the narrowest headless window (phone layout below 761).
+- Hero: `crew-probe.js` (routine), `probe-arm.js` (reach and bubbles), `probe-drag.js` (carrying him), `probe-tea.js` (tea), `probe-jobs.js` (lamp and pipe; open the page with `#crew-fast` so breaks come ten times sooner).
+- Guide: `probe-travel.js` (moves only after scrolling stops and the delay; freezes mid-move), `probe-rappel.js` (where he sits), `probe-landing.js` (no jump on landing, the arm stays on him, rolling; run at 500–760 too), `probe-pull.js` (the second arm only ever pulls), `probe-handback.js` (same size, spot and facing on the swap), `probe-arm3.js` (no arm left floating while he's at home), `probe-contact.js` (Contact page: on the CRT, never by the send button), `probe-room.js` (Control room tour).
+
+## Page checks
+
+- `node scripts/dev/shot.mjs <url> <out.png> [width] [light|dark] [waitMs] [scrollY] [height] [js]` takes a screenshot (`REDUCE=1` for reduced motion).
+- `node scripts/dev/contrast.mjs <base-url> <width> <path>...` checks text contrast in both themes (4.5:1, 3:1 for large text). `MIN=21` makes everything fail: a sanity check that the probe still works.
+- `node scripts/dev/font-swap.mjs <base-url> <width> <path>...` checks that headings wrap the same with the fallback fonts as with the web fonts (a mismatch shifts the page when the fonts arrive).
+- `node scripts/dev/shifts.mjs <url> [width]` logs layout shifts on a phone-sized, CPU-throttled load; `node scripts/dev/longtasks.mjs <url> [width]` profiles the load and lists the heaviest functions.
+
+## Windows / Git Bash
+
+- Prefix with `MSYS_NO_PATHCONV=1` whenever an argument is a path or starts with `/` (URL paths, `PATH_PREFIX=/cuss-staging/` for staging builds), or Git Bash rewrites it into a Windows path.

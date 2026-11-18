@@ -77,10 +77,12 @@
     if (hand) hand.style.transform = 'translate(' + x2.toFixed(1) + 'px,' + y2.toFixed(1) + 'px)';
   }
   function flipped() { return crewEl.classList.contains('flip'); }
+  // Where he is on screen right now: in the fixed layer that's pos; sitting on a box he's part of the page
+  function at() { if (crewEl.parentNode === fixedEl) return pos; var r = crewEl.getBoundingClientRect(); return { x: r.left, y: r.top }; }
   function handAt() { return { x: pos.x + cw() * (flipped() ? 0.38 : 0.62), y: pos.y + ch() * 0.04 }; }
   // His main arm's shoulder (the same point the hero's telescopic arm grows from) and the second arm's (the stub on his other side)
-  function shoulder1() { return { x: pos.x + cw() * (flipped() ? 12 : 66) / 78, y: pos.y + ch() * 54 / 104 }; }   // body's edge: straight up clears his head
-  function shoulderAt() { return { x: pos.x + cw() * (flipped() ? 65.5 : 12.5) / 78, y: pos.y + ch() * 54 / 104 }; }
+  function shoulder1() { var p = at(); return { x: p.x + cw() * (flipped() ? 12 : 66) / 78, y: p.y + ch() * 54 / 104 }; }   // body's edge: straight up clears his head
+  function shoulderAt() { var p = at(); return { x: p.x + cw() * (flipped() ? 65.5 : 12.5) / 78, y: p.y + ch() * 54 / 104 }; }
   function tilt(deg) { svg.style.rotate = deg ? deg.toFixed(2) + 'deg' : ''; }
 
   /* ---------- Boxes he can sit on ---------- */
@@ -273,17 +275,23 @@
   }
   function arrive(seat, toHome, wantX) {
     tilt(0); crewEl.classList.remove('hang');
+    var armOut = arm1.classList.contains('on');
     retractArm1();
-    if (toHome) { backHome(); return; }
+    // Home: the arm comes all the way in before the hero's (or band's) CREW takes over, never left floating
+    if (toHome) return sleep(armOut ? RETRACT_MS + 30 : 0).then(backHome);
     squash();
     return sitOn(seat.el, wantX);
   }
-  // Sits where he landed; if he wants to be further along the box, he rolls there on his tracks
+  // Sits exactly where he landed (never moved on the spot); if he wants to be further along the box, he rolls
+  // there on his tracks, once his arm is back in
   function sitOn(el, wantX) {
-    var s = seatOf(el), x = seatX(s, pos.x + cw() / 2), y = seatY(s);
+    var s = seatOf(el), lo = s.x !== undefined ? s.x : s.left + 6, hi = s.x !== undefined ? s.x : Math.max(lo, s.right - cw() - 6);
+    var x = Math.max(lo, Math.min(hi, pos.x)), y = seatY(s);
     putDoc(x + scrollX, y + scrollY);
     perch = el; mode = 'perch'; clearTimeout(peekT);
-    var go = wantX !== undefined && Math.abs(wantX - x) > 4 && !reduced ? roll(wantX - x) : Promise.resolve();
+    var go = wantX !== undefined && Math.abs(wantX - x) > 4 && !reduced
+      ? sleep(arm1.classList.contains('on') ? RETRACT_MS + 30 : 0).then(function () { return perch === el ? roll(wantX - x) : null; })
+      : Promise.resolve();
     return go.then(function () {
       if (perch !== el) return;
       var k = el.getAttribute('data-crew-stop');
@@ -462,6 +470,7 @@
     doc.dispatchEvent(new CustomEvent('crew:left'));
   }
   function backHome() {
+    ++arm1Gen; arm1Off(); dropArm2();                                         // nothing of his left on screen
     homeCrew.classList.toggle('flip', crewEl.classList.contains('flip'));   // facing the same way: no flip on the swap
     crewEl.hidden = true; mode = 'home'; perch = null;
     homeCrew.classList.remove('away'); homeEl.classList.remove('crew-out');

@@ -47,9 +47,17 @@
 .scene .crew{cursor:default}
 @media (min-width: 761px) and (prefers-reduced-motion: no-preference){.scene .crew.live{cursor:grab}}
 @media (prefers-reduced-motion: reduce){.flick{animation:none}}
-/* His tracks: darker links on the belt that run while he rolls (one link every 6 units, so a 6-unit loop is seamless) */
+/* His tracks: darker links across the belt's top and bottom runs, over its edge; while he rolls the top run moves
+   forward and the bottom run back, like a real track (one link every 6 units, so a 6-unit loop is seamless) */
 .crew .links,.g-crew .links{transform-box:view-box}
-.crew.rolling .links,.g-crew.rolling .links{animation:links .28s linear infinite}
-@keyframes links{to{transform:translateX(6px)}}
+.crew.rolling .links-top,.g-crew.rolling .links-top{animation:links-top .28s linear infinite}
+.crew.rolling .links-bot,.g-crew.rolling .links-bot{animation:links-bot .28s linear infinite}
+@keyframes links-top{to{transform:translateX(6px)}}
+@keyframes links-bot{to{transform:translateX(-6px)}}
+/* Round the ends the links turn with the belt (clockwise when he rolls right; mirrored when he faces left) */
+.crew .links-l,.g-crew .links-l{transform-origin:21.5px 93.5px}
+.crew .links-r,.g-crew .links-r{transform-origin:56.5px 93.5px}
+.crew.rolling .links-l,.g-crew.rolling .links-l,.crew.rolling .links-r,.g-crew.rolling .links-r{animation:links-end .28s linear infinite}
+@keyframes links-end{to{transform:rotate(45deg)}}
 @media (prefers-reduced-motion: reduce){.crew .links,.g-crew .links{animation:none!important}}
 

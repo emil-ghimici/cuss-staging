@@ -25,7 +25,8 @@ description: "This page has gone walkabout. Head back to the CuSS home page."
         <path class="ln" d="M0 276h560"/>
       </svg>
       <div class="lost-404">404</div>
-      {%- for g in ['▓', '#', '?', '░', '¿', '%', '▒', '/', '!', '§', '¦', '∅'] %}<span class="glyph">{{ g }}</span>{% endfor %}
+      {#- Scattered across the floor in the HTML itself (no measuring while the page loads; right without JavaScript too) #}
+      {%- for g in ['▓', '#', '?', '░', '¿', '%', '▒', '/', '!', '§', '¦', '∅'] %}{% set i = loop.index0 %}<span class="glyph" style="left:{{ (8 + 70 * ((i * 37) % 11) / 11) | round(1) }}%;bottom:{{ 36 + ((i * 53) % 5) * 22 }}px;--r:{{ (((i * 71) % 9) - 4) * 9 }}deg">{{ g }}</span>{% endfor %}
       <span class="broom"></span>
       <div class="crew">{% include "svg/crew.njk" %}</div>
     </div>

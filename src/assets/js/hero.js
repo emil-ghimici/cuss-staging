@@ -58,7 +58,6 @@
   var W = 0, H = 0, phone = false, parts = [], ptsC = [], ptsF = [];
   var mqPhone = window.matchMedia('(max-width: 760px)');
   var state = 'broken', lastMove = 0, roll = 0, jolt = 0;
-  var shown = null;          // the words last on screen ('c' CuSS or 'f' full name): breaking disturbs them, it doesn't wipe them
   var ptr = null;            // the pointer or finger on the screen, in canvas pixels
 
   function sample(lines, initials) {
@@ -104,7 +103,7 @@
       parts.push(p);
     }
   }
-  function setState(s) { if (s !== 'broken') shown = s === 'weak' ? 'c' : 'f'; state = s; }
+  function setState(s) { state = s; }
 
   // Static is a pre-drawn noise texture, shown at a random offset each frame: one drawImage, not thousands of rects
   var noiseTex = null, noisePat = null;
@@ -160,7 +159,8 @@
     var rollOff = roll | 0;
 
     var broken = state === 'broken';
-    var set = state === 'weak' ? 'c' : state === 'tuned' ? 'f' : shown;   // broken keeps the last words, disturbed
+    // Broken: the picture scatters entirely, whatever it showed, so it re-forms from nothing (changed 2026-11-18)
+    var set = state === 'weak' ? 'c' : state === 'tuned' ? 'f' : null;
     var amp = broken ? 3.5 : state === 'weak' ? 1.6 : 0.5, size = phone ? 2.5 : 3;
     var R2 = R * R;
     var damp = Math.pow(DAMPING, dt), pull = SPRING * dt;
@@ -174,13 +174,22 @@
           if (d2 < R2) { var d = Math.sqrt(d2) || 1, k = (1 - d / R); k = k * k * R * 0.5; p.tx += dx / d * k + (Math.random() - 0.5) * 10; p.ty += dy / d * k + (Math.random() - 0.5) * 10; }
         }
       }
+      else if (broken) {
+        // Scattered specks drift to random spots across the screen, still pushed about by the pointer
+        if (p.sx === undefined || Math.random() < 0.02) { p.sx = Math.random() * W; p.sy = Math.random() * H; }
+        p.tx = p.sx; p.ty = p.sy;
+        if (ptr) {
+          var ex = p.x - ptr.x, ey = p.y - ptr.y, e2 = ex * ex + ey * ey;
+          if (e2 < R2) { var ed = Math.sqrt(e2) || 1, ek = (1 - ed / R); ek = ek * ek * R * 0.5; p.tx += ex / ed * ek; p.ty += ey / ed * ek; }
+        }
+      }
       else if (Math.random() < 0.05) { p.tx = Math.random() * W; p.ty = Math.random() * H; }
       p.vx = (p.vx + (p.tx - p.x) * pull) * damp; p.vy = (p.vy + (p.ty - p.y) * pull) * damp;
       p.x += p.vx * dt; p.y += p.vy * dt;
-      if (!q || (set === 'c' ? p.cd : p.fd)) continue;
+      if (!broken && (!q || (set === 'c' ? p.cd : p.fd))) continue;
       if ((state === 'weak' && Math.random() < 0.1) || (broken && Math.random() < 0.3)) continue;   // dropouts: noise crawling through
       // shade 0–7: broken sinks into the static, weak shimmers across the range, tuned keeps the initials bright
-      var s = broken ? (Math.random() * 4) | 0 : state === 'weak' ? 1 + ((Math.random() * 6) | 0) : (q.h ? 6 + (Math.random() * 2 | 0) : (Math.random() * 2) | 0);
+      var s = broken ? (Math.random() * 3) | 0 : state === 'weak' ? 1 + ((Math.random() * 6) | 0) : (q.h ? 6 + (Math.random() * 2 | 0) : (Math.random() * 2) | 0);
       lit[s].push(p.x + (Math.random() * 2 - 1) * amp, (p.y + rollOff) % H);
     }
     for (var b = 0; b < 8; b++) {
@@ -603,7 +612,11 @@
   }
   function breakIt() {
     poke();
-    if (state !== 'broken') { setState('broken'); crew.needTV = true; }
+    if (state !== 'broken') {
+      setState('broken'); crew.needTV = true;
+      // Blown apart at once: every speck gets a new spot anywhere on the screen and a kick towards it
+      parts.forEach(function (p) { p.sx = Math.random() * W; p.sy = Math.random() * H; p.vx += (p.sx - p.x) * 0.08; p.vy += (p.sy - p.y) * 0.08; });
+    }
     lastMove = performance.now();
   }
   function thump() {
