@@ -7,7 +7,7 @@ headless profile otherwise serves a stale page after a rebuild.
 ## Serving and Lighthouse
 
 - `node scripts/dev/serve.mjs _site <port>` serves the production build with gzip and Pages-like caching (run after `npx @11ty/eleventy`). Lighthouse runs against it: `npx -y lighthouse@12.6.1 http://localhost:<port>/ --quiet [--preset=desktop] --chrome-flags="--headless=new" --output=json --output-path=<file>`.
-- Mobile scores move by a point between runs and machines. Before chasing a lost point, build the last commit side by side (a `git worktree`) and score both the same way.
+- Mobile scores move by a point between runs and machines. Before chasing a lost point, build the last commit side by side (a `git worktree`) and score both the same way. Before scoring, check the baseline's port is free and that it really serves the old build (grep its HTML for something only one version has): a server left on that port silently serves whatever it was started with, and the comparison is void.
 
 ## Animation probes
 
