@@ -64,9 +64,9 @@ export default {
     { k: 'sent', t: 'Sent', say: 'Confirmed. The rest follows on its own.',
       html: '<p class="dim">SENT</p><p>INV-0142 <span class="ok">sent ✓</span></p><p>Label <span class="ok">printed ✓</span></p>' },
     { k: 'paid', needs: 'bank', t: 'Paid', say: 'Payment arrives and is matched to the invoice.',
-      html: '<p class="dim">BANK</p><p>+€186.00 CAFE ON MAIN</p><p><span class="ok">matched → INV-0142 ✓</span></p><p>Unpaid: €0</p>' },
+      html: '<p class="dim">BANK</p><p>+€186.00 CAFE ON MAIN</p><p><span class="ok">matched → INV-0142 ✓</span></p><p>Overdue: €0</p>' },
     { k: 'dash', needs: 'dash', t: 'Dashboard', say: 'Typed once. Checked by you. Done.',
-      html: '<p class="dim">THIS WEEK</p><p>Sales €4,280 <span class="ok">▲ +€186</span></p><p>Orders 37</p><p>Unpaid €0</p>' },
+      html: '<p class="dim">THIS WEEK</p><p>Sales €4,280 <span class="ok">▲ +€186</span></p><p>Orders 37</p><p>Overdue €0</p>' },
   ],
 
   caption: 'Typed four times. One typo away from a wrong invoice.',

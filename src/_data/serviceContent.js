@@ -54,6 +54,7 @@ export default {
     h1: 'Custom web apps & internal tools for small businesses in Ireland',
     seoTitle: 'Custom web apps & internal tools for Irish businesses',
     lead: 'We build simple web apps around the way your business already works: one place for the jobs now spread across spreadsheets, email and paper. Your team uses it in a browser, on a computer or a phone.',
+    seoDescription: 'Simple web apps built around how your business works: one place for the jobs spread across spreadsheets, email and paper. From Athlone, across Ireland.',
     bandTip: 'Built around how you already work.',
     what: [
       'Many small businesses run on a spreadsheet that started small and grew: one tab for orders, one for stock, a few columns only one person understands. It works until two people edit it at once, or someone is off and nobody knows where things stand.',
@@ -96,6 +97,7 @@ export default {
   dashboards: {
     h1: 'Dashboards & reports for small businesses in Ireland',
     lead: 'We bring the numbers scattered across your till, spreadsheets and accounts into one page that’s always up to date. You see how the business is doing without building the report yourself.',
+    seoDescription: 'Your till, spreadsheets and accounts on one page that is always up to date. Dashboards for small businesses, from Athlone across Ireland. Free first call.',
     bandTip: 'Every number in one place. No digging.',
     what: [
       'Most owners can find any number they need, eventually. Sales are in the till system, costs in the accounts package, orders in a spreadsheet, and the weekly report is whatever someone had time to put together on a Sunday night.',
@@ -135,13 +137,14 @@ export default {
     // Before/after screens: illustrative only (labelled Example), draft wording for review
     screens: {
       before: { label: 'Before', text: '<span class="dim">SALES_final(2).xlsx</span>\nTab 1   Tab 2   Tab 2 (old)\nMon   =SUM(B2:B9) <span class="amb">#REF!</span>\nTue   ask Mary\n<span class="amb">updated: 3 weeks ago</span>' },
-      after: { label: 'After', text: '<span class="dim">THIS WEEK</span>\nSales    €4,280  <span class="hz">▲ 6%</span>\nOrders   37\nUnpaid   €0\n<span class="dim">updated just now</span>' },
+      after: { label: 'After', text: '<span class="dim">THIS WEEK</span>\nSales    €4,280  <span class="hz">▲ 6%</span>\nOrders   37\nOverdue  €0\n<span class="dim">updated just now</span>' },
     },
     related: ['automation', 'custom-software', 'ai-data'],
   },
   websites: {
     h1: 'Websites for small businesses in Ireland',
     lead: 'We build fast, clear websites that tell people what you do, where you are and how to reach you, on any phone. Built to load in a second and to be found on Google.',
+    seoDescription: 'Fast, clear websites for small businesses in Ireland: what you do, where you are and how to reach you, on any phone. Built to be found on Google.',
     bandTip: 'Open for business, even at 3 a.m.',
     what: [
       'For most local businesses, the website is the first thing a new customer sees: usually on a phone, often in a hurry. If it’s slow, hard to read or out of date, they go back to Google and pick the next one.',
@@ -173,9 +176,8 @@ export default {
       { q: 'How long does a website take?', a: 'It depends on how many pages you need. The written quote sets out what comes when, and you see a first version early.' },
       { q: 'Will it show up on Google?', a: 'Every site gets the basics Google looks for: fast pages, clear headings, your location and services spelled out, and a sitemap. We also set up your Google Business Profile, which is what puts you on Maps. Nobody can honestly promise the top spot, but a fast, clear site gives you the best start.' },
       { q: 'I already have a website. Can you fix it instead?', a: 'Sometimes, yes. We’ll look at what you have on the first call and tell you honestly whether it’s worth fixing or quicker to start again.' },
-      { q: 'Do I own the website?', a: 'Yes. The domain, the content and the accounts are in your name, so you can move on whenever you like.' },
+      { q: 'Who owns the website, and where is it hosted?', a: 'You do: the domain, the content and the accounts are in your name, so you can move on whenever you like. Where it’s hosted depends on your budget, the size of the site and what it needs to do. The written plan recommends a host, says where it is and what it costs, before anything is set up. Anything outside the EU only if absolutely necessary and the law allows.' },
       { q: 'Can I update it myself?', a: 'It depends on the site. Simple changes like opening hours, prices or photos can go in a small settings panel you manage yourself. Anything bigger goes through us, or whoever you choose for the job: it’s your site, so you’re never tied to us. The written plan says which is which for yours.' },
-      { q: 'Where will my website be hosted?', a: 'It depends on your budget, the size of the site and what it needs to do. The written plan recommends a host, says where it is and what it costs, before anything is set up. Anything outside the EU only if absolutely necessary and the law allows.' },
       { q: 'How much does it cost?', a: 'It depends on the pages and features you need. The first call is free and you get a written quote before any work starts.' },
     ],
     side: { t: 'Is your website costing you calls?', d: 'Send us the link. The first call is free.' },
@@ -188,6 +190,7 @@ export default {
   'cloud-it-consulting': {
     h1: 'Cloud & IT consulting for small businesses in Ireland',
     lead: 'We sort out the IT behind a small business: email, accounts, backups, sign-ins and the cloud services you pay for. Set up properly once, explained in plain words, and looked after.',
+    seoDescription: 'Email, backups, sign-ins and cloud services for small businesses in Ireland, set up properly once and explained in plain words. Free first call.',
     bandTip: 'Keeping everything up and pointed the right way.',
     what: [
       'Most small businesses never set out to design their IT. It grew: a shared email password, a laptop nobody has backed up, three subscriptions doing the same job, and one person who knows how it all fits together.',
@@ -219,10 +222,9 @@ export default {
       { q: 'Do you come to us?', a: 'Yes, anywhere around the Midlands, at the points where being in the room matters: when the work starts, when we map out how things are done today, when we show you what we’ve built, and on delivery. The work in between happens remotely, across Ireland.' },
       { q: 'Do we have to move everything to the cloud?', a: 'No. We recommend the cloud where it saves you money or risk, and keep things local where that suits you better. The recommendation follows what you need.' },
       { q: 'Will you sell us more software?', a: 'Only if it’s absolutely needed. Most businesses already pay for more than they use, so we’d rather cut what you pay for than add to it.' },
-      { q: 'Do we need a monthly support plan?', a: 'Not necessarily. We can look after things on a monthly plan or just when you need us, and the written plan recommends whichever costs you less for what you have.' },
       { q: 'We already have an IT person. Can you work with them?', a: 'Yes. We can take on the parts they don’t cover, or go through a plan together. Nobody gets pushed out.' },
       { q: 'Is our data safe in the cloud?', a: 'Set up properly, it’s safer than one PC in the back room: two-step sign-in, an account for each person, and backups that are checked. We host in Microsoft’s Irish data centre, backed up in the Netherlands. Anything outside the EU only if absolutely necessary and the law allows.' },
-      { q: 'How much does it cost?', a: 'It depends on how many people and devices are involved. The first call is free and you get a written quote before any work starts.' },
+      { q: 'How much does it cost, and do we need a monthly plan?', a: 'It depends on how many people and devices are involved. We can look after things on a monthly plan or just when you need us, and the written plan recommends whichever costs you less. The first call is free and you get a written quote before any work starts.' },
     ],
     side: { t: 'Not sure what you’re paying for?', d: 'Tell us what you use today. The first call is free.' },
     screens: {
@@ -234,6 +236,7 @@ export default {
   'ai-data': {
     h1: 'AI & data projects for small businesses in Ireland',
     lead: 'We put AI to work on the jobs that eat your week, like answering the same email questions or reading details off forms, with a person checking anything that matters. For bigger data work we bring in partners we trust.',
+    seoDescription: 'AI for the jobs that eat your week, like answering repeat emails or reading forms, with a person checking what matters. From Athlone, across Ireland.',
     bandTip: 'This one’s a team job. We bring in partners.',
     what: [
       'AI is useful to a small business when it takes a dull, repetitive job off someone’s desk: drafting replies to the questions you get every day, reading invoices or forms, sorting what comes in, or spotting patterns in your sales.',

@@ -94,23 +94,71 @@
   function tilt(deg) { svg.style.rotate = deg ? deg.toFixed(2) + 'deg' : ''; }
 
   /* ---------- Boxes he can sit on ---------- */
+  // A junk strip's drawing on the page ("xMidYMid slice", viewBox data-vb): viewBox units to screen px and back
+  function stripMap(el) {
+    var r = el.getBoundingClientRect(), vb = el.getAttribute('data-vb').split(' ').map(Number);
+    var s = Math.max(r.width / vb[0], r.height / vb[1]), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    return {
+      vb: vb,
+      x: function (u) { return cx + (u - vb[0] / 2) * s; },
+      y: function (u) { return cy + (u - vb[1] / 2) * s; },
+      u: function (x) { return (x - cx) / s + vb[0] / 2; }
+    };
+  }
   function seatOf(el) {
     var r = el.getBoundingClientRect(), k = el.getAttribute('data-crew-stop');
-    if (k) {   // a junk strip: its seat is a point of its drawing (data-seat, in its viewBox data-vb; "xMidYMid slice")
-      var vb = el.getAttribute('data-vb').split(' ').map(Number), p = el.getAttribute('data-seat').split(' ').map(Number);
-      var s = Math.max(r.width / vb[0], r.height / vb[1]);
-      return { x: r.left + r.width / 2 + (p[0] - vb[0] / 2) * s - cw() / 2, top: r.top + r.height / 2 + (p[1] - vb[1] / 2) * s, el: el };
+    if (k) {   // a junk strip (2026-11-19): he lands anywhere along it, straight below where he comes from, and walks
+               // its junk to the job (walkToJob); data-job is where his hand goes, data-seat the piece's own height
+      var m = stripMap(el), j = el.getAttribute('data-job').split(' ').map(Number);
+      var s = { left: Math.max(r.left, 0), right: Math.min(r.right, innerWidth), el: el, strip: m,
+        job: { x: m.x(j[0]), y: m.y(j[1]) }, seatY0: m.y(+el.getAttribute('data-seat').split(' ')[1]) };
+      s.top = surfaceY(s, s.job.x - cw() / 2);              // how high the junk is at the job: for choosing a strip
+      return s;
     }
     return { left: r.left, right: r.right, top: r.top, el: el };
+  }
+  // The highest point of a strip's junk under his tracks, his left edge at x (screen). The drawing carries the top of
+  // its junk as data-walk (one height every 8 viewBox units); until it's drawn, the piece's own height.
+  function surfaceY(s, x) {
+    var svgEl = s.el.querySelector('svg[data-walk]');
+    if (!svgEl) return s.seatY0;
+    var w = s.walk || (s.walk = svgEl.getAttribute('data-walk').split(' ').map(Number));
+    var i0 = Math.max(0, Math.floor(s.strip.u(x + cw() * 0.15) / 8)), i1 = Math.min(w.length - 1, Math.ceil(s.strip.u(x + cw() * 0.85) / 8));
+    var best = Infinity;
+    for (var i = i0; i <= i1; i++) if (w[i] < best) best = w[i];
+    return s.strip.y(best === Infinity ? s.strip.vb[1] - 10 : best);
+  }
+  // His path along a strip (screen coords): every 2 px of his left edge, the height his tracks rest at. Steps up are
+  // eased into slopes he can climb (1 up per 1.6 along), and gaps bridged the same way, so he tilts rather than jumps;
+  // where the junk itself steps sharply under him, a small hop. Never below the junk's top.
+  var PATH_DX = 2, PATH_RISE = PATH_DX / 1.6, HOP_PX = 3;
+  function stripPath(s) {
+    var lo = s.left + 6, hi = Math.max(lo, s.right - cw() - 6), n = Math.max(1, Math.ceil((hi - lo) / PATH_DX)), raw = [], y = [], hop = [], i, j;
+    for (i = 0; i <= n; i++) { raw.push(surfaceY(s, lo + i * PATH_DX)); y.push(raw[i]); hop.push(0); }
+    for (i = 1; i <= n; i++) y[i] = Math.min(y[i], y[i - 1] + PATH_RISE);   // never drops faster than he climbs down
+    for (i = n - 1; i >= 0; i--) y[i] = Math.min(y[i], y[i + 1] + PATH_RISE); // starts climbing before a step up
+    for (i = 1; i <= n; i++) if (Math.abs(raw[i] - raw[i - 1]) > 12)
+      for (j = Math.max(0, i - 6); j <= Math.min(n, i + 6); j++) hop[j] = Math.min(hop[j], -HOP_PX * Math.sin(Math.PI * (j - i + 6) / 12));
+    return { lo: lo, hi: lo + n * PATH_DX, n: n, y: y, hop: hop };
+  }
+  function pathAt(p, arr, x) {
+    var f = Math.max(0, Math.min(p.n, (x - p.lo) / PATH_DX)), i = Math.floor(f), t = f - i;
+    return i >= p.n ? arr[p.n] : arr[i] + (arr[i + 1] - arr[i]) * t;
+  }
+  // The top of a box under his tracks with his left edge at x (a strip's path; any other box: its top edge)
+  function topAt(seat, x) {
+    if (!seat.strip || x === undefined) return seat.top;
+    var p = seat.path || (seat.path = stripPath(seat));
+    return pathAt(p, p.y, x);
   }
   function seatX(seat, nearX) {
     if (seat.x !== undefined) return seat.x;
     var lo = seat.left + 6, hi = seat.right - cw() - 6;
     if (hi < lo) return lo;
-    if (mqPhone.matches) return hi;                         // phones: the right-hand end keeps most text clear
+    if (mqPhone.matches && !seat.strip) return hi;          // phones: the right-hand end keeps most text clear
     return Math.max(lo, Math.min(hi, nearX - cw() / 2));
   }
-  function seatY(seat) { return seat.top - ch() + dangle(); }
+  function seatY(seat, x) { return topAt(seat, x) - ch() + dangle(); }
   function candidates() {
     var out = [], minTop = hh() + ch() - dangle() + hangGap() + 2, maxTop = innerHeight - 24;   // seated, he's fully below the header
     doc.querySelectorAll(PERCHES).forEach(function (el) {
@@ -249,10 +297,11 @@
   function rappelTo(seat, toHome) {
     mode = 'move'; hush();
     // tx: where he wants to end up (wantX: a set spot, like a monitor's middle); he gets there by pulling, then rolling
-    var tx = toHome ? seat.x : seat.wantX !== undefined ? seat.wantX : seatX(seat, handAt().x), ty = toHome ? seat.y : seatY(seat);
+    var tx = toHome ? seat.x : seat.wantX !== undefined ? seat.wantX : seatX(seat, handAt().x);
     var x0 = pos.x, y0 = pos.y;
-    // The nearest spot on the box he can sit on, from where he is
+    // The nearest spot on the box he can sit on, from where he is (on a junk strip: straight below him)
     var landX = toHome ? tx : seat.x !== undefined ? seat.x : Math.max(seat.left + 6, Math.min(Math.max(seat.left + 6, seat.right - cw() - 6), x0));
+    var ty = toHome ? seat.y : seatY(seat, landX);
     if (Math.abs(landX - x0) < 24 && arm1.classList.contains('on')) {
       // Straight up or down: on the arm clamped to the top bar (his only grappling point, up or down), ease-out;
       // then he rolls along the box to where he wants to be
@@ -265,7 +314,7 @@
     // the hook. Anything further along, he covers on his tracks (roll).
     crewEl.classList.toggle('flip', landX < x0);
     var lead = cw() * (flipped() ? 12 : 66) / 78;                   // his leading shoulder, in the direction of the pull
-    var hook = { x: landX + lead, y: toHome ? ty + ch() * 54 / 104 : seat.top };
+    var hook = { x: landX + lead, y: toHome ? ty + ch() * 54 / 104 : ty + ch() - dangle() };   // the top he lands on
     var land = { x: landX, y: ty };
     arm2.classList.add('on'); grip.classList.add('on');
     var s0 = shoulderAt();
@@ -295,20 +344,21 @@
     return sitOn(seat.el, wantX);
   }
   // Sits exactly where he landed (never moved on the spot); if he wants to be further along the box, he rolls
-  // there on his tracks, once his arm is back in
+  // there on his tracks, once his arm is back in. On a junk strip he walks its junk to the job instead.
   function sitOn(el, wantX) {
     var s = seatOf(el), lo = s.x !== undefined ? s.x : s.left + 6, hi = s.x !== undefined ? s.x : Math.max(lo, s.right - cw() - 6);
-    var x = Math.max(lo, Math.min(hi, pos.x)), y = seatY(s);
+    var x = Math.max(lo, Math.min(hi, pos.x)), y = seatY(s, x);
     putDoc(x + scrollX, y + scrollY);
     perch = el; mode = 'perch'; clearTimeout(peekT);
+    var k0 = el.getAttribute('data-crew-stop');
+    if (k0) {
+      if (reduced) { job(k0, el); return Promise.resolve(); }   // reduced motion: no walk; the strip shows fixed
+      return sleep(arm1.classList.contains('on') ? RETRACT_MS + 30 : 0).then(function () { if (perch === el) return walkToJob(el); });
+    }
     var go = wantX !== undefined && Math.abs(wantX - x) > 4 && !reduced
       ? sleep(arm1.classList.contains('on') ? RETRACT_MS + 30 : 0).then(function () { return perch === el ? roll(wantX - x) : null; })
       : Promise.resolve();
-    return go.then(function () {
-      if (perch !== el) return;
-      var k = el.getAttribute('data-crew-stop');
-      if (k) job(k, el);
-    });
+    return go;
   }
   // Rolling along the top of a box (part of the page, so it rides with it): about 90 px a second, tracks turning
   var ROLL_PX_S = 90;
@@ -320,6 +370,75 @@
       .then(function () { crewEl.classList.remove('rolling'); });
   }
 
+  /* ---------- Walking a junk strip (2026-11-19): he lands where he comes down, then trundles along the junk on his
+     tracks (following its ups and downs: tilting on slopes, a small hop at a sharp step) until the job is within
+     arm's reach (about two of his widths), reaches for it, fixes it, pulls the arm back and stays where he stopped.
+     He never moves while the page moves: scrolling stops the walk where he is (the arm comes straight back), and
+     after the stop and the delay he carries on from there. A strip already fixed: he just sits where he lands. */
+  var walking = false, walkGen = 0, REACH_W = 2;
+  function walkToJob(el) {
+    var k = el.getAttribute('data-crew-stop');
+    if (done[k] || walking || tvBusy || mode !== 'perch' || perch !== el || scrolling || touching) return Promise.resolve();
+    var s = seatOf(el), p = s.path = stripPath(s), sx = scrollX, sy = scrollY;
+    var x0 = perchDoc.x - sx, gap = s.job.x - (x0 + cw() / 2), reach = cw() * REACH_W;
+    var x1 = Math.abs(gap) <= reach ? x0 : s.job.x - (gap > 0 ? 1 : -1) * reach * 0.8 - cw() / 2;
+    x1 = Math.max(p.lo, Math.min(p.hi, x1));
+    var g = ++walkGen, dx = x1 - x0;
+    walking = true;
+    var go = Promise.resolve(true);
+    if (Math.abs(dx) >= 2) {
+      crewEl.classList.toggle('flip', dx < 0);
+      crewEl.classList.add('rolling');
+      var dir = dx > 0 ? 1 : -1;
+      go = tween(Math.abs(dx) / ROLL_PX_S * 1000, function (t) { return t; }, function (e) {
+        var x = x0 + dx * e, here = pathAt(p, p.y, x), ahead = pathAt(p, p.y, x + dir * 6);
+        putDoc(x + sx, here + pathAt(p, p.hop, x) - ch() + dangle() + sy);
+        tilt(Math.max(-14, Math.min(14, Math.atan2(ahead - here, 6) * 180 / Math.PI * dir)));
+      });
+    }
+    return go.then(function (ok) {
+      crewEl.classList.remove('rolling'); tilt(0);
+      if (!ok || g !== walkGen || perch !== el) { if (g === walkGen) walking = false; return; }
+      return reachJob(el, k, g);
+    });
+  }
+  // The arm out to the job (his main arm, from the side facing it), two taps while the piece changes, and back in
+  function reachJob(el, k, g) {
+    if (done[k]) { walking = false; return; }
+    var target = function () { return seatOf(el).job; };
+    var alive = function () { return g === walkGen && perch === el; };
+    crewEl.classList.toggle('flip', target().x < at().x + cw() / 2);
+    crewEl.classList.add('extend');
+    arm2.classList.add('on'); grip.classList.add('on');
+    return anim(420, function (q) { var s0 = shoulder1(), t = target(), e = easeOut(q); bar(arm2, grip, s0.x, s0.y, lerp(s0.x, t.x, e), lerp(s0.y, t.y, e)); }, alive)
+      .then(function (ok) {
+        if (!ok) return false;
+        job(k, el);
+        return anim(450, function (q) {
+          var s0 = shoulder1(), t = target(), len = Math.hypot(t.x - s0.x, t.y - s0.y) || 1, d = Math.abs(Math.sin(q * Math.PI * 2)) * 5;
+          bar(arm2, grip, s0.x, s0.y, t.x - (t.x - s0.x) / len * d, t.y - (t.y - s0.y) / len * d);
+        }, alive);
+      })
+      .then(function (ok) {
+        if (!ok) return false;
+        var t0 = target();
+        return anim(RETRACT_MS, function (q) { var s0 = shoulder1(), e = easeOut(q); bar(arm2, grip, s0.x, s0.y, lerp(t0.x, s0.x, e), lerp(t0.y, s0.y, e)); }, alive);
+      })
+      .then(function () {
+        if (g !== walkGen) return;
+        dropArm2(); if (!arm1.classList.contains('on')) crewEl.classList.remove('extend');
+        walking = false;
+      });
+  }
+  // Scrolling (or the page moving under him): the walk stops where he is and the arm comes straight back
+  function stopWalk() {
+    if (!walking) return;
+    ++walkGen; walking = false;
+    if (moveTok) moveTok.dead = true;
+    crewEl.classList.remove('rolling'); tilt(0);
+    if (!tvBusy) { dropArm2(); if (!arm1.classList.contains('on')) crewEl.classList.remove('extend'); }
+  }
+
   /* ---------- Losing his footing (README section 2, 2026-11-18): the page moves under him while he sits (an FAQ
      above his box opens or closes, the web font rewraps a heading). His box drops away: his tracks wobble, he falls
      straight down onto the nearest box under him on screen and lands with a squash; nothing under him on screen: he
@@ -327,18 +446,24 @@
   var SLIP_MS = 400, FALL_G = 2600;                         // the wobble; gravity in px/s²
   function checkFooting() {
     if (mode !== 'perch' || !perch) return;
+    var wasWalking = walking;
+    stopWalk();                                             // a walk's path was measured before the page moved
     if (perch.offsetParent === null) return loseFooting();  // his box is gone
-    var want = seatY(seatOf(perch)) + scrollY, dy = want - perchDoc.y;
-    if (Math.abs(dy) <= 2) return;
-    if (dy < 0) { putDoc(perchDoc.x, want); jolt(); return; }   // it rose: it lifts him
-    loseFooting();
+    var want = seatY(seatOf(perch), perchDoc.x - scrollX) + scrollY, dy = want - perchDoc.y;
+    if (Math.abs(dy) > (perch.hasAttribute('data-crew-stop') ? HOP_PX + 2 : 2)) {   // a hop's height on the junk is fine
+      if (dy > 0) return loseFooting();
+      putDoc(perchDoc.x, want); jolt();                     // it rose: it lifts him
+    }
+    // Still on his strip with the job waiting: he carries on after the usual delay
+    if (wasWalking && !scrolling && !touching) { clearTimeout(delayT); delayT = setTimeout(act, CREW_DELAY_MS); }
   }
   // The box straight under him on screen whose top is nearest below his tracks
   function boxUnder(x, feetY) {
-    var best = null;
+    var best = null, bt = 0;
     candidates().forEach(function (s) {
       var mid = x + cw() / 2, over = s.x !== undefined ? Math.abs(s.x - x) < cw() / 2 : mid > s.left + 6 && mid < s.right - 6;
-      if (over && s.top >= feetY - 2 && (!best || s.top < best.top)) best = s;
+      var t = topAt(s, landAt(s, x));
+      if (over && t >= feetY - 2 && (!best || t < bt)) { best = s; bt = t; }
     });
     return best;
   }
@@ -361,7 +486,7 @@
       if (g !== slipGen || mode !== 'move') return;          // scrolling caught him meanwhile
       under = boxUnder(x, pos.y + ch() - dangle());
       var x1 = under ? landAt(under, x) : x;
-      var target = function () { return under ? seatY(seatOf(under.el)) : innerHeight + 4; };   // re-read: it may still be moving
+      var target = function () { return under ? seatY(seatOf(under.el), x1) : innerHeight + 4; };   // re-read: it may still be moving
       var ms = Math.min(900, Math.max(120, Math.sqrt(2 * Math.max(0, target() - y) / FALL_G) * 1000));
       return tween(ms, function (k) { return k * k; }, function (e) { putFixed(lerp(x, x1, e), lerp(y, target(), e)); })
         .then(function (ok) {
@@ -426,7 +551,7 @@
     if (!tvWant || tvBusy || mode === 'home') return;
     var dial = dialEl(); if (!dial) return;
     var d = dial.getBoundingClientRect();
-    if (!(mode === 'perch' || mode === 'hang') || scrolling || touching || d.top < hh() || d.bottom > innerHeight) { setTimeout(tryTvFix, 1000); return; }
+    if (!(mode === 'perch' || mode === 'hang') || walking || scrolling || touching || d.top < hh() || d.bottom > innerHeight) { setTimeout(tryTvFix, 1000); return; }
     tvBusy = true; var g = ++tvGen;
     var useArm1Side = !arm1.classList.contains('on');            // his free shoulder: the main one unless he's hanging from it
     if (useArm1Side) crewEl.classList.toggle('flip', d.left + d.width / 2 < at().x + cw() / 2);
@@ -613,7 +738,7 @@
     if (sy === lastSY) return;
     lastSY = sy;
     scrolling = true;
-    tvAbort();
+    tvAbort(); stopWalk();
     clearTimeout(stillT); clearTimeout(delayT);
     if (!reduced) {
       if (mode === 'move') freeze();                          // at once, not on the next frame
@@ -673,7 +798,11 @@
     }
     if (mode === 'perch') {
       var b = perch.getBoundingClientRect();
-      if (b.top < innerHeight && b.bottom > hh()) return;     // still in view: he stays put
+      if (b.top < innerHeight && b.bottom > hh()) {           // still in view: he stays put (and carries on with a strip's job)
+        var kp = perch.getAttribute('data-crew-stop');
+        if (kp && !done[kp]) walkToJob(perch);
+        return;
+      }
       // Scrolling up took his box out of view at the bottom: he comes back up from where he went out, on his arm
       // clamped to the top bar (his only grappling point, up or down), to the nearest box in view
       var x = perchDoc.x - scrollX, s2 = nearestAbove(x + cw() / 2);
@@ -717,7 +846,11 @@
     window.addEventListener('touchend', lift, { passive: true });
     window.addEventListener('touchcancel', lift, { passive: true });
     window.addEventListener('resize', function () {
-      if (mode === 'perch' && perch) { var s = seatOf(perch); putDoc(seatX(s, perchDoc.x - scrollX + cw() / 2) + scrollX, seatY(s) + scrollY); }
+      if (mode === 'perch' && perch) {
+        stopWalk();
+        var s = seatOf(perch), nx = seatX(s, perchDoc.x - scrollX + cw() / 2);
+        putDoc(nx + scrollX, seatY(s, nx) + scrollY);
+      }
     });
     // The page moving under him while he sits (not a resize: that's handled above, first): he loses his footing
     if ('ResizeObserver' in window) new ResizeObserver(function () { checkFooting(); }).observe(doc.body);
@@ -739,6 +872,6 @@
     if (doc.readyState === 'complete') go(); else window.addEventListener('load', go, { once: true });
   }
   // Probes (scripts/dev) read his state from here; harmless on the live site
-  fixedEl.crewState = function () { return { mode: mode, scrolling: scrolling, perch: perch && (perch.className || perch.tagName) }; };
+  fixedEl.crewState = function () { return { mode: mode, scrolling: scrolling, walking: walking, perch: perch && (perch.className || perch.tagName) }; };
   (window.cussLate || Promise.resolve()).then(function () { whenIdle(begin); });
 })();
