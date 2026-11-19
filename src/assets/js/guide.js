@@ -372,35 +372,50 @@
 
   /* ---------- Walking a junk strip (2026-11-19): he lands where he comes down, then trundles along the junk on his
      tracks (following its ups and downs: tilting on slopes, a small hop at a sharp step) until the job is within
-     arm's reach (about two of his widths), reaches for it, fixes it, pulls the arm back and stays where he stopped.
+     arm's reach (about two of his widths), reaches for it, fixes it and pulls the arm back. Then he walks on past the
+     job to its other side (the zig-zag): as far beyond it as he came down before it, at least a quarter and at most
+     about a third of the strip's width on screen, so every strip moves him across the page.
      He never moves while the page moves: scrolling stops the walk where he is (the arm comes straight back), and
-     after the stop and the delay he carries on from there. A strip already fixed: he just sits where he lands. */
-  var walking = false, walkGen = 0, REACH_W = 2;
+     after the stop and the delay he carries on to the job from there (the walk on past it is not taken up again).
+     A strip already fixed: he just sits where he lands. */
+  var walking = false, walkGen = 0, REACH_W = 2, landedAt = {};
+  // Along a strip's path from x0 to x1 (his left edge, on screen), riding with the page
+  function trundle(p, x0, x1) {
+    var sx = scrollX, sy = scrollY, dx = x1 - x0;
+    if (Math.abs(dx) < 2) return Promise.resolve(true);
+    var dir = dx > 0 ? 1 : -1;
+    crewEl.classList.toggle('flip', dx < 0);
+    crewEl.classList.add('rolling');
+    return tween(Math.abs(dx) / ROLL_PX_S * 1000, function (t) { return t; }, function (e) {
+      var x = x0 + dx * e, here = pathAt(p, p.y, x), ahead = pathAt(p, p.y, x + dir * 6);
+      putDoc(x + sx, here + pathAt(p, p.hop, x) - ch() + dangle() + sy);
+      tilt(Math.max(-14, Math.min(14, Math.atan2(ahead - here, 6) * 180 / Math.PI * dir)));
+    }).then(function (ok) { crewEl.classList.remove('rolling'); tilt(0); return ok; });
+  }
   function walkToJob(el) {
     var k = el.getAttribute('data-crew-stop');
     if (done[k] || walking || tvBusy || mode !== 'perch' || perch !== el || scrolling || touching) return Promise.resolve();
-    var s = seatOf(el), p = s.path = stripPath(s), sx = scrollX, sy = scrollY;
-    var x0 = perchDoc.x - sx, gap = s.job.x - (x0 + cw() / 2), reach = cw() * REACH_W;
+    var s = seatOf(el), p = s.path = stripPath(s);
+    var x0 = perchDoc.x - scrollX, gap = s.job.x - (x0 + cw() / 2), reach = cw() * REACH_W;
+    if (landedAt[k] === undefined) landedAt[k] = x0 + cw() / 2;   // where he came down: the walk on goes past the job from here
     var x1 = Math.abs(gap) <= reach ? x0 : s.job.x - (gap > 0 ? 1 : -1) * reach * 0.8 - cw() / 2;
     x1 = Math.max(p.lo, Math.min(p.hi, x1));
-    var g = ++walkGen, dx = x1 - x0;
+    var g = ++walkGen;
     walking = true;
-    var go = Promise.resolve(true);
-    if (Math.abs(dx) >= 2) {
-      crewEl.classList.toggle('flip', dx < 0);
-      crewEl.classList.add('rolling');
-      var dir = dx > 0 ? 1 : -1;
-      go = tween(Math.abs(dx) / ROLL_PX_S * 1000, function (t) { return t; }, function (e) {
-        var x = x0 + dx * e, here = pathAt(p, p.y, x), ahead = pathAt(p, p.y, x + dir * 6);
-        putDoc(x + sx, here + pathAt(p, p.hop, x) - ch() + dangle() + sy);
-        tilt(Math.max(-14, Math.min(14, Math.atan2(ahead - here, 6) * 180 / Math.PI * dir)));
-      });
-    }
-    return go.then(function (ok) {
-      crewEl.classList.remove('rolling'); tilt(0);
+    return trundle(p, x0, x1).then(function (ok) {
       if (!ok || g !== walkGen || perch !== el) { if (g === walkGen) walking = false; return; }
       return reachJob(el, k, g);
     });
+  }
+  // The zig-zag: on past the job to its other side
+  function walkOn(el, k, g) {
+    var s = seatOf(el), p = s.path = stripPath(s), x0 = perchDoc.x - scrollX, w = s.right - s.left;
+    var from = landedAt[k] !== undefined ? landedAt[k] : x0 + cw() / 2;
+    var side = Math.abs(s.job.x - from) > 4 ? (s.job.x > from ? 1 : -1) : (s.job.x - s.left > s.right - s.job.x ? -1 : 1);
+    var dist = Math.max(w * 0.25, Math.min(w * 0.35, Math.abs(s.job.x - from))), edge = Math.max(6, w * 0.04);
+    var x1 = Math.max(s.left + edge, Math.min(s.right - cw() - edge, s.job.x + side * dist - cw() / 2));
+    x1 = Math.max(p.lo, Math.min(p.hi, x1));
+    return trundle(p, x0, x1).then(function () { if (g === walkGen) walking = false; });
   }
   // The arm out to the job (his main arm, from the side facing it), two taps while the piece changes, and back in
   function reachJob(el, k, g) {
@@ -427,7 +442,7 @@
       .then(function () {
         if (g !== walkGen) return;
         dropArm2(); if (!arm1.classList.contains('on')) crewEl.classList.remove('extend');
-        walking = false;
+        return walkOn(el, k, g);
       });
   }
   // Scrolling (or the page moving under him): the walk stops where he is and the arm comes straight back

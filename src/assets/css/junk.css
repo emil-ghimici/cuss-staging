@@ -2,7 +2,9 @@
    on the page background (no band of colour). Drawn by src/_lib/junk.js. The strip keeps its drawing's shape
    as the screen widens, so nothing is ever cut off top or bottom; narrower screens trim the sides and keep the middle,
    where CREW's piece is. This file holds the broken look (first paint); the fixed look and all motion are in late.css. */
-.junk{position:relative;aspect-ratio:32/3;min-height:120px;overflow:hidden;content-visibility:auto}
+/* width:100%: without it the min-height is carried through the aspect ratio into the width (1280 px, 1024 on phones),
+   so on any narrower page the strip ran off the right edge and the page scrolled sideways (found 2026-11-19) */
+.junk{position:relative;width:100%;aspect-ratio:32/3;min-height:120px;overflow:hidden;content-visibility:auto}
 /* Until its drawing arrives (site.js), the empty slot shows just the kerb it will stand on */
 .junk:empty::after{content:"";position:absolute;left:0;right:0;bottom:0;height:8.4%;border-top:2px solid var(--border-control);background:var(--surface-2)}
 .junk.tall:empty::after{height:6.3%}
