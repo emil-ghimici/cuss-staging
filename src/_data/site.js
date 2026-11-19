@@ -3,12 +3,12 @@ export default {
   name: 'CuSS',
   legalName: 'CuSS Custom Software Solutions',
   email: 'hello@cuss.ie',   // people: footer, Privacy, rights requests, structured data
-  // The automatic email assistant (CREW) answers crew@ (agreed 2026-11-18). Until it is built and verified,
-  // assistantLive stays false: the Contact block then writes to hello@ and says nothing about an automatic
-  // reply, and the Privacy page leaves out its "Our automatic first reply" section. Going live = set it to true
-  // and replace the Privacy placeholder with the verified facts (provider, region, retention, training, alerts).
+  // The automatic email assistant (CREW) answers crew@ (agreed 2026-11-18; live and tested 2026-11-19). With
+  // assistantLive true the Contact block writes to crew@ and says CREW replies first, and the Privacy page shows its
+  // "Our automatic first reply" section (facts verified by the assistant's build, 2026-11-19). Set it to false to
+  // take every mention of the assistant off the site at once (the Contact block then writes to hello@).
   crewEmail: 'crew@cuss.ie',
-  assistantLive: false,
+  assistantLive: true,
   // Shown only on the Contact page and in the footer, never as the first contact option.
   phone: { display: '089 704 4394', tel: '+353897044394' },
   town: 'Athlone, Co. Westmeath',

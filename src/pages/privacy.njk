@@ -13,13 +13,13 @@ crumbs:
   - { name: "Privacy" }
 ---
 {#- Privacy (URL kept from the live site). Updated 2026-11-18 from the live wording: browser storage now names both notes
-    the new site keeps; email names its host (Zoho Mail, EU); a section for the automatic first reply, whose service is
-    not chosen yet (marked "Copy to come" until it is); hosting (GitHub Pages logs). CREW stays in the band. -#}
-{%- from "macros.njk" import ph with context %}
+    the new site keeps; email names its host (Zoho Mail, EU); hosting (GitHub Pages logs). 2026-11-19: the automatic
+    first reply section, with the facts verified by the assistant's build ("in Europe" and "may keep it for a limited
+    time" until the Bedrock settings are checked in the AWS console). CREW stays in the band. -#}
 <div class="wrap"><div class="reading measure-wrap">
   <p class="mono eyebrow">Privacy</p>
   <h1>Privacy notice</h1>
-  <p class="muted">Last updated 18 November 2026.</p>
+  <p class="muted">Last updated 19 November 2026.</p>
 
   <h2>No cookies, no trackers</h2>
   <p>This website does not use cookies, analytics or any third-party trackers. It keeps two small notes in your own browser, and they are never sent anywhere:</p>
@@ -34,8 +34,16 @@ crumbs:
 
   {%- if site.assistantLive %}{#- shown once the assistant is built and verified (site.js) #}
   <h2>Our automatic first reply</h2>
-  <p>An automatic assistant, CREW, reads new emails sent to {{ site.crewEmail }} and replies within minutes with a few first questions. It is not a person, and its reply says so. A person from CuSS follows up within two working days. Your email is used only to write that reply. Emails to {{ site.email }} are read only by people.</p>
-  {{ ph('verified facts from the assistant build: the service it runs on, where it processes emails, what is kept where and for how long, whether the provider may use them for training, and the alerts that go to Gmail') }}
+  <p>An automatic assistant, CREW, reads new emails sent to {{ site.crewEmail }} and usually replies within minutes with a few first questions. It is not a person: its replies say so, and every reply tells you how to reach a person instead. A person from CuSS follows up within two working days. Emails to {{ site.email }} are read only by people.</p>
+  <p>CREW runs on Microsoft Azure, in its North Europe region (Ireland). To write a reply, it sends your email to Claude, an AI model made by Anthropic, through Amazon Bedrock’s European service, which processes it in Europe. Amazon Bedrock does not use it to train AI models and does not share it with Anthropic. Under Amazon’s terms, it may keep it for a limited time to detect misuse.</p>
+  <p>What is kept, and for how long:</p>
+  <ul>
+    <li>your email and CREW’s replies, in the {{ site.crewEmail }} mailbox at Zoho Mail (EU data centres): deleted after 12 months;</li>
+    <li>a short record of the conversation (your email address, the subject, a one-line summary, its status and dates), in Microsoft Azure, North Europe: deleted 12 months after the last message;</li>
+    <li>a count of the emails from your address each day, to stop floods of messages: deleted after 2 days;</li>
+    <li>technical logs showing which email was handled and what CREW did, without its text: deleted after 30 days;</li>
+    <li>an alert to our Gmail inbox with your address, your message and CREW’s reply, so a person can follow up: kept until deleted (an alert that can’t go at once waits in Azure until it can). Gmail is run by Google, whose servers may be outside the EU.</li>
+  </ul>
   {%- endif %}
 
   <h2>Hosting</h2>
