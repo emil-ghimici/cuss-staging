@@ -29,6 +29,9 @@ crumbs:
     <li>if you switch between the light and dark theme, your choice, until you clear it;</li>
     <li>that our robot, CREW, has already said hello, so he only introduces himself once. This one is deleted when you close the tab.</li>
   </ul>
+  {%- if site.assistantLive %}
+  <p>To show whether CREW is answering right now, pages with the contact form load a small status file from our Microsoft Azure storage in North Europe. It holds no personal data. Like any web request it reaches Azure with your IP address, which we don’t log.</p>
+  {%- endif %}
 
   <h2>When you email</h2>
   <p>The “What do you need?” boxes on this site only write an email in your own email app. Nothing is sent until you send it yourself.</p>

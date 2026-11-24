@@ -51,7 +51,9 @@
 {{ mail.body }}</pre><span class="label">Your email, ready to send</span></div>
     <div class="send-row"><a class="btn btn-contact bv-md" data-send href="{{ mail.href }}">{% icon "mail" %}Open email to send</a></div>
     {%- if site.assistantLive %}
-    <p class="assist">Our assistant, CREW, usually replies within minutes with a few first questions. A person follows up within two working days.</p>
+    {#- The off-duty line swaps in when CREW's status file says so (site.js). The hidden copy holds the longest
+        off-duty line, so the paragraph keeps its height at every width whichever line shows. #}
+    <p class="assist" data-crew-status="{{ site.crewStatusUrl }}"><span data-crew-line>Our assistant, CREW, usually replies within minutes with a few first questions. A person follows up within two working days.</span><span class="assist-size" aria-hidden="true">Our assistant, CREW, is off email duty till 1 September. A person is handling emails for now and follows up within two working days.</span></p>
     {%- endif %}
     <div class="copy-list">
       <div class="copy-row">No email app? Write to <strong>{{ to }}</strong><button class="ibtn bv-md js-only" type="button" data-copy="address" aria-label="Copy the address" title="Copy the address">{% icon "copy" %}</button><span class="done" data-copied="address" aria-live="polite"></span></div>

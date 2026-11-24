@@ -175,4 +175,44 @@
     }, { rootMargin: '-30% 0px -60% 0px' });
     Object.keys(map).forEach(function (id) { var s = doc.getElementById(id); if (s) obs.observe(s); });
   }
+
+  /* ---------- CREW off email duty: when its status file says so, the Contact line says till when.
+     Read once per page, when the Contact block comes near the screen; nothing is stored. If the file can't be read,
+     the working line stays. Same rule as CREW's own emails: "tomorrow" when back the next day, else the date. ---------- */
+  var assists = $$('[data-crew-status]');
+  function irishDay(offset) {
+    var d = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Dublin' }).format(new Date());   // YYYY-MM-DD
+    return offset ? new Date(Date.parse(d + 'T00:00:00Z') + offset * 864e5).toISOString().slice(0, 10) : d;
+  }
+  function showOff(back) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(back || '') || back <= irishDay(0)) return;
+    var when = back === irishDay(1) ? 'tomorrow'
+      : new Date(back + 'T00:00:00Z').toLocaleDateString('en-IE', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+    assists.forEach(function (p) {
+      var line = p.querySelector('[data-crew-line]');
+      if (line) line.textContent = 'Our assistant, CREW, is off email duty till ' + when + '. A person is handling emails for now and follows up within two working days.';
+    });
+  }
+  var devOff = /crew-off-(tomorrow|date)/.exec(location.hash);   // dev checks only: show the off-duty lines locally
+  // Only these sites may read the file (CORS, statusOrigins in CREW's infra/main.bicep: change both together).
+  // Anywhere else the browser would refuse it and log an error, so local builds don't ask.
+  var mayRead = /^(www\.)?cuss\.ie$|^emil-ghimici\.github\.io$/.test(location.hostname);
+  if (assists.length && devOff) showOff(irishDay(devOff[1] === 'tomorrow' ? 1 : 10));
+  else if (assists.length && mayRead && window.fetch) {
+    var asked = false;
+    var ask = function () {
+      if (asked) return;
+      asked = true;
+      fetch(assists[0].getAttribute('data-crew-status'), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (s) { if (s && s.state === 'off-email-duty') showOff(s.back); })
+        .catch(function () {});
+    };
+    if ('IntersectionObserver' in window) {
+      var near = new IntersectionObserver(function (es) {
+        if (es.some(function (e) { return e.isIntersecting; })) { near.disconnect(); ask(); }
+      }, { rootMargin: '600px 0px' });
+      assists.forEach(function (p) { near.observe(p); });
+    } else ask();
+  }
 })();

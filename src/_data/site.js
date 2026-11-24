@@ -9,6 +9,11 @@ export default {
   // take every mention of the assistant off the site at once (the Contact block then writes to hello@).
   crewEmail: 'crew@cuss.ie',
   assistantLive: true,
+  // CREW's public status file (agreed 2026-11-24). When CREW hits a cap it goes "off email duty" and writes
+  // {"state":"off-email-duty","back":"YYYY-MM-DD"}; the Contact line then says so (site.js). Holds no personal data.
+  // The storage account lets only cuss.ie, www.cuss.ie and the staging site read it (CORS), so site.js asks only from
+  // those and local builds keep the working line: use #crew-off-tomorrow or #crew-off-date to see the off-duty lines.
+  crewStatusUrl: 'https://stcrewpubyzotliot3d7to.blob.core.windows.net/status/crew.json',
   // Shown only on the Contact page and in the footer, never as the first contact option.
   phone: { display: '089 704 4394', tel: '+353897044394' },
   town: 'Athlone, Co. Westmeath',
