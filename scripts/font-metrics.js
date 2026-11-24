@@ -36,6 +36,8 @@ const out = {
   sans: metrics(`${FS}/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-400-normal.woff2`, `${SYS}/arial.ttf`, 'Arial'),
   sansBold: metrics(`${FS}/atkinson-hyperlegible-next/files/atkinson-hyperlegible-next-latin-700-normal.woff2`, `${SYS}/arialbd.ttf`, 'Arial Bold'),
   mono: metrics(`${FS}/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff2`, `${SYS}/cour.ttf`, 'Courier New'),
+  // The bakery demos' headings (Fraunces, demo pages only), matched on heading-like text
+  serif: metrics(`${FS}/fraunces/files/fraunces-latin-600-normal.woff2`, `${SYS}/georgiab.ttf`, 'Georgia Bold', 'Fresh bread on Main Street from 7am. This week at Shutter & Crumb. Opening hours. Pastries and scones. Wholesale orders for cafés and shops. Find us'),
 };
 fs.writeFileSync('src/_data/fontMetrics.json', JSON.stringify(out, null, 2) + '\n');
 console.log(out);

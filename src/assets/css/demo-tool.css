@@ -1,0 +1,24 @@
+/* The bakery's internal tools (dashboard, roster): follow the device's theme; screens fill the width. */
+.tool{padding-top:var(--space-5);padding-bottom:var(--space-8)}
+.t-head{margin-bottom:var(--space-5)}
+.t-head h1{font-size:clamp(28px,24px + 1.2vw,40px);margin:0 0 var(--space-2)}
+.t-head p{margin:0}
+.t-biz{font:600 14px/1.2 var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--bk-crust)!important;margin-bottom:6px!important}
+.t-sec{margin:0 0 var(--space-6)}
+.t-sec h2{font-size:clamp(22px,20px + .6vw,28px);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.src{font-size:14px;color:var(--bk-muted);margin:6px 0 0}
+.bk-dashboard .b,.bk-roster .b{background:var(--bk-surface)}
+.bk-dashboard .b.fill,.bk-roster .b.fill{background:var(--bk-btn);color:var(--bk-on-btn)}
+.bk-dashboard .b:hover,.bk-roster .b:hover{border-color:var(--bk-crust)}
+.rows{list-style:none;margin:0 0 var(--space-3);padding:0}
+.r{display:grid;grid-template-columns:1fr auto;gap:6px var(--space-3);align-items:center;padding:12px 14px;background:var(--bk-surface);border:1px solid var(--bk-line);border-radius:10px;margin-bottom:8px}
+.r p{margin:0}
+.r-t{font-weight:700}
+.r .cnote{grid-column:1/-1;margin:0}
+.done-t{font-weight:700;color:var(--bk-ok)}
+.undo{font-size:15px}
+@media print{
+  .cbar,.b,.cnote,.fold>summary::after{display:none!important}
+  .fold>*{display:block!important}
+  body.bk{background:#fff;color:#000}
+}

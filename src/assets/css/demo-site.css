@@ -1,0 +1,133 @@
+/* The bakery's website demo (light only). Phone first: the section buttons and Call | Directions in halves. */
+.s-hdr{border-bottom:2px solid var(--bk-line);background:var(--bk-bg)}
+.s-hdr-in{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);padding-top:var(--space-3);padding-bottom:var(--space-3);flex-wrap:wrap}
+.s-name{font-family:var(--font-serif);font-weight:600;font-size:28px;line-height:1.1;margin:0;color:var(--bk-ink)}
+.s-name .amp{color:var(--bk-crust)}
+.s-nav{flex:0 1 420px}
+@media (max-width:760px){.s-nav{flex:1 1 100%}}
+
+.s-hero-in{display:grid;grid-template-columns:1.1fr 1fr;gap:var(--space-6);align-items:center;padding-top:var(--space-7);padding-bottom:var(--space-7)}
+.s-text h1{margin-bottom:var(--space-4)}
+.s-open{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:18px;margin:0 0 var(--space-3)}
+.s-notice{background:var(--bk-hi);border-left:4px solid var(--bk-amb-edge);padding:8px 12px;border-radius:6px}
+.s-acts{margin-top:var(--space-4)}
+.s-pic{margin:0;border:3px solid var(--bk-btn);border-radius:14px;overflow:hidden;background:#f3e6cf;aspect-ratio:640/440}
+.s-pic svg,.s-pic img{width:100%;height:100%;object-fit:cover;display:block}
+@media (max-width:760px){
+  .s-hero-in{grid-template-columns:1fr;gap:var(--space-4);padding-top:var(--space-4);padding-bottom:var(--space-6)}
+  .s-pic{order:-1}
+}
+
+/* "Changed" tags after the owner saves: their space is kept, so nothing moves when they appear */
+.chg{visibility:hidden;display:inline-block;font:700 13px/1.2 var(--font-sans);color:var(--bk-crust);border:1.5px dashed var(--bk-crust);border-radius:6px;padding:2px 6px}
+.chg.on{visibility:visible}
+
+.s-sec{padding:var(--space-7) 0;border-top:2px solid var(--bk-line)}
+.menu{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-6)}
+@media (max-width:960px){.menu{grid-template-columns:1fr}}
+.mgroup h3{border-bottom:2px solid var(--bk-crust);padding-bottom:4px}
+.mlist{list-style:none;margin:0;padding:0}
+.mi{display:grid;grid-template-columns:1fr auto;gap:2px var(--space-3);padding:10px 0 6px;border-bottom:1px solid var(--bk-line)}
+.mi-name{font-weight:700;font-size:18px}
+.mi-price{font-weight:700;font-size:18px;text-align:right}
+.mi-all{grid-column:1/-1;color:var(--bk-muted);font-size:15px}
+.mi-tags{grid-column:1/-1;display:flex;gap:8px;min-height:28px;align-items:center}
+
+.hours2{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-7);align-items:stretch}
+#directions{display:flex;flex-direction:column}
+@media (max-width:860px){.hours2{grid-template-columns:1fr;gap:var(--space-6)}}
+.htable{width:100%;border-collapse:collapse;font-size:18px;margin-bottom:var(--space-4)}
+.htable th,.htable td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--bk-line)}
+.htable th{font-weight:400}
+.htable td[data-htime]{text-align:right;font-weight:700}
+.htable .chg-cell{width:90px;text-align:right}
+.htable tr.today{background:var(--bk-hi)}
+.htable tr.today th{font-weight:700}
+/* The map is the Directions button (2026-11-24): it fills the rest of its column, so it ends level with the hours */
+.mapbtn{position:relative;display:block;flex:1 1 auto;min-height:220px;width:100%;padding:0;border:3px solid var(--bk-btn);border-radius:14px;overflow:hidden;background:#efe1c6;cursor:pointer}
+.mapbtn:hover{border-color:var(--bk-crust)}
+.mapbtn:hover .maplbl{background:var(--bk-crust)}
+.map{position:absolute;inset:0;width:100%;height:100%}
+.maplbl{position:absolute;right:10px;bottom:10px;min-height:40px;display:inline-flex;align-items:center;padding:6px 14px;border-radius:10px;background:var(--bk-btn);color:var(--bk-on-btn);font:700 16px/1.2 var(--font-sans)}
+@media (max-width:860px){.mapbtn{flex:none;aspect-ratio:400/260;min-height:0}}
+
+.ws-intro{max-width:68ch}
+.ws-who .fld{margin-bottom:var(--space-2)}
+@media (max-width:620px){.ws-who{grid-template-columns:1fr}}
+.ws-mail{margin-top:var(--space-6);padding:var(--space-5);background:var(--bk-surface);border:2px solid var(--bk-line);border-radius:14px}
+.ws-mail p{margin:0 0 var(--space-2)}
+.ws-mail .addr{font-weight:700;font-size:18px;white-space:nowrap;overflow-wrap:normal}
+@media (max-width:420px){.ws-mail .addr{font-size:16px}}
+.ws-mail .row2{margin-top:var(--space-3)}
+.ws-mail .cnote{margin-top:var(--space-3)}
+@media (max-width:760px){.ws-mail{padding:var(--space-4)}}
+.wsf{background:var(--bk-surface);border:2px solid var(--bk-line);border-radius:14px;padding:var(--space-5)}
+@media (max-width:760px){.wsf{padding:var(--space-4)}}
+.ws-hint{margin:-8px 0 var(--space-4)}
+.wtable{width:100%;border-collapse:collapse;margin:0 0 var(--space-5)}
+.wtable th,.wtable td{padding:8px 6px;border-bottom:1px solid var(--bk-line);text-align:left;vertical-align:middle}
+.wtable thead th{font-size:14px;color:var(--bk-muted);font-weight:700}
+.wtable td:nth-child(2),.wtable td:last-child,.wtable thead th:nth-child(2),.wtable thead th:last-child{text-align:right;white-space:nowrap}
+.wtable input{width:88px;min-height:48px;padding:8px 10px;border:2px solid var(--bk-edge);border-radius:8px;font:16px var(--font-sans);text-align:right;background:var(--bk-surface);color:var(--bk-ink)}
+.wtable tfoot th,.wtable tfoot td{font-weight:700;font-size:18px;border-bottom:0}
+@media (max-width:520px){.wtable thead th:nth-child(2),.wtable td:nth-child(2){display:none}.wtable input{width:72px}}
+/* Delivery mornings: the coming seven days in one row (sevenths), weekday over date; a day that can't be booked stays
+   in its place, greyed, its reason in a tip (hover, tap, focus); a calendar opens underneath for later dates */
+.week7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.dayb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:64px;padding:6px 2px;border:2px solid var(--bk-btn);border-radius:10px;background:var(--bk-surface);color:var(--bk-ink);font:700 16px/1.15 var(--font-sans);cursor:pointer;text-align:center}
+.dayb small{font:400 14px/1.2 var(--font-sans)}
+.dayb:hover{background:var(--bk-sunk)}
+.dayb[aria-pressed="true"]{background:var(--bk-btn);color:var(--bk-on-btn)}
+.dayb[aria-disabled="true"]{border-style:dashed;border-color:var(--bk-edge);background:var(--bk-sunk);color:var(--bk-muted);cursor:help}
+.dayb .wd-s{display:none}
+@media (max-width:620px){.dayb .wd-l{display:none}.dayb .wd-s{display:block}.dayb{min-height:56px;font-size:15px}.week7{gap:4px}}
+.calb{width:100%;margin-top:var(--space-2)}
+.calb[aria-expanded="true"]{background:var(--bk-sunk)}
+.cal{margin-top:var(--space-2);padding:var(--space-3);border:2px solid var(--bk-line);border-radius:12px;background:var(--bk-bg)}
+.cal-head{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);margin-bottom:var(--space-2)}
+.cal-title{grid-column:1/-1;margin:0;text-align:center;font-weight:700;font-size:18px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal-grid .wdh{text-align:center;font-size:14px;font-weight:700;color:var(--bk-muted);padding:4px 0}
+.cal-grid .dayb{min-height:48px}
+.cal-grid .out{min-height:48px}
+.cal .cnote{margin-top:var(--space-3)}
+.tip{position:fixed;z-index:40;max-width:240px;padding:8px 12px;border-radius:8px;background:var(--bk-btn);color:var(--bk-on-btn);font:700 15px/1.35 var(--font-sans);text-align:center;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.ws-send .b{width:100%}
+.reasons{margin:var(--space-2) 0 0;padding-left:20px;color:var(--bk-muted)}
+.reasons:empty{display:none}
+.ws-done{margin:var(--space-3) 0 0;padding:12px 14px;border:2px solid var(--bk-ok);background:var(--bk-ok-bg);color:var(--bk-ok);border-radius:10px;font-weight:700}
+
+/* Phone: Call | Directions stick to the bottom once the top pair has scrolled away (never shown twice) */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bk-bg);border-top:2px solid var(--bk-line);padding:8px var(--space-4) calc(8px + env(safe-area-inset-bottom))}
+.dock .cnote{margin:0 0 8px}
+@media (min-width:761px){.dock{display:none!important}}
+@media (max-width:760px){body.docked{padding-bottom:80px}}
+
+/* The owner's settings panel: right under the CuSS bar, in the bakery's look */
+.owner{background:var(--bk-sunk);border-bottom:3px solid var(--bk-crust);padding:var(--space-5) 0 var(--space-6)}
+.owner .cnote{margin:0 0 var(--space-4)}
+.own{max-width:760px}
+.own .fold{margin-bottom:var(--space-3)}
+.fsum{font-weight:400;font-size:15px;margin-left:auto;margin-right:8px}
+.fbody{padding:var(--space-4) 4px var(--space-2)}
+.today3{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);margin-bottom:var(--space-4)}
+.today3 .b:first-child{grid-column:1/-1}
+.today3 .b[aria-pressed="true"],.photo2 .b:focus-within{background:var(--bk-btn);color:var(--bk-on-btn)}
+.oh .row2 label{display:block}
+.sublbl{display:block;font-size:14px;color:var(--bk-muted);margin-bottom:4px}
+.oh select{display:block;width:100%;min-height:48px;padding:8px 10px;border:2px solid var(--bk-edge);border-radius:8px;background:var(--bk-surface);color:var(--bk-ink);font:16px var(--font-sans)}
+.mrow{display:grid;grid-template-columns:1fr 140px;gap:0 var(--space-4);align-items:end;padding:var(--space-3) 0;border-bottom:1px solid var(--bk-line)}
+.mname{grid-column:1/-1;font-weight:700;margin:0 0 6px}
+.mrow .fld{margin:0}
+.mrow .fld{grid-column:2;grid-row:2}
+.chk{grid-column:1;grid-row:2;display:flex;align-items:center;gap:10px;min-height:48px;cursor:pointer}
+.chk input{width:24px;height:24px;accent-color:var(--bk-btn)}
+.mrow .undo-slot{grid-column:1/-1}
+.photo2{display:grid;grid-template-columns:1fr;gap:var(--space-2);margin-bottom:var(--space-3)}
+.photo2.two{grid-template-columns:1fr 1fr}
+.undo-slot{min-height:32px;display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
+.undo-slot .lnk{font-size:15px;min-height:32px}
+@media (pointer:coarse){.undo-slot{min-height:48px}.undo-slot .lnk{min-height:48px}}
+.own-line{margin:var(--space-4) 0}
+.own-save .b{width:100%}
+.saved-line{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-3);min-height:56px;font-weight:700}

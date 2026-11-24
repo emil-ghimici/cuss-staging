@@ -26,5 +26,12 @@
     "ascent": "102.02%",
     "descent": "30.00%",
     "lineGap": "0.00%"
+  },
+  "serif": {
+    "fallback": "Georgia Bold",
+    "sizeAdjust": "93.28%",
+    "ascent": "104.84%",
+    "descent": "27.34%",
+    "lineGap": "0.00%"
   }
 }

@@ -204,3 +204,4 @@
 @keyframes jsway{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
 @keyframes jsteam{from{opacity:.5;transform:translateY(6px)}to{opacity:0;transform:translateY(-10px)}}
 @keyframes jspin{to{transform:rotate(360deg)}}
+.lost .crew.away{visibility:hidden}

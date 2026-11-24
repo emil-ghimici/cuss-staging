@@ -3,6 +3,7 @@ layout: layouts/base.njk
 permalink: /
 ---
 {%- from "macros.njk" import faq, steps, contact with context %}
+{%- from "work-card.njk" import workCard %}
 <section class="hero" data-hero aria-labelledby="hero-h">
   <div class="wrap hero-in">
     <div class="hero-copy">
@@ -67,8 +68,9 @@ permalink: /
   <div class="wrap">
     <div class="sec-head"><p class="mono eyebrow">Work</p><h2 id="work-h">Things we’ve built</h2></div>
     <ul class="grid g3 plain">
-      {%- for w in work %}
-      <li><a class="card work bv-lg{% if w.placeholder %} placeholder{% endif %}" href="/work/"><div class="bezel bv-md"><div class="shot"><svg viewBox="0 0 300 170" preserveAspectRatio="none" aria-hidden="true" focusable="false">{{ w.shot | safe }}</svg></div></div><span class="mono tag">{{ w.kind }}</span><h3 class="h4">{{ w.title }}</h3><p>{{ w.d }}</p></a></li>
+      {#- Home picks (demo step 11a): website, roster, dashboard until the client project has screenshots #}
+      {%- for w in work | selectattr("home") | sort(false, false, "home") %}
+      <li>{{ workCard(w, "h3") }}</li>
       {%- endfor %}
     </ul>
     <p class="see-all"><a class="link-tap" href="/work/">See all work →</a></p>

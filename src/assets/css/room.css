@@ -107,7 +107,7 @@ html.js .shop .acts[hidden]{display:grid;visibility:hidden}
   .acts{flex:none}
 }
 /* Trimmed demo on service pages */
-.shop.mini{background:var(--surface-2);padding:var(--space-6);border:var(--border-divider-w) solid var(--divider)}
+/* On a service page it sits on the page background like Home's (one background, 2026-11-24): no panel of its own */
+.shop.mini{background:none;padding:0;border:0}
 .shop.mini .room-tag{display:block;margin-bottom:var(--space-4)}
-@media (max-width: 760px){.shop.mini{padding:var(--space-4);margin-left:calc(var(--space-4) * -1);margin-right:calc(var(--space-4) * -1)}}
 @media (prefers-reduced-motion: reduce){.shop *,.shop *::before,.shop *::after{animation:none!important;transition:none!important}}

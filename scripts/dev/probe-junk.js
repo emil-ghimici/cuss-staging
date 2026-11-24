@@ -4,9 +4,13 @@
 // where he came down AND on the strip's old seat point is a pull to the middle (the old behaviour) and counts as a
 // rule break; so does a fix done from more than arm's reach (two widths) away, and (the zig-zag) a stop that isn't
 // on the other side of the job from where he landed, at least a fifth of the screen from it.
+// Reduced motion (2026-11-24): every strip starts fixed, so the probe doesn't wait for fixes there; it still scrolls to
+// each strip at the same two stops and checks he sits still on a box (a strip or a card) once the hero is off screen.
+// Before this, it skipped fixed strips without scrolling and kept reading CREW at the top of the page ("home").
 // node scripts/dev/watch-crew.mjs http://localhost:8091/ 0 1280 "" probe-junk.js   (also at 500; and with "reduce")
 (async () => {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const st = () => document.querySelector('[data-guide]').crewState();
   const g = document.querySelector('.g-crew');
   const mid = () => { const r = g.getBoundingClientRect(); return r.left + r.width / 2; };
@@ -18,6 +22,23 @@
   };
   const out = [], ends = []; let breaks = 0;
   await sleep(3000);
+  if (reduced) {
+    // his home on screen keeps him (guide.js sitStill): the home CREW below the header
+    const homeEl = document.querySelector('[data-crew-home], [data-hero]'), home = homeEl && homeEl.querySelector('.crew'), hh = document.querySelector('.hdr').offsetHeight;
+    for (const j of document.querySelectorAll('[data-junk]')) {
+      for (const f of [0.55, 0.3]) {
+        scrollTo(0, j.getBoundingClientRect().top + scrollY - innerHeight * f);
+        await sleep(2000);
+        const s = st(), hr = home && home.getBoundingClientRect(), homeOn = hr && hr.bottom > hh && hr.top < innerHeight;
+        let note = '';
+        if (!homeOn && s.mode !== 'perch' && s.mode !== 'shop') { breaks++; note = '  <- BREAK: not on a box (' + s.mode + ')'; }
+        if (s.walking) { breaks++; note += '  <- BREAK: walking under reduced motion'; }
+        out.push(j.dataset.crewStop + ' @' + f + ': ' + s.mode + ' ' + (s.perch || '') + (homeOn ? ' (hero on screen)' : '') + note);
+      }
+    }
+    out.push('rule breaks: ' + breaks);
+    return out.join('\n');
+  }
   for (const j of document.querySelectorAll('[data-junk]')) {
     let hang = null, land = null, end = null, fix = null;
     for (const f of [0.55, 0.3]) {

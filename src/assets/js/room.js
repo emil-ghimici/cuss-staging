@@ -204,21 +204,47 @@
         $('.st', li).textContent = done ? ' (done)' : cur ? ' (now)' : ' (to do)';
       });
     }
-    /* ---------- The sign: hangs from two hangers; nudged, the left one gives and its left side drops ---------- */
+    /* ---------- The sign: hangs from two hangers; he tries its dead letters, then the left hanger gives ---------- */
     var grip = $('.grip', sign), hangL = $('.hanger.l', shop), tilt = 0, dropped = false, DROP = -9;
     function setTilt(d) { tilt = d; sign.style.transform = d ? 'rotate(' + d.toFixed(2) + 'deg)' : ''; }
     function gripAt() { return rel(grip); }
-    // He reaches the sign's left end, gives it a nudge (a little wobble), lets go, and the left side drops
+    // He tries to fix it (2026-11-24): his hand goes to the dead letters, the K and then the R, and taps each; each
+    // flickers once and dies. Then the sign shudders by itself, its left hanger gives and the left side drops, his hand
+    // snatching back as it goes. Nothing in his move pushes the sign (before, he nudged its left end and it dropped).
+    var dead = sign.querySelectorAll('[data-dead]');
+    function letterAt(el) { var p = rel(el); return { x: p.x, y: p.y + el.offsetHeight * 0.15 }; }
+    // Two quick taps on a letter: the hand jiggles; the letter lights for a moment and dies again
+    function tapLetter(el, g) {
+      var p = letterAt(el), lit = false;
+      el.style.transition = 'none';
+      return tween(420, function (k) {
+        var j = Math.sin(k * Math.PI * 4) * 3;
+        follow(p.x + j, p.y - Math.abs(j));
+        var on = (k > 0.22 && k < 0.34) || (k > 0.62 && k < 0.7);
+        if (on !== lit) { lit = on; el.style.opacity = on ? '1' : ''; }
+      }, g).then(function (ok) { el.style.opacity = ''; el.style.transition = ''; return ok; });
+    }
     function nudgeSign(g) {
       if (dropped) { setTilt(DROP); hangL.classList.add('snap'); return Promise.resolve(g === gen); }
-      var t = gripAt();
-      return reach(t.x, t.y, g)
-        .then(function (ok) { return ok && tween(420, function (k) { setTilt(Math.sin(k * Math.PI * 2) * 1.6 * (1 - k)); follow(gripAt().x, gripAt().y); }, g); })
+      setTilt(0);                                     // a shudder cut off earlier starts level again
+      var k = letterAt(dead[0]);
+      return reach(k.x, k.y, g)
+        .then(function (ok) { return ok && tapLetter(dead[0], g); })
+        .then(function (ok) {                         // along to the R
+          if (!ok) return false;
+          var a = letterAt(dead[0]), b = letterAt(dead[1]);
+          return tween(350, function (t) { var e = easeInOut(t); follow(a.x + (b.x - a.x) * e, a.y + (b.y - a.y) * e); }, g);
+        })
+        .then(function (ok) { return ok && tapLetter(dead[1], g); })
+        .then(function (ok) {                         // the sign shudders by itself, his hand still on the R
+          return ok && tween(300, function (t) { setTilt(Math.sin(t * Math.PI * 6) * 0.9 * (1 - t * 0.5)); var p = letterAt(dead[1]); follow(p.x, p.y); }, g);
+        })
         .then(function (ok) {
           if (!ok) return false;
           dropped = true; hangL.classList.add('snap');
-          back(g);                                    // his hand comes back while it drops
-          return tween(650, function (k) { var e = 1 + 2.2 * Math.pow(k - 1, 3) + 1.2 * Math.pow(k - 1, 2); setTilt(DROP * e); }, g);
+          if (!reduced && crew.animate) crew.animate([{ translate: '0 0' }, { translate: '0 -5px' }, { translate: '0 0' }], { duration: 260, easing: 'steps(2)' });   // a small flinch
+          back(g);                                    // his hand snatches back while it drops
+          return tween(650, function (t) { var e = 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2); setTilt(DROP * e); }, g);
         })
         .then(function (ok) { if (ok) setTilt(DROP); return ok && hold(500, g); });
     }
@@ -274,7 +300,7 @@
           .then(function (ok) { return ok && roll(geo().entry, geo().pave, g); });
       }
       return chain
-        .then(function (ok) { return ok && nudgeSign(g); })            // he tries the sign; its left side drops
+        .then(function (ok) { return ok && nudgeSign(g); })            // he tries the dead letters; the sign gives way
         .then(function (ok) {
           if (!ok) return false;
           crew.classList.toggle('flip', rel(sign).x < me.x * U());   // looking at it

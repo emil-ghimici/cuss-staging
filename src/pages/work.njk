@@ -12,22 +12,24 @@ crumbs:
   - { name: "Home", url: "/" }
   - { name: "Work" }
 ---
-{#- Work (design spec sections 7, 11): few items, demos clearly labelled. PLACEHOLDER: real screenshots
-    (copy agreed 2026-11-18). -#}
+{#- Work (design spec sections 7, 11): few items, demos clearly labelled. The three bakery demos link to their pages; PLACEHOLDER: the client
+    project's screenshots (copy agreed 2026-11-18). -#}
 {%- from "macros.njk" import contact, ph with context %}
+{%- from "work-card.njk" import workCard %}
 <div class="wrap">
   <div class="intro">
     <p class="mono eyebrow">Work</p>
     <h1>Things we’ve built</h1>
-    <p class="lead measure">A real client project and a couple of demos built on fictional data, each clearly labelled. Fewer things, shown properly.</p>
+    <p class="lead measure">A real client project and three demos built on fictional data, each clearly labelled. Fewer things, shown properly.</p>
   </div>
   <section class="sec-tight" aria-label="Projects and demos" data-crew-tip="Real work, and a couple of labelled demos.">
-    <ul class="grid g3 plain">
+    {#- Four cards, 2 × 2 on wide screens, one column on phones (demo step 11a) #}
+    <ul class="grid g2 plain">
       {%- for w in work %}
-      <li><article class="card work static bv-lg{% if w.placeholder %} placeholder{% endif %}"><div class="bezel bv-md"><div class="shot"><svg viewBox="0 0 300 170" preserveAspectRatio="none" aria-hidden="true" focusable="false">{{ w.shot | safe }}</svg></div></div><span class="mono tag">{{ w.kind }}</span><h2 class="h4">{{ w.title }}</h2><p>{{ w.d }}</p></article></li>
+      <li>{{ workCard(w, "h2") }}</li>
       {%- endfor %}
     </ul>
-    {{ ph('real screenshots: the client project’s once it’s finished, the two bakery demos once they’re built') }}
+    {{ ph('real screenshots of the client project, once it’s finished') }}
   </section>
   <section class="contact-sec sec-tight" aria-labelledby="contact-h" data-crew-tip="Tick a few boxes. I’ll do the typing.">
     {{ contact('Got something similar in mind?') }}

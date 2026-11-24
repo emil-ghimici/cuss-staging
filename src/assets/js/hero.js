@@ -36,6 +36,9 @@
     // His name (confirmed 2026-11-17), said once per visit after he first tunes the TV
     intro: ['Hiya. I’m CREW: CuSS Robot for Everyday Work.'],
     tea: ['Back in a minute, the kettle’s on.', 'Tea break. The telly can mind itself.', 'Ten minutes. Union rules.', 'Don’t tell the boss.'],
+    // The tea break's own order (2026-11-24): one of the first three announces it, the fourth is always said on the crate
+    teaGo: ['Back in a minute, the kettle’s on.', 'Tea break. The telly can mind itself.', 'Ten minutes. Union rules.'],
+    teaSit: ['Don’t tell the boss.'],
     idle: ['Got something that needs fixing? That’s the Contact button.', 'We fix things. That’s the whole job.', 'Spreadsheets held together with tape? Seen worse.', 'The first call’s free, by the way.', 'All quiet. Suspiciously quiet.']
   };
   // The screen and phosphor tokens, read from the page: dark glass at night, sunlit glass by day.
@@ -263,10 +266,10 @@
     [armEl, handEl].forEach(function (el) { el.classList.remove('on', 'out'); });
     crewEl.classList.remove('extend');
   }
-  function reachTo(x, y, instant) {
+  function reachTo(x, y, instant, side) {
     var sr = scene.getBoundingClientRect(), cr = crewEl.getBoundingClientRect();
-    var left = x < cr.left - sr.left + cr.width / 2;
-    crewEl.classList.toggle('flip', left);                     // face the job (the sprite faces right)
+    var left = side !== undefined ? side : x < cr.left - sr.left + cr.width / 2;
+    if (side === undefined) crewEl.classList.toggle('flip', left);   // face the job (the sprite faces right); a set shoulder keeps his facing
     var sx = cr.left - sr.left + (left ? 26 : 52) / 78 * cr.width, sy = cr.top - sr.top + 52 / 104 * cr.height;
     var len = Math.hypot(x - sx, y - sy), ang = Math.atan2(y - sy, x - sx);
     // Put it at his shoulder first with no transition, so nothing slides across the scene…
@@ -324,6 +327,7 @@
   // At most two things broken at once, and nothing breaks during the tea break: a break that is due waits its turn
   function brokenCount() { return Object.keys(THINGS).filter(function (id) { return THINGS[id].broken(); }).length; }
   var FAST = /crew-fast/.test(location.hash) ? 0.1 : 1;   // dev checks only (scripts/dev/probe-jobs.js): ten times sooner
+  var TEA_AFTER = /crew-tea-soon/.test(location.hash) ? 3000 : 45000;   // dev checks only (scripts/dev/probe-tea.js): tea after 3 s
   function breakLater(min, max, fn) {
     return wait((min + Math.random() * (max - min)) * FAST, true).then(function tryBreak() {
       if (resting || brokenCount() >= 2) return wait(5000, true).then(tryBreak);
@@ -412,23 +416,97 @@
     }
     return tick();
   }
-  function rest() {
-    return walkTo(teaSpot()).then(function () {
-      crewEl.classList.add('tea'); if (!phone) crewEl.classList.add('sit', 'flip');   // facing the screen
-      mutter('tea', true);
-      resting = true; sync();
-      // He watches the telly for a minute (it plays on at a third of the frame rate), then everything stops
-      return new Promise(function (r) { crew.wake = r; setTimeout(function () { if (resting) { teaLong = true; sync(); } }, 60000); });
-    }).then(function () {
-      crewEl.classList.remove('tea', 'sit');
-      resting = false; teaLong = false; sync();
+  // The tea break (changed 2026-11-24). He announces it, the mug appears in his hand, he strolls to the crate and pulls
+  // himself up onto it by his arm, grappling the top bar as he does to climb a page; seated, facing the screen: "Don’t
+  // tell the boss." Anything that gets him back up: he hops down and the mug goes. Visitor input, being carried or the
+  // scene stopping mid-climb: the arm lets go and pulls in, he lowers to the ground, and the climb waits for his next
+  // break. Phones (no crate): the announcement, the mug, the line, beside the telly. Reduced motion: no moves.
+  function teaLine(kind) {                            // the break's own lines: closer together than 12 s, never over a chat
+    if (chatting || held || crewEl.classList.contains('away')) return;
+    lastMutter = performance.now(); showBubble(pick(kind), 3500);
+  }
+  // A move on the crew's clock (it stops while he's chatted to, carried, or the hero is paused); false if cut off
+  function ctween(ms, fn, cut) {
+    return new Promise(function (res) {
+      var t0 = clock;
+      (function f() {
+        if (cut && cut()) return res(false);
+        var k = Math.min(1, (clock - t0) / ms); fn(k);
+        if (k < 1) requestAnimationFrame(f); else res(true);
+      })();
     });
+  }
+  function easeIO(k) { return k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; }
+  function setY(y) { crewEl.style.transition = 'none'; crewEl.style.setProperty('--y', Math.round(y) + 'px'); }
+  // The arm from the shoulder away from the mug (the mug is in the hand on his facing side), its end fixed on the bar
+  function armSide() { return !crewEl.classList.contains('flip'); }      // facing right: the left shoulder
+  function armFrom(left) {
+    var sr = scene.getBoundingClientRect(), cr = crewEl.getBoundingClientRect();
+    var sx = cr.left - sr.left + (left ? 26 : 52) / 78 * cr.width, sy = cr.top - sr.top + 52 / 104 * cr.height;
+    var tx = parseFloat(armEl.style.getPropertyValue('--tx')), ty = parseFloat(armEl.style.getPropertyValue('--ty'));
+    [armEl, handEl].forEach(function (el) { el.style.setProperty('--sx', sx + 'px'); el.style.setProperty('--sy', sy + 'px'); });
+    armEl.style.width = Math.hypot(tx - sx, ty - sy) + 'px'; armEl.style.setProperty('--ang', Math.atan2(ty - sy, tx - sx) + 'rad');
+  }
+  function climb(startAny) {
+    var my = gen, lift = crateEl.offsetHeight * 38 / 40, left = armSide();
+    var cut = function () { return gen !== my || held || lastAny !== startAny; };
+    var hdr = doc.querySelector('.hdr'), sr = scene.getBoundingClientRect();
+    var cx = crew.x + crewW() / 2, ty = (hdr ? hdr.getBoundingClientRect().bottom : sr.top) - sr.top + 2;
+    function letGo() {                                // the arm lets go and pulls in; he lowers to the ground
+      var y0 = parseFloat(crewEl.style.getPropertyValue('--y')) || 0;
+      [armEl, handEl].forEach(function (el) { el.classList.add('still'); });
+      armOff();
+      return ctween(300, function (k) { setY(y0 * (1 - k)); }).then(function () { setY(0); return false; });
+    }
+    return reachTo(cx + (left ? -1 : 1), ty, false, left)
+      .then(function () {                             // clamped on: a jolt, then it reels him up past the crate's top
+        if (cut()) return letGo();
+        armEl.classList.add('still'); handEl.classList.add('still');
+        return ctween(150, function (k) { setY(-3 * Math.sin(k * Math.PI)); armFrom(left); }, cut)
+          .then(function (ok) { return ok ? ctween(900, function (k) { setY(-lift * easeIO(k)); armFrom(left); }, cut) : false; })
+          .then(function (ok) {
+            if (!ok) return letGo();
+            setY(0); crewEl.classList.add('sit');     // the same height, now seated on the crate (one frame, no jump)
+            [armEl, handEl].forEach(function (el) { el.classList.remove('still'); });
+            return retract().then(function () { return true; });
+          });
+      });
+  }
+  function getDown() {
+    if (crewEl.classList.contains('sit')) {
+      var lift = crateEl.offsetHeight * 38 / 40;
+      crewEl.classList.remove('sit');
+      if (!reduced && crewEl.animate) crewEl.animate([{ translate: '0 ' + (-lift) + 'px' }, { translate: '0 ' + (-lift - 10) + 'px', offset: 0.35 }, { translate: '0 0' }], { duration: 380, easing: 'ease-in' });
+    }
+    crewEl.classList.remove('tea');                   // the mug fades out
+    return wait(reduced ? 0 : 400);
+  }
+  function rest() {
+    var startAny = lastAny, crate = !phone && crateEl;
+    teaLine('teaGo');                                 // a. the announcement
+    return wait(reduced ? 0 : 3500)
+      .then(function () { crewEl.classList.add('tea'); return wait(reduced ? 0 : 400); })   // b. the mug
+      .then(function () { return walkTo(teaSpot()); })                                        // c. the stroll
+      .then(function () {
+        if (!crate) return true;
+        if (reduced) { crewEl.classList.add('sit'); return true; }
+        return climb(startAny);                                                               // d. up by his arm
+      })
+      .then(function (seated) {
+        if (!seated) { crewEl.classList.remove('tea'); return; }   // cut off: the climb waits for his next break
+        if (crate) crewEl.classList.add('flip');                   // facing the screen
+        teaLine('teaSit');                                          // e. "Don’t tell the boss."
+        resting = true; sync();
+        // He watches the telly for a minute (it plays on at a third of the frame rate), then everything stops
+        return new Promise(function (r) { crew.wake = r; setTimeout(function () { if (resting) { teaLong = true; sync(); } }, 60000); })
+          .then(function () { resting = false; teaLong = false; sync(); return getDown(); });   // f. he hops down
+      });
   }
   var lastAny = 0;
   function life() {
     return pause(4000 + Math.random() * 4000).then(function () {
       if (crew.needTV) return fixTV();
-      if (performance.now() - lastAny > 45000) return rest();
+      if (performance.now() - lastAny > TEA_AFTER) return rest();
       if (Math.random() < 0.2) mutter('idle');
       var ids = phone ? ['tube', 'junction', 'sign'] : ['tube', 'junction', 'sign', 'off'];
       ['lamp', 'pipe'].forEach(function (id) { if (THINGS[id].broken()) ids.push(id, id); });   // only when broken, and likelier
@@ -557,6 +635,7 @@
     gen++; crewEl.classList.remove('rolling');                                  // ends whatever he was in the middle of
     armOff(); dial.classList.remove('turn');
     crewEl.classList.remove('tea', 'sit', 'reach', 'up', 'flinch');
+    crewEl.style.setProperty('--y', '0px');                                      // a climb cut off: back on the ground
     if (resting) { resting = false; teaLong = false; crew.wake = null; sync(); }
     crew.busy = false; walkTarget = null;
   }

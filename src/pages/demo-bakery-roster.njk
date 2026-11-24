@@ -1,0 +1,55 @@
+---
+layout: layouts/demo.njk
+permalink: /work/demo-bakery-roster/
+title: "Shutter & Crumb: roster demo · CuSS"
+description: "A demo roster for a fictional bakery, built by CuSS: shifts that follow the orders, Irish working-time rules checked as you plan, and swaps from a phone."
+demo: roster
+css: [demo-tool, demo-roster]
+noindex: true
+---
+{#- The bakery's roster (demo steps 7–10, approved 2026-11-19; CuSS's words and the "Why?" notes approved 2026-11-24).
+    Owner's view (Mary plans the week) and Staff view (a phone screen, as Niamh by default). Fixed at Thursday 10:30.
+    The rules: OWTA 1997 s.11–15, 17, 25; PYPEA 1996 s.6; S.I. 57/1998 (skill staff-rostering-rules). The bakery's own
+    words (shift names, labels) are drafts for review on the running page. -#}
+<div class="bk-wrap tool">
+  <div data-pane="owner">
+    <header class="t-head">
+      <p class="t-biz">Shutter &amp; Crumb · Mary, owner</p>
+      <h1>This week’s roster</h1>
+      <p class="muted">Thursday 10:30 · <span data-published>Published Monday 09:12</span></p>
+    </header>
+    <div data-sick-banner></div>
+    <p class="orders-line"><span class="pill amb">Saturday</span> <b>Big wholesale orders: two bakers needed</b> <span class="src">From the orders queue · 10:29</span></p>
+    <div class="days7" data-days role="group" aria-label="Day"></div>
+    <div class="grid-wrap" data-grid></div>
+    <div data-panel></div>
+
+    <section class="t-sec" aria-labelledby="hrs-h">
+      <h2 id="hrs-h">Hours this week</h2>
+      <div data-hours></div>
+      <p class="wages">Wages so far: <b>€{{ bakery.wages.total | money(0) }}</b> · {{ bakery.wages.pct }}% of sales, the same as on the dashboard.</p>
+      <p class="rec">Finished shifts are kept for 3 years, with any corrections. <button class="lnk" type="button" data-why-static="rec" aria-expanded="false">Why?</button></p>
+      <div class="why" data-why-body="rec" hidden></div>
+      <div class="row1"><button class="b" type="button" data-export>Export hours for payroll</button></div>
+      <p class="cnote" id="n-export" hidden>A real file made from this demo week: hours, breaks and Sunday hours for each person, as a spreadsheet (CSV) for your payroll.</p>
+    </section>
+
+    <section class="t-sec pub" aria-labelledby="pub-h">
+      <h2 id="pub-h" class="sr">Publish</h2>
+      <div data-changes></div>
+      <button class="b fill main" type="button" data-publish>Publish roster</button>
+      <ul class="reasons" data-pub-why></ul>
+      <p class="done-t" data-pub-done hidden></p>
+      <p class="cnote" id="n-pub" hidden>For demo purposes, nothing was sent. In the real app, each person gets their shifts on their phone, and later changes go only to the people they affect.</p>
+    </section>
+  </div>
+
+  <div data-pane="staff" hidden>
+    <div class="phone">
+      <label class="fld viewas"><span>View as</span><select data-viewas></select></label>
+      <div data-staff></div>
+    </div>
+  </div>
+
+  <p class="cnote static foot-note">A demo, not legal advice: these rules are our summary of Irish law as we read it in November 2026.</p>
+</div>

@@ -1,0 +1,116 @@
+/* The bakery demo pages (/work/demo-bakery-…/), shared part. Two layers:
+   1. CuSS's own pieces (the CuSS bar, demo notes) in CuSS's look: site tokens, following the theme.
+   2. The bakery's look (demo step 6): cream, crust brown and navy; Fraunces headings, Atkinson body. The website
+      is light only (.bk-site); the dashboard and roster follow the device and the bar's theme switch. */
+
+/* ---------- The bakery's colours ---------- */
+.bk{
+  --bk-bg:#fbf6ec; --bk-surface:#ffffff; --bk-sunk:#f3ead9; --bk-ink:#1d2740; --bk-muted:#4f5566;
+  --bk-crust:#8a4512; --bk-btn:#1f2a4a; --bk-on-btn:#fbf6ec; --bk-line:#cdbb9c; --bk-edge:#8f7b5c;
+  --bk-ok:#1d6b3a; --bk-ok-bg:#e3f2e6; --bk-amb:#7a4600; --bk-amb-bg:#fdebc4; --bk-amb-edge:#c98a1a;
+  --bk-red:#a1231b; --bk-red-bg:#fbe3df; --bk-focus:#1f5fbf; --bk-hi:#fff3c4;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .bk-dashboard,:root:not([data-theme="light"]) .bk-roster{
+    --bk-bg:#121826; --bk-surface:#1a2233; --bk-sunk:#0e1420; --bk-ink:#f2eadb; --bk-muted:#bab3a5;
+    --bk-crust:#e8ac74; --bk-btn:#f2eadb; --bk-on-btn:#141b2d; --bk-line:#3a4459; --bk-edge:#6f7a90;
+    --bk-ok:#86d6a0; --bk-ok-bg:rgba(134,214,160,.13); --bk-amb:#ffc670; --bk-amb-bg:rgba(255,184,77,.14); --bk-amb-edge:#c98a1a;
+    --bk-red:#ff8f85; --bk-red-bg:rgba(255,110,100,.14); --bk-focus:#8fb8ff; --bk-hi:rgba(255,214,102,.16);
+  }
+}
+:root[data-theme="dark"] .bk-dashboard,:root[data-theme="dark"] .bk-roster{
+  --bk-bg:#121826; --bk-surface:#1a2233; --bk-sunk:#0e1420; --bk-ink:#f2eadb; --bk-muted:#bab3a5;
+  --bk-crust:#e8ac74; --bk-btn:#f2eadb; --bk-on-btn:#141b2d; --bk-line:#3a4459; --bk-edge:#6f7a90;
+  --bk-ok:#86d6a0; --bk-ok-bg:rgba(134,214,160,.13); --bk-amb:#ffc670; --bk-amb-bg:rgba(255,184,77,.14); --bk-amb-edge:#c98a1a;
+  --bk-red:#ff8f85; --bk-red-bg:rgba(255,110,100,.14); --bk-focus:#8fb8ff; --bk-hi:rgba(255,214,102,.16);
+}
+body.bk{background:var(--bk-bg);color:var(--bk-ink)}
+.bk main{display:block}
+.bk :focus-visible{outline:3px solid var(--bk-focus);outline-offset:2px}
+.bk h1,.bk h2,.bk h3{font-family:var(--font-serif);font-weight:600;letter-spacing:0;color:var(--bk-ink)}
+.bk h1{font-size:clamp(32px,26px + 1.9vw,52px);line-height:1.1}
+.bk h2{font-size:clamp(26px,22px + 1vw,36px);line-height:1.15;margin:0 0 var(--space-4)}
+.bk h3{font-size:22px;line-height:1.25;margin:0 0 var(--space-2)}
+.bk a{color:var(--bk-crust)}
+.bk .muted{color:var(--bk-muted)}
+.bk-wrap{max-width:1200px;margin:0 auto;padding:0 var(--space-6)}
+@media (max-width:760px){.bk-wrap{padding:0 var(--space-4)}}
+.bk .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+
+/* Buttons: outlined or filled, at least 48 px; groups split the width evenly */
+.b{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 16px;border:2px solid var(--bk-btn);border-radius:10px;background:transparent;color:var(--bk-ink);font:700 16px/1.2 var(--font-sans);text-align:center;text-decoration:none;cursor:pointer}
+.b:hover{background:var(--bk-sunk)}
+.b.fill{background:var(--bk-btn);color:var(--bk-on-btn)}
+.b.fill:hover{filter:brightness(1.12)}
+.b.main{min-height:56px;font-size:18px}
+.b[disabled],.b[aria-disabled="true"]{opacity:.5;cursor:not-allowed;filter:none}
+.b .ico{width:20px;height:20px}
+.row2,.row3{display:grid;gap:var(--space-2)}
+.row2{grid-template-columns:1fr 1fr}
+.row3{grid-template-columns:1fr 1fr 1fr}
+.row2>.b,.row3>.b{width:100%}
+.lnk{background:none;border:0;padding:0;color:var(--bk-crust);font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:auto}
+
+/* Pills: the main state only (≤ 25 characters, centred, also when they wrap) */
+.pill{display:inline-flex;align-items:center;justify-content:center;text-align:center;min-height:28px;padding:2px 10px;border-radius:999px;border:1.5px solid currentColor;font:700 14px/1.2 var(--font-sans);white-space:normal}
+.pill.ok{color:var(--bk-ok);background:var(--bk-ok-bg)}
+.pill.amb{color:var(--bk-amb);background:var(--bk-amb-bg)}
+.pill.red{color:var(--bk-red);background:var(--bk-red-bg)}
+.pill.dim{color:var(--bk-muted);background:transparent}
+/* Waiting-work count: the theme's text colour as the pill, its background colour as the number; nothing else looks like it */
+.wcount{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:var(--bk-ink);color:var(--bk-bg);font:700 14px/1 var(--font-sans);margin-left:8px}
+.cbar .wcount{background:var(--ink);color:var(--surface-0)}
+
+/* Folds: open directly underneath, several at once */
+.fold>summary{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);min-height:48px;padding:8px 14px;border:2px solid var(--bk-line);border-radius:10px;background:var(--bk-surface);cursor:pointer;font-weight:700;list-style:none}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::after{content:"";width:10px;height:10px;border-right:2.5px solid currentColor;border-bottom:2.5px solid currentColor;transform:rotate(45deg) translateY(-3px);flex:none}
+.fold[open]>summary::after{transform:rotate(-135deg) translate(-3px,0)}
+.fold>summary:hover{border-color:var(--bk-edge)}
+
+/* Form fields: label on its own row, field full width below */
+.fld{display:block;margin:0 0 var(--space-4)}
+.fld>span,.fld>legend{display:block;font-weight:700;margin:0 0 6px}
+.fld input,.fld select,.fld textarea{display:block;width:100%;min-height:48px;padding:10px 12px;border:2px solid var(--bk-edge);border-radius:8px;background:var(--bk-surface);color:var(--bk-ink);font:16px/1.4 var(--font-sans)}
+.fld textarea{min-height:96px;resize:vertical}
+.fld small,.hint{display:block;color:var(--bk-muted);font-size:14px;margin-top:4px}
+fieldset.fld{border:0;padding:0;margin:0 0 var(--space-4);min-width:0}
+
+/* ---------- CuSS's own pieces, in CuSS's look ---------- */
+.cbar{background:var(--surface-1);color:var(--ink);border-bottom:1px solid var(--divider);font-family:var(--font-sans)}
+.cbar-in{max-width:1200px;margin:0 auto;padding:6px var(--space-6);display:flex;align-items:center;gap:var(--space-3) var(--space-4);flex-wrap:wrap;min-height:56px}
+.cbar .mono{font-family:var(--font-mono);font-weight:500;font-size:14px;letter-spacing:.03em;line-height:1.4}
+.cbar-tag{color:var(--ink-muted);text-transform:uppercase}
+.cbar-load{color:var(--ink-muted);visibility:hidden}
+.cbar-load.on{visibility:visible}
+.cbar-load b{color:var(--ink);font-weight:500}
+.cbar-btn{min-height:48px;padding:8px 16px;border:2px solid var(--signal);border-radius:var(--bevel-fallback);background:transparent;color:var(--ink);font:700 16px/1.2 var(--font-sans);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.cbar-btn:hover,.cbar-btn[aria-pressed="true"],.cbar-btn[aria-expanded="true"]{background:var(--signal-tint)}
+.cbar-btn[aria-pressed="true"]{box-shadow:inset 0 -3px 0 var(--signal)}
+.cbar-views{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);flex:1 1 320px;max-width:420px}
+.cbar-end{margin-left:auto;display:flex;align-items:center;gap:var(--space-3)}
+.cbar .cbar-back{color:var(--signal);display:inline-flex;align-items:center;min-height:48px}
+.cbar :focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+.ibtn{display:inline-grid;place-items:center;width:48px;height:48px;padding:0;border:2px solid var(--border-control);border-radius:var(--bevel-fallback);background:transparent;color:var(--ink);cursor:pointer}
+.ibtn:hover{border-color:var(--signal)}
+.ico{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:760px){
+  .cbar-in{padding:6px var(--space-4)}
+  .cbar-tag{flex:1 1 auto}
+  .cbar-end{margin-left:0}
+  .bk-site .cbar-load{order:3;flex:1 1 100%}
+  .bk-site .cbar-btn{order:4;flex:1 1 100%}
+  .cbar-views{order:4;flex:1 1 100%;max-width:none}
+}
+/* Screenshots (npm run shots) hide the bar and every note */
+.shotmode .cbar,.shotmode .cnote{display:none!important}
+
+/* A demo note: opens directly under the button that hit the demo's edge, in CuSS's look */
+.cnote{margin:var(--space-2) 0 0;padding:12px 14px;background:var(--surface-1);color:var(--ink);border:1px solid var(--divider);border-left:4px solid var(--signal);border-radius:var(--bevel-fallback);font:16px/1.5 var(--font-sans);text-align:left}
+.cnote::before{content:"CuSS · demo note";display:block;font:500 13px/1.4 var(--font-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:4px}
+.cnote.static::before{content:none}
+
+/* The bakery's footer */
+.bk-foot{border-top:2px solid var(--bk-line);padding:var(--space-6) 0 var(--space-8);margin-top:var(--space-8);color:var(--bk-muted)}
+.bk-foot p{margin:0 0 var(--space-2)}
+.bk-foot .name{font-family:var(--font-serif);font-weight:600;font-size:22px;color:var(--bk-ink)}

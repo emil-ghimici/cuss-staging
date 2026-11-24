@@ -11,6 +11,7 @@
   const docX = () => g.getBoundingClientRect().left + scrollX;
   const out = []; let breaks = 0, tested = 0;
   await sleep(3000);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return 'reduced motion: no walks to test (every strip starts fixed and he never walks)';
   for (const j of document.querySelectorAll('[data-junk]')) {
     if (j.classList.contains('fixed')) continue;
     scrollTo(0, j.getBoundingClientRect().top + scrollY - innerHeight * 0.55);

@@ -1,0 +1,21 @@
+{#- One Work card (Work page and Home). A demo card is a link to its demo page, with its screenshot in the monitor
+    frame: AVIF and WebP, two widths, lazy, width and height set; a themed demo has a dark and a light picture and
+    only the one the theme shows is loaded (display:none + loading=lazy). Other cards keep the drawn stand-in. -#}
+{%- macro pic(w, theme) %}
+<picture class="th{% if theme %} th-{{ theme }}{% endif %}">
+  {%- set stem = '/assets/img/work/' + w.img + '-' + (theme or 'light') %}
+  <source type="image/avif" srcset="{{ stem }}-640.avif 640w, {{ stem }}-1280.avif 1280w" sizes="(max-width: 760px) 92vw, (max-width: 1060px) 46vw, 580px">
+  <source type="image/webp" srcset="{{ stem }}-640.webp 640w, {{ stem }}-1280.webp 1280w" sizes="(max-width: 760px) 92vw, (max-width: 1060px) 46vw, 580px">
+  <img src="{{ stem }}-640.webp" width="1280" height="726" alt="{{ w.alt }}" loading="lazy" decoding="async">
+</picture>
+{%- endmacro %}
+{%- macro workCard(w, hl) %}
+{%- set tag = 'a' if w.href else 'article' %}
+<{{ tag }} class="card work{% if not w.href %} static{% endif %} bv-lg{% if w.placeholder %} placeholder{% endif %}"{% if w.href %} href="{{ w.href }}"{% endif %}>
+  <div class="bezel bv-md"><div class="shot">
+    {%- if w.img %}{% if w.themed %}{{ pic(w, 'dark') }}{{ pic(w, 'light') }}{% else %}{{ pic(w, '') }}{% endif %}
+    {%- else %}<svg viewBox="0 0 300 170" preserveAspectRatio="none" aria-hidden="true" focusable="false">{{ w.shot | safe }}</svg>{% endif %}
+  </div></div>
+  <span class="mono tag">{{ w.kind }}</span><{{ hl }} class="h4">{{ w.title }}</{{ hl }}><p>{{ w.d }}</p>
+</{{ tag }}>
+{%- endmacro %}

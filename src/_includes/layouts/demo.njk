@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en-IE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ title }}</title>
+<meta name="description" content="{{ description }}">
+{#- The bakery demos are labelled demos of a fictional business: never indexed, never in the sitemap (noindex: true). #}
+<meta name="robots" content="noindex">
+{%- set pageUrl = page.url | absUrl(env.url + '/') %}
+<meta name="theme-color" content="{{ '#fbf6ec' if demo == 'site' else '#0b0f14' }}">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/assets/fonts/atkinson-hyperlegible-next-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CuSS Custom Software Solutions">
+<meta property="og:locale" content="en_IE">
+<meta property="og:title" content="{{ ogTitle or title }}">
+<meta property="og:description" content="{{ description }}">
+<meta property="og:url" content="{{ pageUrl }}">
+<meta property="og:image" content="{{ ('/assets/og/' + (page.url | ogSlug) + '.png') | absUrl(env.url + '/') }}">
+<meta property="og:image:alt" content="{{ ogTitle or title }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<script>(function(d){d.classList.add('js');try{var t=localStorage.getItem('cuss-theme');if(t==='light'||t==='dark')d.setAttribute('data-theme',t)}catch(e){}})(document.documentElement)</script>
+<style>{% inlineDemoCss css %}</style>
+</head>
+<body class="bk bk-{{ demo }}">
+<a class="skip" href="#main">Skip to content</a>
+{#- The CuSS bar (approved 2026-11-24): CuSS's own words, in CuSS's look; hidden by the screenshot script (?shot). #}
+<div class="cbar" data-cbar>
+  <div class="cbar-in">
+    <span class="cbar-tag mono">Demo · fictional business</span>
+    {%- if demo == 'site' %}
+    <span class="cbar-load mono" data-loaded aria-live="polite">Loaded in <b>0.0</b> s on your device</span>
+    <button class="cbar-btn" type="button" data-owner-toggle aria-expanded="false" aria-controls="owner">Try the owner’s settings</button>
+    {%- elif demo == 'roster' %}
+    <div class="cbar-views" role="group" aria-label="Whose view">
+      <button class="cbar-btn" type="button" data-view="owner" aria-pressed="true">Owner’s view</button>
+      <button class="cbar-btn" type="button" data-view="staff" aria-pressed="false">Staff view<span class="wcount" data-wcount hidden><span class="sr"> (</span><b>1</b><span class="sr"> waiting)</span></span></button>
+    </div>
+    {%- endif %}
+    <span class="cbar-end">
+      {%- if demo != 'site' %}<button class="ibtn cbar-theme js-only" type="button" data-theme-toggle aria-pressed="false" aria-label="Daylight theme" title="Daylight theme">{% icon "sun", "i-sun" %}{% icon "moon", "i-moon" %}</button>{% endif %}
+      <a class="cbar-back mono" href="/work/">Built by CuSS · Back to Work</a>
+    </span>
+  </div>
+</div>
+<main id="main" tabindex="-1">
+{{ content | safe }}
+</main>
+<script id="bk-data" type="application/json">{{ bakery | json | safe }}</script>
+{%- if demo == 'roster' %}
+{#- The roster draws its week with script: run before the first paint, so nothing moves when it appears #}
+<script>{% inlineFile "src/assets/js/demo.js" %}</script>
+<script>{% inlineFile "src/assets/js/demo-roster.js" %}</script>
+{%- else %}
+<script src="/assets/js/demo.js" defer></script>
+<script src="/assets/js/demo-{{ demo }}.js" defer></script>
+{%- endif %}
+</body>
+</html>

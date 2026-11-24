@@ -125,8 +125,12 @@
     makeBubble(ls, lcrew, function () { return lines[n++ % lines.length]; });
     // The glyphs start scattered across the floor (placed in the HTML); measured only when he sweeps, after load
     function swept() { lost.classList.add('swept'); lost.classList.remove('sweeping'); }
-    if (reduced) { swept(); return; }
+    // Live as his job starts, like the band CREWs: scrolled past the band, the guide may take him down the page to the
+    // footer's valve (2026-11-24); back in view, he's here again
+    function ready() { lcrew.classList.add('live'); }
+    if (reduced) { swept(); ready(); return; }
     (window.cussLate || Promise.resolve()).then(function () { whenIdle(function () {
+      ready();
       sleep(800).then(function () {
         // He sweeps towards the middle; the glyphs gather into a pile, which settles into "404"
         lost.classList.add('sweeping');

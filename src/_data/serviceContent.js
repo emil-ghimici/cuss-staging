@@ -71,7 +71,7 @@ export default {
     who: [
       { t: 'A trades business booking jobs on a whiteboard', d: 'Jobs, crews and materials in one place, visible from the van.' },
       { t: 'A wholesaler tracking orders across three spreadsheets', d: 'One order list everyone works from, with stock updated as it goes.' },
-      { t: 'A training company running courses from an inbox', d: 'Sign-ups, attendance and certificates handled in one place.' },
+      { t: 'A café whose roster lives in a WhatsApp group', d: 'Shifts, swaps and sick days in one place, with Irish working-time rules checked as you plan.' },
     ],
     exampleLead: 'A small bakery (fictional) takes wholesale orders by email. Here is the same order, before and after it has one app to live in.',
     room: ['inbox', 'sheet', 'inv', 'dash'],

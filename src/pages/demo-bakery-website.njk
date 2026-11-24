@@ -1,0 +1,261 @@
+---
+layout: layouts/demo.njk
+permalink: /work/demo-bakery-website/
+title: "Shutter & Crumb: bakery website demo · CuSS"
+description: "A demo website for a fictional bakery, built by CuSS: menu, hours, wholesale orders and directions, with a small settings panel for the owner."
+demo: site
+css: [demo-site]
+noindex: true
+---
+{#- The bakery's website (demo steps 4 and 4b, approved 2026-11-19; CuSS's words approved 2026-11-24).
+    One page, light only. The bakery's own words are drafts for review on the running page (demo step 13).
+    The owner's settings panel opens directly under the CuSS bar; nothing is stored anywhere. #}
+{%- set b = bakery %}
+<section id="owner" class="owner" hidden aria-labelledby="owner-h">
+  <div class="bk-wrap">
+    <p class="cnote static">On the real site, only the owner sees this, after signing in. Here anyone can try it: changes show on this page only and are gone when you reload. Nothing is stored.</p>
+    <h2 id="owner-h">The owner’s settings</h2>
+    <form class="own" data-own novalidate>
+      <details class="fold">
+        <summary>Today <span class="fsum muted" data-sum="today"></span></summary>
+        <div class="fbody">
+          <div class="today3">
+            <button class="b" type="button" data-today="usual" aria-pressed="true">As usual</button>
+            <button class="b" type="button" data-today="early" aria-pressed="false">Closing early</button>
+            <button class="b" type="button" data-today="closed" aria-pressed="false">Closed today</button>
+          </div>
+          <label class="fld" data-early-time hidden><span>Closing time today</span>
+            <select data-close-early><option value="">Pick a time</option></select></label>
+          <label class="fld"><span>Note for customers (optional)</span>
+            <input type="text" data-notice data-format="sentence" maxlength="120" placeholder="">
+            <small>Shows beside today’s hours.</small></label>
+          <div class="undo-slot"><button class="lnk" type="button" data-undo-key="today" hidden></button><button class="lnk" type="button" data-undo-key="note" hidden></button></div>
+        </div>
+      </details>
+      <details class="fold">
+        <summary>Opening hours <span class="fsum muted" data-sum="hours"></span></summary>
+        <div class="fbody">
+          {%- for h in b.hours %}
+          <fieldset class="fld oh" data-day="{{ loop.index0 }}">
+            <legend>{{ b.dayNames[loop.index0] }}</legend>
+            <div class="row2">
+              <label><span class="sr">{{ b.dayNames[loop.index0] }}: </span><span class="sublbl">Opens</span><select data-open></select></label>
+              <label><span class="sr">{{ b.dayNames[loop.index0] }}: </span><span class="sublbl">Closes</span><select data-close></select></label>
+            </div>
+            <div class="undo-slot"><button class="lnk" type="button" data-undo-key="h{{ loop.index0 }}" hidden></button></div>
+          </fieldset>
+          {%- endfor %}
+        </div>
+      </details>
+      <details class="fold">
+        <summary>Menu <span class="fsum muted" data-sum="menu"></span></summary>
+        <div class="fbody">
+          {%- for g in b.menu %}{% for i in g.items %}
+          <div class="mrow" data-item="{{ i.id }}">
+            <p class="mname">{{ i.name }}</p>
+            <label class="fld"><span>Price{% if i.from %} from{% endif %} (€)</span><input type="text" inputmode="decimal" data-price value="{{ i.price | f2 }}"></label>
+            <label class="chk"><input type="checkbox" data-sold{% if i.soldOut %} checked{% endif %}> <span>Sold out today</span></label>
+            <div class="undo-slot"><button class="lnk" type="button" data-undo-key="p-{{ i.id }}" hidden></button><button class="lnk" type="button" data-undo-key="s-{{ i.id }}" hidden></button></div>
+          </div>
+          {%- endfor %}{% endfor %}
+        </div>
+      </details>
+      <details class="fold">
+        <summary>Photo <span class="fsum muted" data-sum="photo"></span></summary>
+        <div class="fbody">
+          <p>Swap the drawing at the top of the page for your own photo.</p>
+          <div class="photo2">
+            <label class="b"><input class="sr" type="file" accept="image/*" data-photo>Choose a photo</label>
+            <label class="b" data-touch-only hidden><input class="sr" type="file" accept="image/*" capture="environment" data-photo>Take a photo</label>
+          </div>
+          <p class="cnote static">For demo purposes, your photo stays on this device and is gone when you reload. On the real site, it would replace the drawing for everyone who visits.</p>
+          <div class="undo-slot"><button class="lnk" type="button" data-undo-key="photo" hidden></button></div>
+        </div>
+      </details>
+      <p class="own-line">Bigger changes, like new items or pages, go through whoever looks after your site.</p>
+      <div class="own-save" data-save-area>
+        <button class="b fill main" type="submit" data-save disabled>Save changes</button>
+        <ul class="reasons" data-save-why><li>Nothing changed yet</li></ul>
+      </div>
+    </form>
+  </div>
+</section>
+
+<header class="s-hdr">
+  <div class="bk-wrap s-hdr-in">
+    <p class="s-name"><span>Shutter</span> <span class="amp">&amp;</span> <span>Crumb</span></p>
+    <nav class="s-nav row3" aria-label="Sections">
+      <a class="b" href="#menu">Menu</a><a class="b" href="#wholesale">Wholesale</a><a class="b" href="#hours">Hours</a>
+    </nav>
+  </div>
+</header>
+
+<section class="s-hero">
+  <div class="bk-wrap s-hero-in">
+    <div class="s-text">
+      <h1>Fresh bread on Main Street from 7am</h1>
+      <p class="s-open"><span class="pill ok" data-open-pill>Open now</span> <span data-open-text>until 5pm</span><span class="chg" data-chg="today">Changed</span></p>
+      <p class="s-notice" data-notice-line hidden></p>
+      <div class="row2 s-acts" data-acts>
+        <a class="b fill main" href="#call" data-note="n-call">Call us</a>
+        <a class="b main" href="#directions" data-note="n-dir">Directions</a>
+      </div>
+      <p class="cnote" id="n-call" hidden>On a real site this rings the bakery. This one’s a demo, so there’s no number to call.</p>
+      <p class="cnote" id="n-dir" hidden>On a real site this opens your maps app at the shop. This bakery is made up, so there’s nowhere to go.</p>
+    </div>
+    <figure class="s-pic" data-pic>
+      <svg class="shopfront" viewBox="0 0 640 440" role="img" aria-label="Drawing of the bakery’s shopfront on Main Street, its shutter rolled up and bread in the window">
+        <rect x="0" y="0" width="640" height="440" fill="#f3e6cf"/>
+        <rect x="40" y="40" width="560" height="350" fill="#efe1c6" stroke="#8f7b5c" stroke-width="4"/>
+        <rect x="56" y="56" width="528" height="58" rx="6" fill="#1f2a4a"/>
+        <text x="320" y="96" text-anchor="middle" fill="#fbf6ec" font-family="Georgia,serif" font-weight="700" font-size="30" letter-spacing="2">SHUTTER &amp; CRUMB</text>
+        <rect x="56" y="118" width="528" height="20" fill="#5a6274"/>
+        <path d="M60 122h520M60 128h520M60 134h520" stroke="#3d4456" stroke-width="2"/>
+        <path d="M56 138h528l-18 40H74z" fill="#8a4512"/>
+        <path d="M100 138l-10 40M160 138l-6 40M220 138l-3 40M280 138v40M340 138v40M400 138l3 40M460 138l6 40M520 138l10 40" stroke="#fbf6ec" stroke-width="12" opacity=".9"/>
+        <rect x="76" y="196" width="300" height="176" fill="#fbf6ec" stroke="#1f2a4a" stroke-width="5"/>
+        <path d="M86 290h280M86 346h280" stroke="#c9b48f" stroke-width="5"/>
+        <g fill="#c98a3a" stroke="#8a4512" stroke-width="3">
+          <ellipse cx="124" cy="274" rx="30" ry="15"/><ellipse cx="196" cy="274" rx="30" ry="15"/><ellipse cx="268" cy="274" rx="30" ry="15"/><ellipse cx="334" cy="276" rx="22" ry="13"/>
+          <circle cx="112" cy="332" r="12"/><circle cx="140" cy="332" r="12"/><circle cx="168" cy="332" r="12"/>
+          <path d="M210 340q30-26 60 0z"/><path d="M286 340q30-26 60 0z"/>
+        </g>
+        <path d="M108 268q16-8 32 0M180 268q16-8 32 0M252 268q16-8 32 0" stroke="#8a4512" stroke-width="3" fill="none"/>
+        <rect x="408" y="196" width="156" height="194" fill="#1f2a4a"/>
+        <rect x="422" y="210" width="128" height="96" fill="#fbf6ec" opacity=".9"/>
+        <rect x="430" y="228" width="112" height="44" rx="4" fill="#1d6b3a"/>
+        <text x="486" y="257" text-anchor="middle" fill="#fbf6ec" font-family="Arial,sans-serif" font-weight="700" font-size="22">OPEN</text>
+        <circle cx="536" cy="330" r="6" fill="#e8ac74"/>
+        <rect x="0" y="390" width="640" height="50" fill="#cdbb9c"/>
+        <path d="M0 392h640" stroke="#8f7b5c" stroke-width="4"/>
+        <path d="M60 414h70M260 424h60M470 412h80" stroke="#8f7b5c" stroke-width="3"/>
+        <g stroke="#1f2a4a" stroke-width="4" fill="none"><circle cx="600" cy="370" r="16"/><circle cx="556" cy="370" r="16"/><path d="M556 370l18-22h22l4 22M574 348l-6-10h-10"/></g>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<section id="menu" class="s-sec">
+  <div class="bk-wrap">
+    <h2>Today’s bakes</h2>
+    <div class="menu">
+      {%- for g in b.menu %}
+      <div class="mgroup">
+        <h3>{{ g.group }}</h3>
+        {%- if g.note %}<p class="muted">{{ g.note }}</p>{% endif %}
+        <ul class="plain mlist">
+          {%- for i in g.items %}
+          <li class="mi" data-mi="{{ i.id }}">
+            <span class="mi-name">{{ i.name }}</span>
+            <span class="mi-price" data-mi-price>{% if i.from %}from €{{ i.price }}{% else %}€{{ i.price | f2 }}{% endif %}</span>
+            <span class="mi-all">Contains: {{ i.allergens }}</span>
+            <span class="mi-tags"><span class="pill red" data-mi-sold{% if not i.soldOut %} hidden{% endif %}>Sold out today</span><span class="chg" data-chg="i-{{ i.id }}">Changed</span></span>
+          </li>
+          {%- endfor %}
+        </ul>
+      </div>
+      {%- endfor %}
+    </div>
+    <p class="muted">Ask us about allergens: we bake everything here, in one kitchen.</p>
+  </div>
+</section>
+
+<section id="wholesale" class="s-sec">
+  <div class="bk-wrap ws">
+    <h2>Wholesale</h2>
+    <p class="ws-intro">Fresh bread and pastries for cafés, shops and hotels, delivered by our van before 8am, Monday to Saturday. Order by 2pm for the next morning.</p>
+    <form class="wsf" data-ws novalidate>
+      <h3>Order for delivery</h3>
+      <div class="row2 ws-who">
+        <label class="fld"><span>Business name</span><input type="text" autocomplete="organization" data-format="name" data-ws-name></label>
+        <label class="fld"><span>Email</span><input type="email" autocomplete="email" data-ws-email></label>
+      </div>
+      <p class="hint ws-hint">For demo purposes, nothing you type leaves this page.</p>
+      <table class="wtable">
+        <caption class="sr">Trade prices and quantities</caption>
+        <thead><tr><th scope="col">Product</th><th scope="col">Trade price</th><th scope="col">Quantity</th><th scope="col">Line</th></tr></thead>
+        <tbody>
+          {%- for t in b.trade %}
+          <tr data-tr="{{ t.id }}" data-price="{{ t.price }}"><th scope="row">{{ t.name }}</th><td>€{{ t.price | f2 }}</td><td><label><span class="sr">Quantity of {{ t.name }}</span><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" data-qty></label></td><td data-line>–</td></tr>
+          {%- endfor %}
+        </tbody>
+        <tfoot><tr><th scope="row" colspan="3">Total</th><td data-total>€0.00</td></tr></tfoot>
+      </table>
+      <label class="fld"><span>Notes for the baker or the driver (optional)</span><textarea data-format="sentence" data-ws-notes></textarea></label>
+      <fieldset class="fld"><legend>Delivery morning</legend>
+        <div class="week7" data-days></div>
+        <button class="b calb" type="button" data-cal-toggle aria-expanded="false" aria-controls="cal">Pick another date</button>
+        <div class="cal" id="cal" data-cal hidden></div>
+        <p class="hint" data-cutoff></p>
+      </fieldset>
+      <div class="ws-send">
+        <button class="b fill main" type="submit" data-ws-send aria-describedby="ws-why">Send order</button>
+        <ul class="reasons" id="ws-why" data-ws-why></ul>
+        <p class="ws-done" data-ws-done hidden></p>
+        <p class="cnote" id="n-send" hidden>For demo purposes, nothing was sent. On a real site, the order would land in the bakery’s inbox and order list, like #1042 in our Control room.</p>
+      </div>
+    </form>
+    <div class="ws-mail">
+      <p>Prefer email? Send your order to:</p>
+      <p class="addr">orders@shutter-and-crumb.example</p>
+      <div class="row2">
+        <button class="b fill" type="button" data-note="n-email">Email us</button>
+        <button class="b" type="button" data-copy="orders@shutter-and-crumb.example">Copy</button>
+      </div>
+      <p class="cnote" id="n-email" hidden>For demo purposes, nothing opens. On a real site, this opens your email with the bakery’s address already filled in.</p>
+    </div>
+  </div>
+</section>
+
+<section id="hours" class="s-sec">
+  <div class="bk-wrap hours2">
+    <div>
+      <h2>Opening hours</h2>
+      <table class="htable">
+        <caption class="sr">Opening hours, by day</caption>
+        <tbody>
+          {%- for h in b.hours %}
+          <tr data-hrow="{{ loop.index0 }}"><th scope="row">{{ b.dayNames[loop.index0] }}<span class="today-tag" hidden> · today</span></th><td data-htime>{{ h.open | hm }}–{{ h.close | hm }}</td><td class="chg-cell"><span class="chg" data-chg="h{{ loop.index0 }}">Changed</span></td></tr>
+          {%- endfor %}
+        </tbody>
+      </table>
+      <p class="s-notice" data-notice-line2 hidden></p>
+    </div>
+    <div id="directions">
+      <h2>Find us</h2>
+      <p>Main Street, between the post office and the chemist.</p>
+      <button class="mapbtn" type="button" data-note="n-dir2">
+      <svg class="map" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+        <rect width="400" height="260" fill="#efe1c6"/>
+        <path d="M0 130h400" stroke="#fbf6ec" stroke-width="34"/><path d="M0 130h400" stroke="#cdbb9c" stroke-width="2" stroke-dasharray="14 12"/>
+        <path d="M260 0v260" stroke="#fbf6ec" stroke-width="26"/>
+        <path d="M70 0q30 60 0 260" stroke="#fbf6ec" stroke-width="18" fill="none"/>
+        <rect x="290" y="160" width="80" height="70" fill="#d9e7cf" stroke="#8f7b5c" stroke-width="2"/>
+        <g fill="#e3d2b3" stroke="#8f7b5c" stroke-width="2"><rect x="110" y="72" width="44" height="38"/><rect x="200" y="72" width="44" height="38"/><rect x="110" y="152" width="60" height="40"/><rect x="290" y="72" width="60" height="38"/></g>
+        <rect x="158" y="72" width="38" height="38" fill="#8a4512" stroke="#1f2a4a" stroke-width="3"/>
+        <path d="M177 30c-14 0-22 10-22 21 0 15 22 31 22 31s22-16 22-31c0-11-8-21-22-21z" fill="#1f2a4a"/><circle cx="177" cy="51" r="8" fill="#fbf6ec"/>
+        <g font-family="Arial,sans-serif" font-size="13" fill="#1d2740" font-weight="700"><text x="12" y="158">MAIN STREET</text><text x="296" y="152">The Square</text><text x="150" y="66" text-anchor="end">Post office</text><text x="204" y="68">Chemist</text></g>
+      </svg>
+        <span class="maplbl">Directions</span>
+      </button>
+      <p class="sr">The drawn map shows the bakery on Main Street, between the post office and the chemist, near the square.</p>
+      <p class="cnote" id="n-dir2" hidden>On a real site this opens your maps app at the shop. This bakery is made up, so there’s nowhere to go.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="bk-foot">
+  <div class="bk-wrap">
+    <p class="name">Shutter &amp; Crumb</p>
+    <p>Main Street · orders@shutter-and-crumb.example</p>
+    <p>Demo · fictional business</p>
+  </div>
+</footer>
+
+<div class="dock" data-dock hidden>
+  <p class="cnote" id="n-dock" hidden></p>
+  <div class="row2">
+    <a class="b fill main" href="#call" data-dock-note="n-call">Call us</a>
+    <a class="b main" href="#directions" data-dock-note="n-dir">Directions</a>
+  </div>
+</div>

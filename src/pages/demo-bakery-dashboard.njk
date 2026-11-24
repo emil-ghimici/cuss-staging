@@ -1,0 +1,197 @@
+---
+layout: layouts/demo.njk
+permalink: /work/demo-bakery-dashboard/
+title: "Shutter & Crumb: dashboard demo · CuSS"
+description: "A demo dashboard for a fictional bakery, built by CuSS: the week’s sales, orders, unpaid invoices and wages on one page."
+demo: dashboard
+css: [demo-tool, demo-dash]
+noindex: true
+---
+{#- The bakery's week at a glance (demo step 5 rerun, approved 2026-11-19; CuSS's words approved 2026-11-24).
+    Fixed at Thursday 10:30 of "this week", after order #1042 was delivered and paid (the Control room's story).
+    Follows the device's theme and the bar's switch. The bakery's own words are drafts for review on the page. #}
+{%- set b = bakery %}
+{%- set unpaidTotal = b.invoices | sum('amount') %}
+<div class="bk-wrap tool">
+  <header class="t-head">
+    <p class="t-biz">Shutter &amp; Crumb</p>
+    <h1>This week at Shutter &amp; Crumb</h1>
+    <p class="muted">Thursday 10:30 · Updated 2 min ago</p>
+  </header>
+
+  <section class="t-sec" aria-labelledby="look-h">
+    <h2 id="look-h">Needs a look <span class="wcount" data-look-count>3</span></h2>
+    <ul class="plain looks">
+      <li class="look" data-look="match">
+        <div class="look-txt">
+          <p class="look-t">€410.00 paid in with no reference</p>
+          <p class="muted">It matches INV-0139, Hotel on the Square, €410.00, due Friday.</p>
+          <p class="src">From the bank feed · this morning</p>
+        </div>
+        <div class="look-act" data-look-act>
+          <button class="b fill" type="button" data-do="match">Match to INV-0139</button>
+        </div>
+      </li>
+      <li class="look" data-look="flour">
+        <div class="look-txt">
+          <p class="look-t">Flour: 11 bags left</p>
+          <p class="muted">About 3 days’ baking at this week’s orders.</p>
+          <p class="src">From the stock count · this morning</p>
+        </div>
+        <div class="look-act" data-look-act>
+          <button class="b fill" type="button" data-do="flour">Draft the flour order</button>
+        </div>
+        <p class="cnote look-note" id="n-flour" hidden>For demo purposes, nothing is sent. In the real app, this drafts an email to your flour supplier with your usual order, for you to check and send.</p>
+      </li>
+      <li class="look" data-look="shift">
+        <div class="look-txt">
+          <p class="look-t">Saturday 5am bake: nobody yet</p>
+          <p class="muted">Big wholesale orders on Saturday: two bakers needed.</p>
+          <p class="src">From the roster · 10:20</p>
+        </div>
+        <div class="look-act">
+          <a class="b fill" href="/work/demo-bakery-roster/?shift=sat-bake-2">Open the roster</a>
+        </div>
+        <p class="cnote look-note">The demos don’t share data: fill the shift in the roster demo and this flag stays. In the real app, it clears as soon as the shift is filled.</p>
+      </li>
+    </ul>
+  </section>
+
+  <section class="t-sec" aria-label="This week in figures">
+    <div class="tiles">
+      <div class="tile">
+        <p class="tl">Sales</p>
+        <p class="tv">€4,280 <span class="up">▲ 6%</span></p>
+        <p class="ts">on the same days last week</p>
+        <p class="src">From the till and wholesale orders · 10:28</p>
+      </div>
+      <div class="tile">
+        <p class="tl">Wholesale orders</p>
+        <p class="tv">{{ b.ordersWeek }}</p>
+        <p class="ts">6 still to deliver</p>
+        <p class="src">From the orders queue · 10:29</p>
+      </div>
+      <div class="tile">
+        <p class="tl">Unpaid</p>
+        <p class="tv" data-unpaid>€{{ unpaidTotal | money(0) }}</p>
+        <p class="ts" data-unpaid-n>8 invoices · none overdue</p>
+        <p class="src">From the accounts · 10:15</p>
+      </div>
+      <div class="tile">
+        <p class="tl">Wages so far</p>
+        <p class="tv">€{{ b.wages.total | money(0) }}</p>
+        <p class="ts">{{ b.wages.pct }}% of sales</p>
+        <p class="src">From the roster · 10:30</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="t-sec" aria-labelledby="sales-h">
+    <h2 id="sales-h">Sales by day</h2>
+    {#- Two drawings of one chart: wide screens get bar values; phones get their own proportions so every label stays
+        at 14 px or more (no sideways scroll), with the day totals as text underneath. #}
+    {%- macro chart(bk, cls, VW, H, bw, step, x0, fs, vals) %}
+      <svg class="{{ cls }}" viewBox="0 0 {{ VW }} {{ H + 40 }}" role="img" aria-labelledby="sales-h sales-d{{ cls }}">
+        <desc id="sales-d{{ cls }}">Shop and wholesale sales for Monday to Thursday this week, with last week’s days as a thin line. Friday to Sunday are still to come.</desc>
+        {%- set top = 1600 %}
+        {%- for v in [0, 500, 1000, 1500] %}
+        <line class="grid" x1="{{ x0 }}" x2="{{ VW - 4 }}" y1="{{ H - v / top * (H - 20) }}" y2="{{ H - v / top * (H - 20) }}"/>
+        <text class="ax" style="font-size:{{ fs }}px" x="{{ x0 - 6 }}" y="{{ H - v / top * (H - 20) + 5 }}" text-anchor="end">{{ '€' + (v / 1000) + 'k' if v else '0' }}</text>
+        {%- endfor %}
+        {%- for d in bk.sales.thisWeek %}
+        {%- set x = x0 + 10 + loop.index0 * step %}
+        {%- if d %}
+        {%- set hs = d[0] / top * (H - 20) %}{% set hw = d[1] / top * (H - 20) %}
+        <rect class="bar-shop" x="{{ x }}" y="{{ H - hs }}" width="{{ bw }}" height="{{ hs }}"/>
+        <rect class="bar-ws" x="{{ x }}" y="{{ H - hs - hw }}" width="{{ bw }}" height="{{ hw }}"/>
+        {%- if vals %}<text class="val" style="font-size:{{ fs }}px" x="{{ x + bw / 2 }}" y="{{ H - hs - hw - 6 }}" text-anchor="middle">€{{ (d[0] + d[1]) | money(0) }}</text>{% endif %}
+        {%- else %}
+        <rect class="bar-empty" x="{{ x }}" y="{{ H - 4 }}" width="{{ bw }}" height="4"/>
+        {%- endif %}
+        <text class="day{% if loop.index0 == 3 %} now{% endif %}" style="font-size:{{ fs }}px" x="{{ x + bw / 2 }}" y="{{ H + 24 }}" text-anchor="middle">{{ bk.days[loop.index0] }}{% if loop.index0 == 3 and vals %} (so far){% endif %}</text>
+        {%- endfor %}
+        <polyline class="last" points="{% for v in bk.sales.lastWeek %}{{ x0 + 10 + loop.index0 * step + bw / 2 }},{{ H - v / top * (H - 20) }} {% endfor %}"/>
+      </svg>
+    {%- endmacro %}
+    <figure class="chart">
+      {{ chart(b, 'c-wide', 700, 240, 56, 92, 46, 13, true) }}
+      {{ chart(b, 'c-narrow', 340, 220, 30, 42, 44, 14, false) }}
+      <figcaption class="legend"><span><i class="k-shop"></i>Shop</span><span><i class="k-ws"></i>Wholesale</span><span><i class="k-last"></i>Last week</span></figcaption>
+      <p class="c-totals">{% for d in b.sales.thisWeek %}{% if d %}<span>{{ b.days[loop.index0] }} €{{ (d[0] + d[1]) | money(0) }}{% if loop.index0 == 3 %} so far{% endif %}</span>{% endif %}{% endfor %}</p>
+    </figure>
+    <p class="src">From the till and wholesale orders · 10:28</p>
+  </section>
+
+  <div class="two">
+    <section class="t-sec" aria-labelledby="ord-h">
+      <h2 id="ord-h">Wholesale orders</h2>
+      <p class="muted">Still to deliver, by delivery morning</p>
+      <ul class="plain rows">
+        {%- for o in b.orders %}{% if o.state != 'delivered' %}
+        <li class="r">
+          <div><p class="r-t">#{{ o.n }} · {{ o.who }}</p><p class="muted">{{ o.what }} · {{ b.dayNames[b.days.indexOf(o.when)] }} morning</p><p class="src">{{ o.src | capitalize }}</p></div>
+          <span class="pill {{ 'ok' if o.state == 'out' else 'dim' }}">{{ 'Out for delivery' if o.state == 'out' else 'Booked' }}</span>
+        </li>
+        {%- endif %}{% endfor %}
+      </ul>
+      <details class="fold">
+        <summary>Delivered this week <span class="muted fc">31</span></summary>
+        <ul class="plain rows">
+          {%- for o in b.orders %}{% if o.state == 'delivered' %}
+          <li class="r"><div><p class="r-t">#{{ o.n }} · {{ o.who }}</p><p class="muted">{{ o.what }} · {{ o.note }}</p><p class="src">{{ o.src | capitalize }}</p></div><span class="pill dim">Delivered</span></li>
+          {%- endif %}{% endfor %}
+        </ul>
+        <p class="muted">And 28 earlier this week.</p>
+      </details>
+      <p class="src">From the orders queue · 10:29</p>
+    </section>
+
+    <section class="t-sec" aria-labelledby="inv-h">
+      <h2 id="inv-h">Unpaid invoices</h2>
+      <p class="muted">By due date · none overdue</p>
+      <ul class="plain rows">
+        {%- for i in b.invoices %}
+        <li class="r" data-inv="{{ i.n }}">
+          <div><p class="r-t">{{ i.n }} · {{ i.who }}</p><p class="muted">€{{ i.amount | f2 }} · due {{ i.due }}</p></div>
+          <div class="r-act" data-inv-act>
+            <button class="b" type="button" data-remind>Send reminder</button>
+          </div>
+          <p class="cnote r-note" hidden>For demo purposes, no email went out. In the real app, the reminder goes to the customer from your own email, with the invoice attached.</p>
+        </li>
+        {%- endfor %}
+      </ul>
+      <details class="fold">
+        <summary>Paid this week <span class="muted fc" data-paid-n>{{ b.paidThisWeek.length }}</span></summary>
+        <ul class="plain rows" data-paid>
+          {%- for p in b.paidThisWeek %}
+          <li class="r"><div><p class="r-t">{{ p.n }} · {{ p.who }}</p><p class="muted">+€{{ p.amount | f2 }} · {{ p.how }}</p></div><span class="pill ok">Paid</span></li>
+          {%- endfor %}
+        </ul>
+      </details>
+      <p class="src">From the accounts · 10:15</p>
+    </section>
+  </div>
+
+  <section class="t-sec" aria-labelledby="on-h">
+    <h2 id="on-h">On today</h2>
+    <ul class="plain ontoday">
+      {%- for s in b.shifts %}{% if s.day == 3 and s.who %}
+      {%- set k = b.kinds[s.kind] %}{% set w = b.worked[s.id] %}
+      {%- for p in b.staff %}{% if p.id == s.who %}
+      <li><span class="ot-who">{{ p.name }}</span><span class="muted">{{ k.label }} · {{ k.start | replace(r/^0/, "") }}–{{ k.end | replace(r/^0/, "") }}</span><span class="ot-in">{% if w %}In since {{ w[0] | replace(r/^0/, "") }}{% else %}Starts {{ k.start | replace(r/^0/, "") }}{% endif %}</span></li>
+      {%- endif %}{% endfor %}
+      {%- endif %}{% endfor %}
+    </ul>
+    <p class="src">From the roster · 10:30</p>
+    <a class="b" href="/work/demo-bakery-roster/">Open the roster</a>
+  </section>
+
+  <section class="t-sec t-out" aria-label="Export and sharing">
+    <div class="row2">
+      <button class="b" type="button" data-csv>Excel (CSV)</button>
+      <button class="b" type="button" data-pdf>PDF</button>
+    </div>
+    <p class="cnote static">Made on your device from this demo’s figures.</p>
+    <p class="muted">Shared with: you and your accountant (sales, invoices and wages only)</p>
+  </section>
+</div>
