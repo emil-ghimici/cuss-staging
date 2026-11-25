@@ -36,6 +36,7 @@ export function jsonld({ site, env, services, url, crumbs, faqs, service }) {
       { '@type': 'AdministrativeArea', name: 'County Offaly' },
       { '@type': 'City', name: 'Longford' },
       { '@type': 'AdministrativeArea', name: 'County Laois' },
+      { '@type': 'AdministrativeArea', name: 'Midlands, Ireland' }, // the region the site's copy names (Westmeath, Offaly, Longford, Laois); not in the Google profile, on purpose
       { '@type': 'City', name: 'Galway' },
       { '@type': 'City', name: 'Dublin' },
       { '@type': 'Country', name: 'Ireland' },
