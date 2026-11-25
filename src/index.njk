@@ -1,0 +1,108 @@
+---
+layout: layouts/base.njk
+permalink: /
+---
+{%- from "macros.njk" import faq, steps, contact with context %}
+{%- from "work-card.njk" import workCard %}
+<section class="hero" data-hero aria-labelledby="hero-h">
+  <div class="wrap hero-in">
+    <div class="hero-copy">
+      <p class="mono eyebrow">Athlone · Midlands · Ireland-wide</p>
+      <h1 id="hero-h">Custom software that fits the way your business works</h1>
+      <p class="lead">Automation, apps, dashboards and websites for small businesses in Athlone, the Midlands and across Ireland.</p>
+      <div class="actions"><a class="btn btn-contact bv-md" href="#contact">Tell us what you need</a><a class="btn bv-md" href="#demo">See how it works</a></div>
+      <p class="note">{{ site.promise }}</p>
+    </div>
+    {% include "partials/hero-scene.njk" %}
+  </div>
+</section>
+
+{% junk "spark" %}
+
+<section class="sec" aria-labelledby="pain-h" data-crew-tip="Sound familiar? That’s the stuff we fix.">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">Sound familiar?</p><h2 id="pain-h">Running a business shouldn’t mean doing the computer’s job</h2></div>
+    <ul class="grid g4 plain">
+      {%- for p in pains %}
+      <li class="info bv-lg">{% icon p.icon, "ci" %}<h3 class="h4">{{ p.t }}</h3><p>{{ p.d }}</p></li>
+      {%- endfor %}
+    </ul>
+  </div>
+</section>
+
+{% junk "workshop" %}
+
+<section class="sec" id="demo" aria-labelledby="demo-h">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">The control room · Demo: fictional business</p><h2 id="demo-h">Six tools that don’t talk to each other. Watch what happens when they do.</h2>
+      <p class="lead">A small bakery takes a wholesale order by email.<span class="js-only"> CREW will open up and show you round.</span></p></div>
+    {% include "partials/room.njk" %}
+  </div>
+</section>
+
+{% junk "dish" %}
+
+<section class="sec" id="services" aria-labelledby="svc-h" data-crew-tip="Six ways we can help. Pick whichever fits.">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">Services</p><h2 id="svc-h">What we build</h2></div>
+    <ul class="grid g3 plain">
+      {%- for s in services %}
+      <li><a class="card bv-lg" href="/services/{{ s.slug }}/">{% icon s.icon, "ci" %}<h3 class="h4">{{ s.name }}</h3><p>{{ s.summary }}</p><span class="arrow" aria-hidden="true">→</span></a></li>
+      {%- endfor %}
+    </ul>
+  </div>
+</section>
+
+{% junk "fan" %}
+
+<section class="sec" aria-labelledby="how-h" data-crew-tip="Four steps. No surprises, I promise.">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">How we work</p><h2 id="how-h">Four steps, no surprises</h2></div>
+    {{ steps(howSteps) }}
+  </div>
+</section>
+
+{% junk "crates" %}
+
+<section class="sec" aria-labelledby="work-h" data-crew-tip="Real work, and a couple of labelled demos.">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">Work</p><h2 id="work-h">Things we’ve built</h2></div>
+    <ul class="grid g3 plain">
+      {#- Home picks (demo step 11a): website, roster, dashboard until the client project has screenshots #}
+      {%- for w in work | selectattr("home") | sort(false, false, "home") %}
+      <li>{{ workCard(w, "h3") }}</li>
+      {%- endfor %}
+    </ul>
+    <p class="see-all"><a class="link-tap" href="/work/">See all work →</a></p>
+  </div>
+</section>
+
+{% junk "monitor" %}
+
+<section class="sec" aria-labelledby="why-h" data-crew-tip="Local, plain-spoken, careful with your data.">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">Why CuSS</p><h2 id="why-h">A small firm you can trust with your business</h2></div>
+    <ul class="grid g4 plain">
+      {%- for w in why %}
+      <li class="info bv-lg">{% icon w.icon, "ci" %}<h3 class="h4">{{ w.t }}</h3><p>{{ w.d }}</p></li>
+      {%- endfor %}
+    </ul>
+  </div>
+</section>
+
+{% junk "cable" %}
+
+<section class="sec" aria-labelledby="faq-h" data-crew-tip="Ask away! If I can’t help you, ask the humans.">
+  <div class="wrap">
+    <div class="sec-head"><p class="mono eyebrow">Questions</p><h2 id="faq-h">Things people ask us</h2></div>
+    {{ faq(faqs, true) }}
+  </div>
+</section>
+
+{% junk "open" %}
+
+<section class="sec" aria-labelledby="contact-h" data-crew-tip="Tick a few boxes. I’ll do the typing.">
+  <div class="wrap">
+    {{ contact('Tell us what you need') }}
+  </div>
+</section>

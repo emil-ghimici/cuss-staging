@@ -1,0 +1,791 @@
+/* CuSS home hero: the broken TV and the crew who fixes it (design spec section 2).
+   Evolved from the old dot field: phosphor specks confined to the TV screen, three signal levels.
+     broken  – pointer/finger moving over the hero, and on first load: full static, rolling picture
+     weak    – after ~1 s of stillness: "CuSS" forms, noise crawling through it
+     tuned   – after the crew twists the dial: "Custom / Software / Solutions", Cu S S lit
+   One requestAnimationFrame loop drives the picture and the crew's clock. Everything stops when the
+   hero is off screen or the tab is hidden, and when the crew sits down for tea (zero CPU).
+   Reduced motion: one still frame, the full name showing and the crew's hand on the dial. No sound, ever. */
+(function () {
+  'use strict';
+  var doc = document;
+  var hero = doc.querySelector('[data-hero]');
+  if (!hero) return;
+  var scene = hero.querySelector('.scene'), tv = scene.querySelector('.tv'), screenEl = tv.querySelector('.tv-screen');
+  var canvas = screenEl.querySelector('canvas'), ctx = canvas.getContext && canvas.getContext('2d');
+  if (!ctx) return;
+  var crewEl = scene.querySelector('.crew'), dial = tv.querySelector('.dial.d1');
+  var tube = scene.querySelector('[data-tube]'), spark = scene.querySelector('[data-spark]'), sign = scene.querySelector('[data-sign]');
+  var lamp = scene.querySelector('[data-lamp]'), joint = scene.querySelector('[data-joint]'), drop = scene.querySelector('.drop');
+  var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // What the crew says when you hover over him (tap on phones), by what he's doing.
+  // Approved 2026-11-17. Plain, warm, a bit dry; no doom.
+  var LINES = {
+    tv: ['Mind the screen, it’s older than me.', 'Who’s been touching the telly?', 'Hang on, I’ll give it a twist.', 'Signal’s gone again. Back in a sec.', 'It’s grand. A twist and it’ll come back.'],
+    job: ['Somebody has to keep the lights on.', 'One thing at a time.', 'Nearly there. Nearly.', 'If it’s broken, I’m on it.'],
+    // one more line for the job in hand
+    tube: ['This light’s been flickering all week.'],
+    junction: ['Don’t touch that box. Seriously.'],
+    sign: ['This sign’s been loose since Tuesday.'],
+    lamp: ['Bulb’s gone again. Good job I carry spares.'],
+    pipe: ['Drip, drip. Not on my watch.'],
+    off: ['Just popping out. Back in a tick.'],
+    held: ['Whoa, easy!', 'I can walk, you know.', 'Mind the paintwork.'],
+    thanks: ['Cheers, I was getting to that.'],
+    // His name (confirmed 2026-11-17), said once per visit after he first tunes the TV
+    intro: ['Hiya. I’m CREW: CuSS Robot for Everyday Work.'],
+    tea: ['Back in a minute, the kettle’s on.', 'Tea break. The telly can mind itself.', 'Ten minutes. Union rules.', 'Don’t tell the boss.'],
+    // The tea break's own order (2026-11-24): one of the first three announces it, the fourth is always said on the crate
+    teaGo: ['Back in a minute, the kettle’s on.', 'Tea break. The telly can mind itself.', 'Ten minutes. Union rules.'],
+    teaSit: ['Don’t tell the boss.'],
+    idle: ['Got something that needs fixing? That’s the Contact button.', 'We fix things. That’s the whole job.', 'Spreadsheets held together with tape? Seen worse.', 'The first call’s free, by the way.', 'All quiet. Suspiciously quiet.']
+  };
+  // The screen and phosphor tokens, read from the page: dark glass at night, sunlit glass by day.
+  // By day nothing glows: the halo and the static are darker than the glass, not brighter.
+  var BG, BGRGB, PH, HALO, DAY = false;
+  function rgbOf(hex) { hex = hex.trim().replace('#', ''); if (hex.length === 3) hex = hex.replace(/./g, '$&$&'); var n = parseInt(hex, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function readColours() {
+    var cs = getComputedStyle(doc.documentElement), bg = rgbOf(cs.getPropertyValue('--screen') || '#05080a');
+    BG = 'rgb(' + bg + ')'; BGRGB = bg.join(','); PH = rgbOf(cs.getPropertyValue('--phosphor') || '#3ee6e0').join(',');
+    DAY = bg[0] + bg[1] + bg[2] > 384;
+    HALO = DAY ? '0,60,66' : '200,240,240';
+    SHADES = [];
+    for (var i = 0; i < 8; i++) SHADES.push('rgba(' + PH + ',' + (0.24 + i * 0.1).toFixed(2) + ')');
+  }
+  var FONT = '"Chakra Petch", "Chakra Petch Fallback", sans-serif';
+  var SPRING = 0.09, DAMPING = 0.78;               // from the dot field: pull to target, velocity kept per frame
+  var FRAME_MS = 1000 / 30;                        // a CRT doesn't need 60 fps; half the work
+
+  /* ---------------- The picture ---------------- */
+  var W = 0, H = 0, phone = false, parts = [], ptsC = [], ptsF = [];
+  var mqPhone = window.matchMedia('(max-width: 760px)');
+  var state = 'broken', lastMove = 0, roll = 0, jolt = 0;
+  var ptr = null;            // the pointer or finger on the screen, in canvas pixels
+
+  function sample(lines, initials) {
+    var c = doc.createElement('canvas'); c.width = W; c.height = H;
+    var x = c.getContext('2d', { willReadFrequently: true });
+    x.font = '600 100px ' + FONT;
+    var widest = 0;
+    lines.forEach(function (l) { widest = Math.max(widest, x.measureText(l).width); });
+    var size = Math.min((W * 0.86) / widest * 100, (H * 0.8) / (lines.length * 1.04));
+    x.font = '600 ' + size + 'px ' + FONT; x.textBaseline = 'middle'; x.fillStyle = '#fff';
+    var lh = size * 1.04, y0 = H / 2 - (lines.length - 1) * lh / 2, left = (W - widest * size / 100) / 2;
+    lines.forEach(function (l, i) { x.fillText(l, lines.length > 1 ? left : W / 2 - x.measureText(l).width / 2, y0 + i * lh); });
+    var full = x.getImageData(0, 0, W, H).data, hi = null;
+    if (initials) {
+      x.clearRect(0, 0, W, H);
+      lines.forEach(function (l, i) { x.fillText(l.slice(0, initials[i]), left, y0 + i * lh); });
+      hi = x.getImageData(0, 0, W, H).data;
+    }
+    var step = Math.max(3, Math.round(size / (lines.length > 1 ? 13 : 16))), out = [];
+    for (var yy = step / 2 | 0; yy < H; yy += step) for (var xx = step / 2 | 0; xx < W; xx += step) {
+      var k = (yy * W + xx) * 4 + 3;
+      if (full[k] > 120) out.push({ x: xx, y: yy, h: hi ? hi[k] > 120 : true });
+    }
+    out.sort(function (a, b) { return a.x - b.x || a.y - b.y; });   // pair left to right, so specks travel a short way
+    out.step = step;
+    return out;
+  }
+  function build() {
+    var r = screenEl.getBoundingClientRect();
+    W = Math.max(40, Math.round(r.width)); H = Math.max(40, Math.round(r.height));
+    phone = mqPhone.matches;                              // the same breakpoint as the CSS
+    canvas.width = W; canvas.height = H;                   // low resolution on purpose: a CRT, and cheap
+    ptsC = sample(['CuSS'], null);
+    ptsF = sample(['Custom', 'Software', 'Solutions'], [2, 1, 1]);
+    var n = Math.max(ptsC.length, ptsF.length);
+    var old = parts; parts = [];
+    for (var i = 0; i < n; i++) {
+      var p = old[i] || { x: Math.random() * W, y: Math.random() * H, vx: 0, vy: 0 };
+      p.c = ptsC[Math.floor(i * ptsC.length / n)]; p.f = ptsF[Math.floor(i * ptsF.length / n)];
+      p.tx = p.x; p.ty = p.y;
+      // Several specks can share a letter point; only the first one lights it
+      p.cd = i > 0 && parts[i - 1].c === p.c; p.fd = i > 0 && parts[i - 1].f === p.f;
+      parts.push(p);
+    }
+  }
+  function setState(s) { state = s; }
+
+  // Static is a pre-drawn noise texture, shown at a random offset each frame: one drawImage, not thousands of rects
+  var noiseTex = null, noisePat = null;
+  function makeNoise() {
+    noiseTex = doc.createElement('canvas');
+    noiseTex.width = W; noiseTex.height = H;
+    var x = noiseTex.getContext('2d'), img = x.createImageData(W, H), d = img.data;
+    for (var n = (W * H * 0.06) | 0; n > 0; n--) {
+      var i = ((Math.random() * W * H) | 0) * 4, v = 150 + Math.random() * 105;
+      if (DAY) v = (255 - v) * 0.5;                 // dark specks on sunlit glass
+      d[i] = v * 0.8; d[i + 1] = v; d[i + 2] = v; d[i + 3] = 40 + Math.random() * 150;
+    }
+    x.putImageData(img, 0, 0);
+    noisePat = ctx.createPattern(noiseTex, "repeat");
+  }
+  // A few fixed phosphor shades, so a frame sets fillStyle a handful of times instead of once per speck
+  var SHADES = [];   // filled by readColours() when the show starts (not while the page loads: it forces a style pass)
+
+  function draw(dt) {
+    var noise = state === 'broken' ? 1 : state === 'weak' ? 0.5 : 0.16;
+    // Phosphor persistence: fade the last frame instead of clearing it
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(' + BGRGB + (state === 'broken' ? ',.7)' : ',.55)');
+    ctx.fillRect(0, 0, W, H);
+    // Static at a level brightness (no flashing): the texture's density does the work
+    var R = Math.min(W, H) * 0.3;
+    if (noisePat) {
+      var ox = (Math.random() * W) | 0, oy = (Math.random() * H) | 0;
+      ctx.globalAlpha = noise;
+      ctx.translate(-ox, -oy); ctx.fillStyle = noisePat; ctx.fillRect(ox, oy, W, H); ctx.setTransform(1, 0, 0, 1, 0, 0);
+      // Like a finger on a real set: the static gathers and brightens around the pointer
+      if (ptr) {
+        ctx.save(); ctx.beginPath(); ctx.arc(ptr.x, ptr.y, R, 0, 6.2832); ctx.clip();
+        ctx.globalAlpha = 1;
+        for (var pass = 0; pass < 2; pass++) {
+          var px = (Math.random() * W) | 0, py = (Math.random() * H) | 0;
+          ctx.translate(-px, -py); ctx.fillRect(px, py, W, H); ctx.setTransform(1, 0, 0, 1, 0, 0);
+        }
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+    }
+    if (ptr) {
+      var g = ctx.createRadialGradient(ptr.x, ptr.y, 0, ptr.x, ptr.y, R);
+      g.addColorStop(0, 'rgba(' + HALO + ',.14)'); g.addColorStop(1, 'rgba(' + HALO + ',0)');
+      ctx.fillStyle = g; ctx.fillRect(ptr.x - R, ptr.y - R, R * 2, R * 2);
+    }
+
+    // Horizontal roll while the picture is broken; a jolt rolls through once
+    if (state === 'broken' && performance.now() - lastMove < 400) roll = (roll + 17 * dt) % H;
+    else roll *= 0.8;
+    if (jolt > 0) { jolt -= dt; roll = (roll + 31 * dt) % H; }
+    var rollOff = roll | 0;
+
+    var broken = state === 'broken';
+    // Broken: the picture scatters entirely, whatever it showed, so it re-forms from nothing (changed 2026-11-18)
+    var set = state === 'weak' ? 'c' : state === 'tuned' ? 'f' : null;
+    var amp = broken ? 3.5 : state === 'weak' ? 1.6 : 0.5, size = phone ? 2.5 : 3;
+    var R2 = R * R;
+    var damp = Math.pow(DAMPING, dt), pull = SPRING * dt;
+    var lit = [[], [], [], [], [], [], [], []];
+    for (var j = 0; j < parts.length; j++) {
+      var p = parts[j], q = set ? p[set] : null;
+      if (q) {
+        p.tx = q.x; p.ty = q.y;
+        if (broken && ptr) {                        // pushed about by the pointer, like the old dot field
+          var dx = q.x - ptr.x, dy = q.y - ptr.y, d2 = dx * dx + dy * dy;
+          if (d2 < R2) { var d = Math.sqrt(d2) || 1, k = (1 - d / R); k = k * k * R * 0.5; p.tx += dx / d * k + (Math.random() - 0.5) * 10; p.ty += dy / d * k + (Math.random() - 0.5) * 10; }
+        }
+      }
+      else if (broken) {
+        // Scattered specks drift to random spots across the screen, still pushed about by the pointer
+        if (p.sx === undefined || Math.random() < 0.02) { p.sx = Math.random() * W; p.sy = Math.random() * H; }
+        p.tx = p.sx; p.ty = p.sy;
+        if (ptr) {
+          var ex = p.x - ptr.x, ey = p.y - ptr.y, e2 = ex * ex + ey * ey;
+          if (e2 < R2) { var ed = Math.sqrt(e2) || 1, ek = (1 - ed / R); ek = ek * ek * R * 0.5; p.tx += ex / ed * ek; p.ty += ey / ed * ek; }
+        }
+      }
+      else if (Math.random() < 0.05) { p.tx = Math.random() * W; p.ty = Math.random() * H; }
+      p.vx = (p.vx + (p.tx - p.x) * pull) * damp; p.vy = (p.vy + (p.ty - p.y) * pull) * damp;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      if (!broken && (!q || (set === 'c' ? p.cd : p.fd))) continue;
+      if ((state === 'weak' && Math.random() < 0.1) || (broken && Math.random() < 0.3)) continue;   // dropouts: noise crawling through
+      // shade 0–7: broken sinks into the static, weak shimmers across the range, tuned keeps the initials bright
+      var s = broken ? (Math.random() * 3) | 0 : state === 'weak' ? 1 + ((Math.random() * 6) | 0) : (q.h ? 6 + (Math.random() * 2 | 0) : (Math.random() * 2) | 0);
+      lit[s].push(p.x + (Math.random() * 2 - 1) * amp, (p.y + rollOff) % H);
+    }
+    for (var b = 0; b < 8; b++) {
+      var L = lit[b]; if (!L.length) continue;
+      ctx.fillStyle = SHADES[b];
+      for (var m = 0; m < L.length; m += 2) ctx.fillRect(L[m], L[m + 1], size, size);
+    }
+    // A faint tear line now and then
+    if (Math.random() < (state === 'broken' ? 0.3 : 0.04)) {
+      ctx.fillStyle = 'rgba(' + HALO + ',.08)';
+      ctx.fillRect(0, (Math.random() * H) | 0, W, 2 + Math.random() * 5);
+    }
+  }
+  function stillFrame() {
+    setState('tuned');
+    ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(' + HALO + ',.07)';
+    for (var i = 0; i < W * H / 260; i++) ctx.fillRect((Math.random() * W) | 0, (Math.random() * H) | 0, 2, 2);
+    ptsF.forEach(function (q) {
+      ctx.fillStyle = 'rgba(' + PH + ',' + (q.h ? 0.95 : 0.4) + ')';
+      ctx.fillRect(q.x, q.y, phone ? 2.5 : 3, phone ? 2.5 : 3);
+    });
+  }
+
+  /* ---------------- One loop, one clock ---------------- */
+  // The crew's timers run on this clock, so they freeze with everything else when the hero is paused.
+  var teaLong = false, gen = 0, chatting = false, clock = 0, waits = [], raf = 0, lastT = 0, acc = 0, running = false, onScreen = false, resting = false;
+  function wait(ms, keep) { return new Promise(function (r) { waits.push({ t: clock + ms, r: r, g: keep ? -1 : gen }); }); }
+  function loop(t) {
+    raf = requestAnimationFrame(loop);
+    var el = lastT ? Math.min(250, t - lastT) : FRAME_MS; lastT = t;
+    if (!chatting && !held) clock += el;   // he stops what he's doing while you talk to him or carry him
+    acc += el;
+    if (waits.length) {
+      var due = waits.filter(function (w) { return w.t <= clock; });
+      if (due.length) { waits = waits.filter(function (w) { return w.t > clock; }); due.forEach(function (w) { if (w.g === -1 || w.g === gen) w.r(); }); }
+    }
+    if (acc < (resting ? FRAME_MS * 3 : FRAME_MS)) return;
+    var dt = Math.min(3, acc / 16.667); acc = 0;
+    if (state === 'broken' && performance.now() - lastMove > 1000) {
+      setState('weak');
+      // Away down the page (the guide has him), he still fixes the telly: from wherever he is (guide.js)
+      if (crewEl.classList.contains('away') && crew.needTV && !remoteAsked) { remoteAsked = true; doc.dispatchEvent(new CustomEvent('tv:needs-fix')); }
+    }
+    draw(dt);
+  }
+  function start() { if (!raf) { lastT = 0; raf = requestAnimationFrame(loop); } }
+  function stop() { if (raf) { cancelAnimationFrame(raf); raf = 0; } }
+  function sync() {
+    running = onScreen && !doc.hidden && !teaLong;
+    if (running) start(); else stop();
+    scene.classList.toggle('paused', !running);
+  }
+
+  /* ---------------- The crew ---------------- */
+  var crew = { x: 0, needTV: true, wake: null, busy: false };
+  var held = false;                                   // being carried by the visitor (desktop)
+  function sceneW() { return scene.clientWidth; }
+  // A point of the street drawing (viewBox 640×520, "xMidYMax slice") in scene pixels
+  function vx(x) { var w = sceneW(), h = scene.clientHeight, s = Math.max(w / 640, h / 520); return (x - 320) * s + w / 2; }
+  function vy(y) { var w = sceneW(), h = scene.clientHeight, s = Math.max(w / 640, h / 520); return (y - 520) * s + h; }
+  function crewW() { return crewEl.offsetWidth; }
+  function rel(el) { var r = el.getBoundingClientRect(), s = scene.getBoundingClientRect(); return { x: r.left - s.left + r.width / 2, y: r.top - s.top + r.height / 2 }; }
+
+  // The telescopic arm: it grows out of his shoulder to whatever needs fixing, and back
+  var armEl = doc.createElement('span'), handEl = doc.createElement('span');
+  armEl.className = 'reach-arm'; handEl.className = 'reach-hand';
+  armEl.setAttribute('aria-hidden', 'true'); handEl.setAttribute('aria-hidden', 'true');
+  scene.appendChild(armEl); scene.appendChild(handEl);
+  function armOff() {
+    [armEl, handEl].forEach(function (el) { el.classList.remove('on', 'out'); });
+    crewEl.classList.remove('extend');
+  }
+  function reachTo(x, y, instant, side) {
+    var sr = scene.getBoundingClientRect(), cr = crewEl.getBoundingClientRect();
+    var left = side !== undefined ? side : x < cr.left - sr.left + cr.width / 2;
+    if (side === undefined) crewEl.classList.toggle('flip', left);   // face the job (the sprite faces right); a set shoulder keeps his facing
+    var sx = cr.left - sr.left + (left ? 26 : 52) / 78 * cr.width, sy = cr.top - sr.top + 52 / 104 * cr.height;
+    var len = Math.hypot(x - sx, y - sy), ang = Math.atan2(y - sy, x - sx);
+    // Put it at his shoulder first with no transition, so nothing slides across the scene…
+    [armEl, handEl].forEach(function (el) {
+      el.classList.add('still'); el.classList.remove('out');
+      el.style.setProperty('--sx', sx + 'px'); el.style.setProperty('--sy', sy + 'px');
+      el.style.setProperty('--tx', x + 'px'); el.style.setProperty('--ty', y + 'px');
+    });
+    armEl.style.width = len + 'px'; armEl.style.setProperty('--ang', ang + 'rad');
+    crewEl.classList.add('extend');
+    armEl.classList.add('on'); handEl.classList.add('on');
+    void armEl.offsetWidth;
+    // …then let it grow out
+    if (!instant) { armEl.classList.remove('still'); handEl.classList.remove('still'); }
+    armEl.classList.add('out'); handEl.classList.add('out');
+    return instant ? Promise.resolve() : wait(470);
+  }
+  function retract() {
+    armEl.classList.remove('out'); handEl.classList.remove('out');
+    return wait(470).then(armOff);
+  }
+  function tap(x, y) {
+    return reachTo(x, y).then(function () { return wait(600); }).then(retract)
+      .then(function () { return wait(200); }).then(function () { return reachTo(x, y); })
+      .then(function () { return wait(600); }).then(retract);
+  }
+
+  // Where things are. On phones he lives on top of the TV and reaches from its ends.
+  function tvLeft() { return tv.offsetLeft; }
+  function tvRight() { return tv.offsetLeft + tv.offsetWidth; }
+  function offRight() { return hero.getBoundingClientRect().right - scene.getBoundingClientRect().left + 20; }
+  function besideTV() { return phone ? tvRight() - crewW() - 4 : tvRight() + 2; }
+  function nearTV() { return Math.abs(crew.x - besideTV()) < 140; }
+  var THINGS = {
+    tube: { at: [550, 96], broken: function () { return tube && !tube.classList.contains('fixed'); },
+      fix: function () { tube.classList.add('fixed'); breakLater(25000, 25000, function () { tube.classList.remove('fixed'); }); } },
+    junction: { at: [586, 352], broken: function () { return spark && spark.classList.contains('on'); },
+      fix: function () { spark.classList.remove('on'); } },
+    sign: { at: [72, 270], broken: function () { return sign && sign.getAttribute('transform').indexOf('rotate(0') !== 0; },
+      fix: function () { sign.setAttribute('transform', 'rotate(0 75 270)'); breakLater(60000, 60000, function () { sign.setAttribute('transform', 'rotate(-9 75 270)'); }); } },
+    // Street lamp: the bulb flickers out (≤ 3 flickers) and goes dark; he unscrews it and fits a spare
+    lamp: { at: [92, 66], broken: function () { return lamp && (lamp.classList.contains('dark') || lamp.classList.contains('failing')); },
+      breakIt: function () { lamp.classList.add('failing'); wait(1200, true).then(function () { lamp.classList.remove('failing'); lamp.classList.add('dark'); }); },
+      fix: function () { lamp.classList.remove('dark', 'failing'); breakLater(30000, 90000, THINGS.lamp.breakIt); } },
+    // Dripping pipe: one drop every 1.5 s into the bucket; two quarter-turns of a wrench, one last drop, then dry
+    pipe: { el: joint, broken: function () { return scene.classList.contains('leak') && !pipeFixing; },
+      breakIt: function () { joint.style.transform = ''; scene.classList.add('leak'); },
+      fix: function () {
+        pipeFixing = true;
+        drop.addEventListener('animationiteration', function () { scene.classList.remove('leak'); pipeFixing = false; }, { once: true });
+        breakLater(30000, 90000, THINGS.pipe.breakIt);
+      } }
+  };
+  var pipeFixing = false;
+  // At most two things broken at once, and nothing breaks during the tea break: a break that is due waits its turn
+  function brokenCount() { return Object.keys(THINGS).filter(function (id) { return THINGS[id].broken(); }).length; }
+  var FAST = /crew-fast/.test(location.hash) ? 0.1 : 1;   // dev checks only (scripts/dev/probe-jobs.js): ten times sooner
+  var TEA_AFTER = /crew-tea-soon/.test(location.hash) ? 3000 : 45000;   // dev checks only (scripts/dev/probe-tea.js): tea after 3 s
+  function breakLater(min, max, fn) {
+    return wait((min + Math.random() * (max - min)) * FAST, true).then(function tryBreak() {
+      if (resting || brokenCount() >= 2) return wait(5000, true).then(tryBreak);
+      fn();
+    });
+  }
+  // A thing's point in scene pixels: an element's centre, or a point of the street drawing
+  function ptOf(id) { if (THINGS[id].el) return rel(THINGS[id].el); var a = atOf(id); return { x: vx(a[0]), y: vy(a[1]) }; }
+  // The wrench: two quarter-turns of the joint
+  function wrench() {
+    var p = ptOf('pipe');
+    return reachTo(p.x, p.y)
+      .then(function () { joint.style.transform = 'rotate(90deg)'; return wait(500); })
+      .then(function () { joint.style.transform = 'rotate(180deg)'; return wait(500); })
+      .then(retract);
+  }
+  // On phones the sign is reached at its far end, so the arm passes over the bezel, not the screen
+  function atOf(id) { var a = THINGS[id].at; return id === 'sign' && phone ? [30, 270] : a; }
+  function standFor(id) {
+    if (phone) return id === 'sign' || id === 'lamp' ? tvLeft() - crewW() * 0.25 : tvRight() - crewW() - 4;
+    if (id === 'sign' || id === 'lamp') return Math.max(0, vx(100) - crewW() / 2);
+    if (id === 'pipe') return besideTV();                // reaches up past the set's right-hand side, never across the screen
+    return Math.min(sceneW() - crewW(), vx(560) - crewW() / 2);
+  }
+  var crateEl = scene.querySelector('.crate');
+  function teaSpot() { return phone || !crateEl ? besideTV() : crateEl.offsetLeft + crateEl.offsetWidth / 2 - crewW() / 2; }
+
+  function place(x, dur) {
+    crewEl.style.transition = dur ? 'transform ' + dur + 's linear' : 'none';
+    crewEl.style.setProperty('--x', Math.round(x) + 'px');
+    crew.x = x;
+  }
+  function walkTo(x) {
+    var d = Math.abs(x - crew.x), dur = Math.max(0.3, d / 90);     // slow, a trundle
+    if (d < 2) return wait(60);
+    crewEl.classList.toggle('flip', x < crew.x);
+    place(x, dur);
+    crewEl.classList.add('rolling');                                // his tracks turn while he trundles
+    return wait(dur * 1000 + 60).then(function () { crewEl.classList.remove('rolling'); });
+  }
+  function act(cls, ms) { crewEl.classList.add(cls); return wait(ms).then(function () { crewEl.classList.remove(cls); }); }
+  function twist() {
+    var d = rel(dial);
+    return reachTo(d.x, d.y)
+      .then(function () { dial.classList.add('turn'); return wait(380); })
+      .then(function () { dial.classList.remove('turn'); return wait(250); })
+      .then(function () { dial.classList.add('turn'); return wait(300); })
+      .then(function () {
+        setState('tuned'); crew.needTV = false;
+        dial.classList.remove('turn');
+        return retract();
+      })
+      .then(function () { return act('flinch', 320); });              // the nod
+  }
+  function untilWeak() { return state === 'broken' ? wait(200).then(untilWeak) : Promise.resolve(); }
+  function fixTV() {
+    // He only reaches the dials from the right-hand side, never across the screen
+    return walkTo(besideTV()).then(function () { mutter('tv'); return untilWeak(); }).then(twist);
+  }
+  function fixMove(id) { if (id === 'pipe') return wrench(); var p = ptOf(id); return tap(p.x, p.y); }
+  function job(id) {
+    crew.busy = id;
+    return jobInner(id).then(function () { crew.busy = false; });
+  }
+  function jobInner(id) {
+    if (id === 'off') {
+      // Out by the street's right-hand edge, back in from the left (the scene clips its left edge)
+      mutter('off', true);
+      var w = sceneW();
+      return wait(1500).then(function () { return walkTo(offRight()); })
+        .then(function () { return wait(2500 + Math.random() * 2000); })
+        .then(function () { if (spark) { spark.classList.remove('on'); void spark.getBBox(); spark.classList.add('on'); } return wait(800 + Math.random() * 1000); })
+        .then(function () { place(-crewW() - 10, 0); void crewEl.offsetWidth; return walkTo(Math.min(w * 0.12, tvLeft() - crewW())); });
+    }
+    var t = THINGS[id];
+    return walkTo(standFor(id))
+      .then(function () { mutter('job'); return fixMove(id); })
+      .then(function () { t.fix(); });
+  }
+  // A pause between jobs, cut short (after 2–6 s) if the picture breaks meanwhile
+  function pause(ms) {
+    var end = clock + ms;
+    function tick() {
+      if (crew.needTV) return wait(2000 + Math.random() * 4000);
+      return clock >= end ? Promise.resolve() : wait(250).then(tick);
+    }
+    return tick();
+  }
+  // The tea break (changed 2026-11-24). He announces it, the mug appears in his hand, he strolls to the crate and pulls
+  // himself up onto it by his arm, grappling the top bar as he does to climb a page; seated, facing the screen: "Don’t
+  // tell the boss." Anything that gets him back up: he hops down and the mug goes. Visitor input, being carried or the
+  // scene stopping mid-climb: the arm lets go and pulls in, he lowers to the ground, and the climb waits for his next
+  // break. Phones (no crate): the announcement, the mug, the line, beside the telly. Reduced motion: no moves.
+  function teaLine(kind) {                            // the break's own lines: closer together than 12 s, never over a chat
+    if (chatting || held || crewEl.classList.contains('away')) return;
+    lastMutter = performance.now(); showBubble(pick(kind), 3500);
+  }
+  // A move on the crew's clock (it stops while he's chatted to, carried, or the hero is paused); false if cut off
+  function ctween(ms, fn, cut) {
+    return new Promise(function (res) {
+      var t0 = clock;
+      (function f() {
+        if (cut && cut()) return res(false);
+        var k = Math.min(1, (clock - t0) / ms); fn(k);
+        if (k < 1) requestAnimationFrame(f); else res(true);
+      })();
+    });
+  }
+  function easeIO(k) { return k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; }
+  function setY(y) { crewEl.style.transition = 'none'; crewEl.style.setProperty('--y', Math.round(y) + 'px'); }
+  // The arm from the shoulder away from the mug (the mug is in the hand on his facing side), its end fixed on the bar
+  function armSide() { return !crewEl.classList.contains('flip'); }      // facing right: the left shoulder
+  function armFrom(left) {
+    var sr = scene.getBoundingClientRect(), cr = crewEl.getBoundingClientRect();
+    var sx = cr.left - sr.left + (left ? 26 : 52) / 78 * cr.width, sy = cr.top - sr.top + 52 / 104 * cr.height;
+    var tx = parseFloat(armEl.style.getPropertyValue('--tx')), ty = parseFloat(armEl.style.getPropertyValue('--ty'));
+    [armEl, handEl].forEach(function (el) { el.style.setProperty('--sx', sx + 'px'); el.style.setProperty('--sy', sy + 'px'); });
+    armEl.style.width = Math.hypot(tx - sx, ty - sy) + 'px'; armEl.style.setProperty('--ang', Math.atan2(ty - sy, tx - sx) + 'rad');
+  }
+  function climb(startAny) {
+    var my = gen, lift = crateEl.offsetHeight * 38 / 40, left = armSide();
+    var cut = function () { return gen !== my || held || lastAny !== startAny; };
+    var hdr = doc.querySelector('.hdr'), sr = scene.getBoundingClientRect();
+    var cx = crew.x + crewW() / 2, ty = (hdr ? hdr.getBoundingClientRect().bottom : sr.top) - sr.top + 2;
+    function letGo() {                                // the arm lets go and pulls in; he lowers to the ground
+      var y0 = parseFloat(crewEl.style.getPropertyValue('--y')) || 0;
+      [armEl, handEl].forEach(function (el) { el.classList.add('still'); });
+      armOff();
+      return ctween(300, function (k) { setY(y0 * (1 - k)); }).then(function () { setY(0); return false; });
+    }
+    return reachTo(cx + (left ? -1 : 1), ty, false, left)
+      .then(function () {                             // clamped on: a jolt, then it reels him up past the crate's top
+        if (cut()) return letGo();
+        armEl.classList.add('still'); handEl.classList.add('still');
+        return ctween(150, function (k) { setY(-3 * Math.sin(k * Math.PI)); armFrom(left); }, cut)
+          .then(function (ok) { return ok ? ctween(900, function (k) { setY(-lift * easeIO(k)); armFrom(left); }, cut) : false; })
+          .then(function (ok) {
+            if (!ok) return letGo();
+            setY(0); crewEl.classList.add('sit');     // the same height, now seated on the crate (one frame, no jump)
+            [armEl, handEl].forEach(function (el) { el.classList.remove('still'); });
+            return retract().then(function () { return true; });
+          });
+      });
+  }
+  function getDown() {
+    if (crewEl.classList.contains('sit')) {
+      var lift = crateEl.offsetHeight * 38 / 40;
+      crewEl.classList.remove('sit');
+      if (!reduced && crewEl.animate) crewEl.animate([{ translate: '0 ' + (-lift) + 'px' }, { translate: '0 ' + (-lift - 10) + 'px', offset: 0.35 }, { translate: '0 0' }], { duration: 380, easing: 'ease-in' });
+    }
+    crewEl.classList.remove('tea');                   // the mug fades out
+    return wait(reduced ? 0 : 400);
+  }
+  function rest() {
+    var startAny = lastAny, crate = !phone && crateEl;
+    teaLine('teaGo');                                 // a. the announcement
+    return wait(reduced ? 0 : 3500)
+      .then(function () { crewEl.classList.add('tea'); return wait(reduced ? 0 : 400); })   // b. the mug
+      .then(function () { return walkTo(teaSpot()); })                                        // c. the stroll
+      .then(function () {
+        if (!crate) return true;
+        if (reduced) { crewEl.classList.add('sit'); return true; }
+        return climb(startAny);                                                               // d. up by his arm
+      })
+      .then(function (seated) {
+        if (!seated) { crewEl.classList.remove('tea'); return; }   // cut off: the climb waits for his next break
+        if (crate) crewEl.classList.add('flip');                   // facing the screen
+        teaLine('teaSit');                                          // e. "Don’t tell the boss."
+        resting = true; sync();
+        // He watches the telly for a minute (it plays on at a third of the frame rate), then everything stops
+        return new Promise(function (r) { crew.wake = r; setTimeout(function () { if (resting) { teaLong = true; sync(); } }, 60000); })
+          .then(function () { resting = false; teaLong = false; sync(); return getDown(); });   // f. he hops down
+      });
+  }
+  var lastAny = 0;
+  function life() {
+    return pause(4000 + Math.random() * 4000).then(function () {
+      if (crew.needTV) return fixTV();
+      if (performance.now() - lastAny > TEA_AFTER) return rest();
+      if (Math.random() < 0.2) mutter('idle');
+      var ids = phone ? ['tube', 'junction', 'sign'] : ['tube', 'junction', 'sign', 'off'];
+      ['lamp', 'pipe'].forEach(function (id) { if (THINGS[id].broken()) ids.push(id, id); });   // only when broken, and likelier
+      var id = ids[(Math.random() * ids.length) | 0];
+      return job(id).then(function () { if (crew.needTV) return wait(2000 + Math.random() * 4000).then(fixTV); });
+    }).then(life);
+  }
+  function firstEntrance() {
+    return wait(2500).then(untilWeak).then(function () {
+      crewEl.classList.remove('reach', 'flip');
+      place(phone ? besideTV() : offRight(), 0); void crewEl.offsetWidth;
+      return fixTV();
+    }).then(function () {
+      // He introduces himself once per visit
+      var seen = false;
+      try { seen = sessionStorage.getItem('cuss-crew-hello') === '1'; sessionStorage.setItem('cuss-crew-hello', '1'); } catch (e) {}
+      if (!seen && !chatting && !held && !reduced) { lastMutter = performance.now(); showBubble(LINES.intro[0], 5000); return wait(5200); }
+    }).then(life);
+  }
+
+  /* ---------------- Talking: his speech bubble ---------------- */
+  var bubble = doc.createElement('div'), bubbleWho = doc.createElement('span'), bubbleText = doc.createElement('p');
+  var lastLine = {}, bubbleTimer = 0, walkTarget = null, lastMutter = -1e9;
+  bubble.className = 'crew-bubble'; bubble.setAttribute('aria-hidden', 'true'); bubble.hidden = true;
+  bubbleWho.className = 'who'; bubbleWho.textContent = 'CREW';
+  bubble.appendChild(bubbleWho); bubble.appendChild(bubbleText); scene.appendChild(bubble);
+  function situation() {
+    if (resting) return 'tea';
+    if (crew.needTV || state === 'broken') return 'tv';
+    if (crew.busy) return 'job';
+    return 'idle';
+  }
+  function pick(kind) {
+    var list = kind === 'job' ? LINES.job.concat(LINES[crew.busy] || []) : LINES[kind], i;
+    do { i = (Math.random() * list.length) | 0; } while (list.length > 1 && i === lastLine[kind]);
+    lastLine[kind] = i;
+    return list[i];
+  }
+  // Above his head when there's room inside the scene; otherwise beside his head, so the bubble
+  // never spills out of the picture over the page's text or buttons (phones: he sits at the top)
+  function placeBubble() {
+    bubble.style.maxWidth = ''; bubble.classList.remove('left', 'above');
+    var sr = scene.getBoundingClientRect(), cr = crewEl.getBoundingClientRect();
+    var bw = bubble.offsetWidth, bh = bubble.offsetHeight, cx = cr.left - sr.left + cr.width / 2, top = cr.top - sr.top;
+    var side = top - 8 - bh < 0;
+    bubble.classList.toggle('side', side);
+    if (side) {                                      // the side with room, never off screen (site.js)
+      window.cussBubble(bubble, crewEl, { dy: cr.height * 0.12, minTop: 4 });
+      return;
+    }
+    var left = Math.max(bw / 2 + 4, Math.min(sr.width - bw / 2 - 4, cx));
+    bubble.style.left = left + 'px';
+    bubble.style.top = (top - 8) + 'px';
+    bubble.style.setProperty('--tail', (cx - left) + 'px');
+  }
+  function showBubble(text, ms) {
+    clearTimeout(bubbleTimer);
+    bubbleText.textContent = text;
+    bubble.hidden = false; placeBubble();
+    void bubble.offsetWidth; bubble.classList.add('on');
+    if (ms) bubbleTimer = setTimeout(hideBubble, ms);
+  }
+  function hideBubble() { clearTimeout(bubbleTimer); bubble.classList.remove('on'); bubble.hidden = true; }
+  // He speaks up now and then on his own, at most one line every 12 s, and never over a chat
+  function mutter(kind, sure) {
+    if (chatting || held || reduced || crewEl.classList.contains('away')) return;
+    var now = performance.now();
+    if (now - lastMutter < 12000 || (!sure && Math.random() > 0.5)) return;
+    lastMutter = now;
+    showBubble(kind === 'off' ? LINES.off[0] : pick(kind), 3500);
+  }
+  function freezeWalk() {
+    // Stop him where he is: read his current position off the running transition
+    var m = new DOMMatrixReadOnly(getComputedStyle(crewEl).transform), x = m.m41;
+    if (Math.abs(x - crew.x) > 1) { walkTarget = crew.x; place(x, 0); crew.x = x; crewEl.classList.remove('rolling'); }
+  }
+  function resumeWalk() {
+    if (walkTarget === null) return;
+    var d = Math.abs(walkTarget - crew.x); place(walkTarget, Math.max(0.2, d / 90)); walkTarget = null; crewEl.classList.add('rolling');
+  }
+  function openChat() {
+    if (held) return;
+    if (!chatting) { chatting = true; freezeWalk(); showBubble(pick(situation())); }
+    clearTimeout(bubbleTimer); bubbleTimer = setTimeout(closeChat, 5000);
+  }
+  function closeChat() {
+    if (!chatting) return;
+    chatting = false; hideBubble();
+    resumeWalk();
+  }
+  crewEl.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') openChat(); });
+  crewEl.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse' && !held) { clearTimeout(bubbleTimer); bubbleTimer = setTimeout(closeChat, 300); } });
+  crewEl.addEventListener('pointerdown', function (e) {
+    if (e.pointerType === 'mouse' || e.pointerType === 'pen') return;          // desktop: hover talks, press-and-drag carries
+    e.stopPropagation();
+    chatting ? closeChat() : openChat();
+  });
+  doc.addEventListener('pointerdown', function (e) { if (chatting && !crewEl.contains(e.target)) closeChat(); });
+
+  /* ---------------- Carrying him (desktop) ---------------- */
+  // A short drag picks him up; he follows the pointer inside the scene and drops to the ground on release.
+  // Dropped near something broken, he fixes it straight away. He is on the top layer, so he can be left anywhere.
+  var drag = null;
+  // While the site guide has him, his routine here stops where it is (he doesn't wander about unseen), so the guide
+  // can hand him back exactly where he left; he carries on once he's back.
+  doc.addEventListener('crew:left', function () { freezeWalk(); walkTarget = null; hideBubble(); chatting = false; stopEverything(); });
+  // The guide's CREW has reached the dial from where he is: two clicks, the full name tunes in
+  var remoteAsked = false;
+  doc.addEventListener('tv:twist', function () {
+    if (!crewEl.classList.contains('away')) return;
+    dial.classList.add('turn');
+    wait(380, true).then(function () { dial.classList.remove('turn'); return wait(250, true); })
+      .then(function () { dial.classList.add('turn'); return wait(300, true); })
+      .then(function () {
+        dial.classList.remove('turn'); setState('tuned'); crew.needTV = false; remoteAsked = false;
+        doc.dispatchEvent(new CustomEvent('tv:fixed'));
+      });
+  });
+  doc.addEventListener('crew:back', function () {
+    remoteAsked = false;
+    poke();
+    var my = gen;
+    wait(600).then(function () { if (my === gen) return life(); });
+  });
+  function stopEverything() {
+    gen++; crewEl.classList.remove('rolling');                                  // ends whatever he was in the middle of
+    armOff(); dial.classList.remove('turn');
+    crewEl.classList.remove('tea', 'sit', 'reach', 'up', 'flinch');
+    crewEl.style.setProperty('--y', '0px');                                      // a climb cut off: back on the ground
+    if (resting) { resting = false; teaLong = false; crew.wake = null; sync(); }
+    crew.busy = false; walkTarget = null;
+  }
+  crewEl.addEventListener('pointerdown', function (e) {
+    if (phone || reduced || !(e.pointerType === 'mouse' || e.pointerType === 'pen') || e.button !== 0) return;
+    var cr = crewEl.getBoundingClientRect();
+    drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, ox: e.clientX - cr.left, oy: e.clientY - cr.top, on: false };
+    e.preventDefault();
+  });
+  doc.addEventListener('pointermove', function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.on) {
+      if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 6) return;
+      drag.on = true; held = true; chatting = false;
+      try { crewEl.setPointerCapture(e.pointerId); } catch (err) {}
+      stopEverything();
+      var m = new DOMMatrixReadOnly(getComputedStyle(crewEl).transform);
+      crew.x = m.m41; place(crew.x, 0);
+      drag.base = crewEl.offsetTop;                          // his top when standing on the ground
+      crewEl.classList.add('held');
+      showBubble(pick('held'));
+    }
+    var sr = scene.getBoundingClientRect();
+    var x = Math.max(0, Math.min(sceneW() - crewW(), e.clientX - sr.left - drag.ox));
+    var top = Math.max(0, Math.min(drag.base, e.clientY - sr.top - drag.oy));
+    crew.x = x;
+    crewEl.style.setProperty('--x', Math.round(x) + 'px');
+    crewEl.style.setProperty('--y', Math.round(top - drag.base) + 'px');
+    placeBubble();
+  });
+  function drop(e) {
+    if (!drag || (e && e.pointerId !== drag.id)) return;
+    var was = drag.on; drag = null;
+    if (!was) return;
+    held = false; hideBubble();
+    crewEl.classList.remove('held');
+    var x = crew.x;
+    crewEl.style.transition = 'transform .4s cubic-bezier(.5,0,.9,.6)';
+    crewEl.style.setProperty('--x', Math.round(x) + 'px');
+    crewEl.style.setProperty('--y', '0px');
+    crew.x = x;
+    poke();
+    var my = gen;
+    wait(420).then(function () { return afterDrop(); }).then(function () { if (my === gen) return life(); });
+  }
+  doc.addEventListener('pointerup', drop);
+  doc.addEventListener('pointercancel', drop);
+  function afterDrop() {
+    var mid = crew.x + crewW() / 2, best = null, bd = 170;
+    if ((crew.needTV || state === 'broken') && Math.abs(mid - (tvRight() + crewW() / 2)) < bd) best = 'tv';
+    Object.keys(THINGS).forEach(function (id) {
+      var t = THINGS[id], d = Math.abs(mid - ptOf(id).x);
+      if (best !== 'tv' && t.broken() && d < bd) { bd = d; best = id; }
+    });
+    if (!best) return Promise.resolve();
+    lastMutter = performance.now(); showBubble(LINES.thanks[0], 3000);
+    if (best === 'tv') return fixTV();
+    var t = THINGS[best];
+    crew.busy = best;
+    return fixMove(best).then(function () { t.fix(); crew.busy = false; });
+  }
+
+  /* ---------------- Visitors ---------------- */
+  function poke() {
+    lastAny = performance.now();
+    if (crew.wake) { var w = crew.wake; crew.wake = null; w(); }
+  }
+  function breakIt() {
+    poke();
+    if (state !== 'broken') {
+      setState('broken'); crew.needTV = true;
+      // Blown apart at once: every speck gets a new spot anywhere on the screen and a kick towards it
+      parts.forEach(function (p) { p.sx = Math.random() * W; p.sy = Math.random() * H; p.vx += (p.sx - p.x) * 0.08; p.vy += (p.sy - p.y) * 0.08; });
+    }
+    lastMove = performance.now();
+  }
+  function thump() {
+    poke();
+    tv.classList.remove('jolt'); void tv.offsetWidth; tv.classList.add('jolt');
+    jolt = 8;
+    if (nearTV() || phone) act('flinch', 320);
+  }
+  function onScreenAt(cx, cy) {
+    var r = canvas.getBoundingClientRect();
+    ptr = { x: (cx - r.left) * W / r.width, y: (cy - r.top) * H / r.height };
+    breakIt();
+  }
+  // Only a pointer or finger on the TV screen breaks the picture; anywhere in the hero still wakes the crew
+  hero.addEventListener('pointermove', function (e) { if (!crewEl.contains(e.target)) poke(); }, { passive: true });
+  screenEl.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse' || e.buttons) onScreenAt(e.clientX, e.clientY); }, { passive: true });
+  screenEl.addEventListener('touchmove', function (e) { var t = e.touches[0]; if (t) onScreenAt(t.clientX, t.clientY); }, { passive: true });
+  screenEl.addEventListener('pointerleave', function () { ptr = null; });
+  screenEl.addEventListener('touchend', function () { ptr = null; }, { passive: true });
+  tv.addEventListener('pointerdown', function (e) { thump(); onScreenAt(e.clientX, e.clientY); lastMove = performance.now() - 600; });
+
+  /* ---------------- Start ---------------- */
+  // The show never delays the message: wait for the fonts (so the letters sample in Chakra Petch)
+  // and for the page to settle, then build the picture and let the crew in.
+  function begin() {
+    readColours();
+    build();
+    // Theme switch (header) or the OS preference changing: the glass changes colour, nothing else
+    function retheme() {
+      readColours();
+      if (reduced) { stillFrame(); return; }
+      if (noiseTex) makeNoise();
+      ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+    }
+    doc.addEventListener('cuss:theme', retheme);
+    var mqL = window.matchMedia && matchMedia('(prefers-color-scheme: light)');
+    if (mqL && mqL.addEventListener) mqL.addEventListener('change', retheme);
+    if (reduced) {
+      stillFrame();
+      crewEl.classList.remove('reach');
+      var d = rel(dial); reachTo(d.x, d.y, true);
+      return;
+    }
+    whenIdle(makeNoise);   // the crew keeps the markup's still pose: hand on the dial
+    crewEl.style.left = '0'; place(phone ? besideTV() : offRight(), 0);
+    crewEl.classList.add('live');
+    lastMove = lastAny = performance.now();
+    ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) { onScreen = es[0].isIntersecting; sync(); }).observe(hero);
+    } else { onScreen = true; sync(); }
+    doc.addEventListener('visibilitychange', sync);
+
+    var lastW = scene.clientWidth;
+    window.addEventListener('resize', function () {
+      if (Math.abs(scene.clientWidth - lastW) < 30) return;
+      lastW = scene.clientWidth;
+      var wasPhone = phone;
+      build(); makeNoise();
+      if (phone !== wasPhone) {                    // crossed the breakpoint: put him where this layout wants him
+        stopEverything();
+        place(besideTV(), 0);
+        life();
+        crew.needTV = true;
+      }
+    });
+    if (spark) setInterval(function () { if (running && !resting && brokenCount() < 2 && !spark.classList.contains('on') && Math.random() < 0.3) spark.classList.add('on'); }, 9000);
+    if (lamp) breakLater(30000, 90000, THINGS.lamp.breakIt);
+    if (joint) breakLater(30000, 90000, THINGS.pipe.breakIt);
+    firstEntrance();
+  }
+  function whenIdle(fn) {
+    var go = function () { if ('requestIdleCallback' in window) requestIdleCallback(fn, { timeout: 2000 }); else setTimeout(fn, 300); };
+    if (doc.readyState === 'complete') go(); else window.addEventListener('load', go, { once: true });
+  }
+  var fontsReady = doc.fonts && doc.fonts.ready ? doc.fonts.ready : Promise.resolve();
+  Promise.all([Promise.race([fontsReady, new Promise(function (r) { setTimeout(r, 3000); })]), window.cussLate]).then(function () { whenIdle(begin); });
+})();

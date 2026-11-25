@@ -1,0 +1,34 @@
+---
+layout: layouts/base.njk
+permalink: /404.html
+eleventyExcludeFromCollections: true
+scripts: [band]
+css: [lost]
+title: "Page not found | CuSS"
+description: "This page has gone walkabout. Head back to the CuSS home page."
+---
+{%- from "macros.njk" import ph with context %}
+{#- 404 (design spec sections 1, 2, 8): one world scene, no travelling. CREW sweeps scattered broken glyphs into a pile
+    that settles into "404", then points at "Back to home" without covering it. Tip lines approved 2026-11-17. -#}
+<section class="lost" data-lost data-crew-home data-crew-tip="This page has gone walkabout. · Nothing here but me and a brush." aria-labelledby="lost-h">
+  <div class="wrap lost-in">
+    <div class="lost-copy">
+      <p class="mono eyebrow">Error 404</p>
+      <h1 id="lost-h">This page has gone walkabout</h1>
+      <p class="lead">The link may be old or mistyped. Everything we do is on the home page, or tell us what you were looking for and we’ll point you to it.</p>
+      <div class="actions"><a class="btn btn-contact bv-md" href="/contact/">Contact</a><a class="btn bv-md" href="/" data-home>Back to home</a></div>
+    </div>
+    <div class="lost-scene" aria-hidden="true">
+      <svg class="street" viewBox="0 0 560 300" preserveAspectRatio="xMidYMax slice" focusable="false">
+        <path class="ln2" d="M0 200V120h60V90h50v110M380 200V80h70v50h60v70"/>
+        <path class="cable" d="M0 30Q200 90 380 30T560 50"/>
+        <path class="ln" d="M0 276h560"/>
+      </svg>
+      <div class="lost-404">404</div>
+      {#- Scattered across the floor in the HTML itself (no measuring while the page loads; right without JavaScript too) #}
+      {%- for g in ['▓', '#', '?', '░', '¿', '%', '▒', '/', '!', '§', '¦', '∅'] %}{% set i = loop.index0 %}<span class="glyph" style="left:{{ (8 + 70 * ((i * 37) % 11) / 11) | round(1) }}%;bottom:{{ 36 + ((i * 53) % 5) * 22 }}px;--r:{{ (((i * 71) % 9) - 4) * 9 }}deg">{{ g }}</span>{% endfor %}
+      <span class="broom"></span>
+      <div class="crew">{% include "svg/crew.njk" %}</div>
+    </div>
+  </div>
+</section>

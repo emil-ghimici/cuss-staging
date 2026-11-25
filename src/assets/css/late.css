@@ -1,0 +1,207 @@
+/* CREW's moving parts: his telescopic arm, his speech bubble and the site guide. Only scripts use them, so this
+   file is not inlined: site.js loads it (cached across pages) and the crew scripts wait for it. */
+/* His telescopic arm: reaches whatever needs fixing from where he stands. Every arm (this one, and the guide's two)
+   looks the same: rounded at the shoulder, steel segments of a fixed size, a round hand. Growing out, the arm is
+   revealed from the shoulder (clip-path), never stretched, so its segments keep their size. Sized to CREW:
+   --u is 1px with his 84 px body, 0.643px with his 54 px phone body. */
+.scene .reach-arm,.scene .reach-hand{--u:1px}
+@media (max-width: 760px){.scene .reach-arm,.scene .reach-hand,.band .reach-arm,.band .reach-hand{--u:.643px}}
+.reach-arm,.reach-hand{position:absolute;left:0;top:0;z-index:5;pointer-events:none;opacity:0}
+.reach-arm{height:calc(7 * var(--u));margin-top:calc(-3.5 * var(--u));transform-origin:0 50%;border-radius:999px;background:repeating-linear-gradient(90deg,#8a93a0 0 calc(16 * var(--u)),#4b525d calc(16 * var(--u)) calc(19 * var(--u)));
+  transform:translate(var(--sx),var(--sy)) rotate(var(--ang));clip-path:inset(0 100% 0 0 round 999px);transition:clip-path .45s cubic-bezier(.2,.8,.2,1),opacity .1s}
+.reach-hand{width:calc(14 * var(--u));height:calc(14 * var(--u));margin:calc(-7 * var(--u)) 0 0 calc(-7 * var(--u));border-radius:50%;background:#9aa3ae;border:calc(2 * var(--u)) solid #59606b;
+  transform:translate(var(--sx),var(--sy));transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .1s}
+.reach-arm.on,.reach-hand.on{opacity:1}
+.reach-arm.out{clip-path:inset(0 0 0 0 round 999px)}
+.reach-hand.out{transform:translate(var(--tx),var(--ty))}
+.reach-arm.still,.reach-hand.still{transition:none}
+
+.crew-bubble .who{display:block;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--screen-dim);margin-bottom:2px}
+.crew-bubble{position:absolute;z-index:6;max-width:240px;width:max-content;padding:8px 12px;background:var(--screen);color:var(--phosphor);border:2px solid var(--phosphor);font:500 16px/1.4 var(--font-mono);pointer-events:none;
+  transform:translate(-50%,calc(-100% + 6px));opacity:0;transition:opacity .15s,transform .15s cubic-bezier(.2,.8,.2,1)}
+.crew-bubble.on{opacity:1;transform:translate(-50%,-100%)}
+.crew-bubble p{margin:0}
+.crew-bubble::after{content:"";position:absolute;left:calc(50% + var(--tail,0px) - 7px);bottom:-9px;width:12px;height:12px;background:var(--screen);border:2px solid var(--phosphor);border-top:0;border-left:0;transform:rotate(45deg)}
+.crew-bubble{box-shadow:0 0 12px var(--glow-signal-soft)}
+@media (max-width: 760px){.crew-bubble{max-width:200px}}
+/* Beside his head (no room above inside the scene): tail points sideways at him */
+/* It slides out from his head, never past where it settles (so it can't cross the screen edge on the way) */
+.crew-bubble.side{transform:translate(-6px,0)}
+.crew-bubble.side.on{transform:none}
+.crew-bubble.side.left{transform:translate(calc(-100% + 6px),0)}
+.crew-bubble.side.left.on{transform:translateX(-100%)}
+.crew-bubble.side::after{left:-9px;top:14px;bottom:auto;border:2px solid var(--phosphor);border-right:0;border-top:0}
+.crew-bubble.side.left::after{left:auto;right:-9px;border:2px solid var(--phosphor);border-left:0;border-bottom:0}
+
+/* ---------- CREW the guide: caught by the header where he stands, rappels to the next box ---------- */
+.g-fixed{position:fixed;left:0;top:0;width:0;height:0;z-index:28;pointer-events:none}
+.g-doc{position:absolute;left:0;top:0;width:0;height:0;z-index:20}
+.g-crew{position:absolute;left:0;top:0;width:84px;height:112px;cursor:pointer;will-change:transform}
+.g-crew svg{width:100%;height:100%;overflow:visible}
+.g-crew .eye{fill:var(--phosphor)}
+.g-crew .mug{display:none}
+.g-crew .arm{transform-origin:50px 46px;transition:transform .25s}
+.g-crew.flip svg{transform:scaleX(-1)}
+.g-crew.tapping .arm{transform:rotate(-100deg)}
+.g-fixed.on .g-crew{z-index:28}
+/* His two telescopic arms: 100 px bars stretched and turned with transform only.
+   arm1 clamps the top bar (the header covers its top end); arm2 hooks a box's top edge. */
+.g-fixed{--gs:1}
+@media (max-width: 760px){.g-fixed{--gs:.643}}
+.g-arm{position:absolute;left:0;top:0;width:0;height:calc(7px * var(--gs));margin-top:calc(-3.5px * var(--gs));transform-origin:0 50%;border-radius:999px;opacity:0;
+  background:repeating-linear-gradient(90deg,#8a93a0 0 calc(16px * var(--gs)),#4b525d calc(16px * var(--gs)) calc(19px * var(--gs)))}
+.g-hand{position:absolute;left:0;top:0;width:calc(14px * var(--gs));height:calc(14px * var(--gs));margin:calc(-7px * var(--gs)) 0 0 calc(-7px * var(--gs));border-radius:50%;background:#9aa3ae;border:calc(2px * var(--gs)) solid #59606b;opacity:0}
+.g-arm.on,.g-hand.on{opacity:1}
+.g-arm,.g-hand{z-index:29}   /* in front of him, like the arm on the TV */
+.g-crew.extend .arm{opacity:0}
+/* Grab: a 3° jolt that settles in 400 ms. Land: a 2 px squash. Hang: the eye watches the page pass;
+   after 4 s one track lifts to check his footing. Individual transform properties, so the flip stays put. */
+.g-crew svg{transform-origin:50% 0}
+.g-crew.jolt svg{animation:gjolt .4s cubic-bezier(.2,.8,.2,1)}
+@keyframes gjolt{0%{rotate:3deg}45%{rotate:-1.2deg}100%{rotate:0deg}}
+.g-crew.land svg{animation:gland .22s ease-out}
+@keyframes gland{40%{scale:1 var(--squash,.98);translate:0 2px}}
+.g-crew .eye,.g-crew .tread{transform-box:fill-box;transition:transform .3s}
+.g-crew.hang .eye{transform:translateY(3px)}
+.g-crew .tread{transform-origin:100% 50%}
+.g-crew.peek .tread{transform:rotate(-7deg)}
+/* Losing his footing (guide.js loseFooting): his tracks wobble, he rocks, then falls */
+.g-crew.slip svg{animation:gslip .4s ease-in-out}
+@keyframes gslip{20%{rotate:-6deg}45%{rotate:5deg}70%{rotate:-3deg}100%{rotate:0deg}}
+.g-crew.slip .tread{animation:gtread .4s ease-in-out}
+@keyframes gtread{25%,75%{transform:rotate(-10deg)}50%{transform:rotate(5deg)}}
+.g-crew.typing .arm{animation:gtype .6s steps(4)}
+@keyframes gtype{0%,50%{transform:rotate(-30deg)}25%,75%{transform:rotate(-45deg)}}
+@media (prefers-reduced-motion: reduce){.g-crew svg,.g-crew .arm{animation:none!important}.g-crew .eye,.g-crew .tread{transition:none}}
+/* His bubble rides with him, beside his head */
+.g-bubble{position:absolute;top:0;right:calc(100% + 10px);left:auto;max-width:240px;width:max-content;transform:none}
+.g-bubble.on{transform:none}
+.g-bubble::after{left:auto;right:-9px;top:14px;bottom:auto;border:2px solid var(--phosphor);border-left:0;border-bottom:0}
+.g-bubble.right{right:auto;left:calc(100% + 10px)}
+.g-bubble.right::after{right:auto;left:-9px;border:2px solid var(--phosphor);border-right:0;border-top:0}
+@media (max-width: 760px){
+  .g-crew{width:54px;height:72px}
+  .g-bubble{max-width:200px}
+}
+/* While the guide has him, the hero's CREW is away (one character, never two) */
+.scene .crew.away{visibility:hidden}
+.g-crew{pointer-events:auto}
+/* CREW pointing down into the monitor he sits on */
+.g-crew.point .arm{transform:rotate(-40deg)}
+
+/* ---------- The Control room's storefront: what only its story script uses (room.js waits for this file) ---------- */
+.shop.lit .sign .dead{opacity:1;text-shadow:inherit;animation:signon 1.2s steps(1) 1}
+.shop.lit .sign .flk{animation:none}
+@keyframes signon{0%{opacity:.15}20%{opacity:1}35%{opacity:.3}55%{opacity:1}70%{opacity:.4}85%,100%{opacity:1}}
+.shop .scrn.flicker .glass{animation:mflick 4s steps(1) infinite}
+.shop .scrn:nth-child(2n).flicker .glass{animation-delay:-1.7s}
+@keyframes mflick{0%,100%{opacity:1}48%{opacity:.6}49%{opacity:1}}
+/* The finished shop: one big screen, a lamp, two tables with chairs; warm light */
+.shop.after .interior::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 84% 8%,var(--glow-amber),transparent 62%);opacity:.45}
+.shop.after .wall-before{visibility:hidden}
+.shop.after .wall-after{visibility:visible}
+.big{position:absolute;z-index:1;left:calc(24 * var(--u));top:calc(14 * var(--u));width:calc(512 * var(--u));height:calc(290 * var(--u));margin:0;display:flex;flex-direction:column;background:var(--screen);border:calc(10 * var(--u)) solid var(--bezel);outline:2px solid var(--signal);box-shadow:0 0 18px var(--glow-signal);color:var(--phosphor)}
+.big .dim{color:var(--screen-dim)}
+.big .ok{color:var(--hazard)}
+.rail{display:flex;flex-wrap:wrap;gap:2px 14px;list-style:none;margin:0;padding:5px 10px;border-bottom:1px solid var(--screen-hi-edge);font:500 14px/1.4 var(--font-mono);color:var(--screen-dim)}
+.rail li{white-space:nowrap}
+.rail .tick{display:inline-block;width:1.1em;color:transparent}
+.rail li.on{color:var(--phosphor)}
+.rail li.done .tick{color:var(--hazard)}
+.bpanes{position:relative;flex:1;overflow:hidden;font:500 15px/1.5 var(--font-mono)}
+.bpane{position:absolute;inset:0;padding:8px 14px;opacity:0;transform:translateX(28px);transition:opacity .35s,transform .45s cubic-bezier(.2,.8,.2,1)}
+.bpane.on{opacity:1;transform:none}
+.bpane.gone{transform:translateX(-28px)}
+.bpane p{margin:0}
+.cafe{position:absolute;left:calc(552 * var(--u));bottom:calc(6 * var(--u));width:calc(280 * var(--u));overflow:visible}
+.cafe path{fill:none;stroke:var(--ink-muted);stroke-width:5;stroke-linecap:round}
+.cafe .lampcord{stroke-width:2}
+.cafe .lampshade{fill:var(--amber);stroke:none}
+.cafe .lampbulb{fill:#fff3d6;filter:drop-shadow(0 0 8px var(--glow-amber))}
+.cafe .cup{fill:var(--ink);stroke:none}
+/* The shutter's thump, and welding light through its gaps (at most 3 flashes a second) */
+.shutter.thump{animation:thump .3s steps(3)}
+@keyframes thump{33%{translate:4px 0}66%{translate:-3px 1px}}
+.shop.weld .shutter .leak{animation:weld .4s steps(1) 5}
+@keyframes weld{0%{background:var(--weld);box-shadow:0 0 30px var(--glow-weld)}45%{background:var(--shutter-back);box-shadow:none}}
+/* Sparks from under the shutter, fanning across the pavement and bouncing once; the welding light spills under it */
+.sparks{position:absolute;left:calc(180 * var(--u));width:calc(840 * var(--u));top:calc(566 * var(--u));height:0;z-index:4;pointer-events:none}
+.sparks i{position:absolute;left:var(--ox,50%);top:0;width:max(3px,calc(5 * var(--u)));height:max(8px,calc(14 * var(--u)));border-radius:2px;background:var(--amber);box-shadow:0 0 6px var(--glow-amber);opacity:0}
+.shop.grind .sparks i{animation:fly .75s cubic-bezier(.3,.6,.6,1) var(--d,0s) infinite}
+.shop.puff .sparks i:nth-child(-n+8){animation:fly .75s cubic-bezier(.3,.6,.6,1) var(--d,0s) 1}
+@keyframes fly{0%{opacity:1;transform:translate(0,0) rotate(var(--r,0deg))}55%{opacity:1;transform:translate(calc(var(--dx) * .7),var(--dy)) rotate(var(--r,0deg))}100%{opacity:0;transform:translate(var(--dx),calc(var(--dy) * .65)) rotate(var(--r,0deg))}}
+.sparks::before{content:"";position:absolute;left:25%;right:25%;top:0;height:calc(46 * var(--u));background:radial-gradient(ellipse at 50% 0,var(--glow-weld),transparent 70%);opacity:0}
+.shop.weld .sparks::before{animation:spill .4s steps(1) 5}
+@keyframes spill{0%{opacity:1}45%{opacity:0}}
+.dust{position:absolute;left:calc(180 * var(--u));width:calc(840 * var(--u));top:calc(162 * var(--u));height:0;z-index:3;pointer-events:none}
+.dust i{position:absolute;top:0;width:calc(5 * var(--u));height:calc(5 * var(--u));background:var(--ink-muted);opacity:0}
+.dust i:nth-child(1){left:12%}.dust i:nth-child(2){left:26%}.dust i:nth-child(3){left:37%}.dust i:nth-child(4){left:48%}.dust i:nth-child(5){left:57%}.dust i:nth-child(6){left:69%}.dust i:nth-child(7){left:80%}.dust i:nth-child(8){left:91%}
+.shop.dusty .dust i{animation:dust 1.1s ease-in 1}
+.dust i:nth-child(2n){animation-delay:.15s!important}.dust i:nth-child(3n){animation-delay:.3s!important}
+@keyframes dust{0%{opacity:.9;transform:none}100%{opacity:0;transform:translateY(calc(140 * var(--u)))}}
+/* CREW in the shop: the guide hands him in on the pavement; behind the shutter he is under it */
+.shop .crew{left:0;top:0;bottom:auto;width:84px;height:112px;z-index:5;visibility:hidden}
+.shop .crew.live{visibility:visible}
+.shop .crew.away{visibility:hidden}
+.shop .crew.inside,.shop-pic .reach-arm.inside,.shop-pic .reach-hand.inside{z-index:1}
+.shop .crew.happy svg{animation:happy .5s cubic-bezier(.3,1.6,.5,1) 2}
+@keyframes happy{40%{transform:translateY(-8px)}}
+.shop .crew.flip.happy svg{animation-name:happyflip}
+@keyframes happyflip{0%,100%{transform:scaleX(-1)}40%{transform:scaleX(-1) translateY(-8px)}}
+.shop .crew.happy .eye{transform:scaleY(.4);transform-box:fill-box;transform-origin:50% 50%}
+.shop .crew.point .arm{transform:rotate(-40deg)}
+.shop .crew.tapping .arm{transform:rotate(-100deg)}
+.shop-pic .reach-arm,.shop-pic .reach-hand,.shop-pic .crew-bubble{--u:1px}
+/* Nothing moves while he's away, or off screen */
+.shop.frozen *,.shop.frozen *::before,.shop.paused *,.shop.paused *::before{animation-play-state:paused!important}
+@media (max-width: 760px){
+  .big{left:calc(10 * var(--u));top:calc(10 * var(--u));width:calc(552 * var(--u));height:calc(400 * var(--u))}
+  .rail{gap:0 10px;padding:4px 8px}
+  .bpanes{font-size:14px;line-height:1.45}
+  .bpane{padding:6px 10px}
+  .cafe{left:calc(136 * var(--u));width:calc(300 * var(--u));bottom:calc(6 * var(--u))}
+  .sparks{left:calc(34 * var(--u));width:calc(572 * var(--u));top:calc(784 * var(--u))}
+  .dust{left:calc(34 * var(--u));width:calc(572 * var(--u));top:calc(130 * var(--u))}
+  .shop .crew{width:54px;height:72px}
+  .shop-pic .reach-arm,.shop-pic .reach-hand{--u:.643px}
+}
+@media (prefers-reduced-motion: reduce){.shop *,.shop *::before,.shop *::after{animation:none!important;transition:none!important}}
+/* The sign's left hanger gives when CREW nudges it: it snaps and dangles; fixed, it hangs straight again */
+.hanger.l{transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+.hanger.l.snap{transform:rotate(16deg) scaleY(.55)}
+/* The guide's bubble above his head (site.js cussBubble, when neither side has room): centred, tail down at him */
+.g-bubble.above{right:auto;transform:translate(-50%,calc(-100% + 6px))}
+.g-bubble.above.on{transform:translate(-50%,-100%)}
+.g-bubble.above::after{left:calc(50% + var(--tail,0px) - 7px);right:auto;top:auto;bottom:-9px;border:2px solid var(--phosphor);border-top:0;border-left:0}
+
+/* ---------- Junk strips: the fixed look (CREW's jobs, guide.js) and their motion (site.js adds .live on screen) ----------
+   Reduced motion: site.js shows every strip fixed and nothing moves. */
+.j-door,.j-flap,.j-dish,.j-lean,.j-hang,.j-wheel{transition:transform .6s cubic-bezier(.3,1.4,.5,1)}
+.j-wheel{transition-duration:1.2s;transition-timing-function:cubic-bezier(.4,0,.2,1)}
+.j-fix,.j-brk,.j-dim,.j-spk,.j-steam,.j-hookr,.j-bulb{transition:opacity .3s,fill .3s}
+.j-hookr{transition-delay:.45s}
+.junk.fixed .j-fix{opacity:1}
+.junk.fixed .j-brk,.junk.fixed .j-spk,.junk.fixed .j-steam{opacity:0}
+.junk.fixed .j-dim{opacity:1}
+.junk.fixed .j-door,.junk.fixed .j-flap,.junk.fixed .j-dish,.junk.fixed .j-lean,.junk.fixed .j-hang{transform:none}
+.junk.fixed .j-wheel{transform:rotate(180deg)}
+.junk.fixed .j-hookr{opacity:.6}
+.junk.fixed .j-bulb{fill:var(--amber);filter:drop-shadow(0 0 5px var(--glow-amber))}
+@media (prefers-reduced-motion: no-preference){
+  .junk.live .j-flk{animation:jflk 6s steps(1) infinite}
+  .junk.live .j-flk:nth-of-type(3n){animation-delay:-2.3s}
+  .junk.live:not(.fixed) .j-spk{animation:jspk .8s steps(2) infinite}
+  .junk.live:not(.fixed) .j-flap{animation:jflap 1.6s ease-in-out infinite alternate}
+  .junk.live:not(.fixed) .j-sway{animation:jsway 2.4s ease-in-out infinite alternate}
+  .junk.live:not(.fixed) .j-steam circle{animation:jsteam 1.8s ease-out infinite}
+  .junk.live:not(.fixed) .j-steam circle:nth-child(2){animation-delay:-.6s}
+  .junk.live:not(.fixed) .j-steam circle:nth-child(3){animation-delay:-1.2s}
+  .junk.live.fixed .j-blades{animation:jspin .9s linear infinite}
+}
+@keyframes jflk{0%,100%{opacity:1}61%{opacity:.2}62%{opacity:1}64%{opacity:.3}65%{opacity:1}}
+@keyframes jspk{50%{opacity:0}}
+@keyframes jflap{from{transform:rotate(60deg)}to{transform:rotate(74deg)}}
+@keyframes jsway{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+@keyframes jsteam{from{opacity:.5;transform:translateY(6px)}to{opacity:0;transform:translateY(-10px)}}
+@keyframes jspin{to{transform:rotate(360deg)}}
+.lost .crew.away{visibility:hidden}

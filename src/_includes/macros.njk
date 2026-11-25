@@ -1,0 +1,68 @@
+{#- Shared components. Import with: {% from "macros.njk" import faq, steps, contact, ph with context %} -#}
+
+{#- A clearly marked placeholder for copy still to come (never filled by guessing) -#}
+{%- macro ph(what) -%}
+<p class="ph"><span class="mono">Copy to come</span> {{ what }}</p>
+{%- endmacro -%}
+
+{%- macro faq(items, openFirst = false) -%}
+<div class="faq">
+  {%- for f in items %}
+  <details class="bv-lg"{% if openFirst and loop.first %} open{% endif %}><summary>{{ f.q }}<span class="pm">{% icon "plus", "i-plus" %}{% icon "minus", "i-minus" %}</span></summary><div class="ans"><p>{{ f.a }}</p></div></details>
+  {%- endfor %}
+</div>
+{%- endmacro -%}
+
+{%- macro steps(items, vertical = false) -%}
+<ol class="{{ 'vsteps' if vertical else 'steps' }}">
+  {%- for s in items %}
+  <li><span class="n" aria-hidden="true">{{ '0' if loop.index < 10 }}{{ loop.index }}</span>{% if vertical %}<h3>{{ s.t }}</h3>{% else %}<h3 class="h4">{{ s.t }}</h3>{% endif %}<p>{{ s.d }}</p></li>
+  {%- endfor %}
+</ol>
+{%- endmacro -%}
+
+{#- Contact block. Short version on Home and service pages (one chip pre-ticked, no phone);
+    full version on the Contact page (adds the phone number under the promise).
+    Without JavaScript: the heading, the ready-made email link and the visible address. -#}
+{%- macro contact(heading, ticked = 'Not sure yet', full = false, lead = 'Tick what fits. We’ll write the email for you.', level = 2) -%}
+{%- set to = site.crewEmail if site.assistantLive else site.email %}{#- crew@ once the assistant is live (site.js) #}
+{%- set mail = ticked | composeMail(to) %}
+<div class="contact-grid" id="contact">
+  <div>
+    <h{{ level }} id="contact-h">{{ heading }}</h{{ level }}>
+    <p class="lead js-only">{{ lead }}</p>
+    <p class="lead no-js">Write to us at <a href="mailto:{{ to }}">{{ to }}</a> and tell us a little about your business.</p>
+    <form class="compose js-only" data-compose data-to="{{ to }}" onsubmit="return false">
+      <fieldset><legend>What do you need?</legend>
+        <div class="chips">
+          {%- for c in chips %}
+          <label class="chip bv-sm"><input type="checkbox" name="need" value="{{ c.label }}" data-phrase="{{ c.phrase }}"{% if c.unsure %} data-unsure{% endif %}{% if c.label == ticked %} checked{% endif %}><span class="box bv-sm">{% icon "check" %}</span>{{ c.label }}</label>
+          {%- endfor %}
+        </div>
+      </fieldset>
+      <label class="field"><span>Your business <span class="opt">(optional)</span></span><input class="bv-md" name="biz" autocomplete="organization" placeholder="e.g. a bakery in Mullingar" data-format="sentence"></label>
+      <label class="field"><span>Anything else? <span class="opt">(optional)</span></span><textarea class="bv-md" name="more" data-format="sentence"></textarea></label>
+    </form>
+  </div>
+  <div>
+    <div class="crt bv-lg"><pre class="scr" data-preview aria-live="polite"><span class="k">To:</span> {{ to }}
+<span class="k">Subject:</span> {{ mail.subject }}
+
+{{ mail.body }}</pre><span class="label">Your email, ready to send</span></div>
+    <div class="send-row"><a class="btn btn-contact bv-md" data-send href="{{ mail.href }}">{% icon "mail" %}Open email to send</a></div>
+    {%- if site.assistantLive %}
+    {#- The off-duty line swaps in when CREW's status file says so (site.js). The hidden copy holds the longest
+        off-duty line, so the paragraph keeps its height at every width whichever line shows. #}
+    <p class="assist" data-crew-status="{{ site.crewStatusUrl }}"><span data-crew-line>Our assistant, CREW, usually replies within minutes with a few first questions. A person follows up within two working days.</span><span class="assist-size" aria-hidden="true">Our assistant, CREW, is off email duty till 1 September. A person is handling emails for now and follows up within two working days.</span></p>
+    {%- endif %}
+    <div class="copy-list">
+      <div class="copy-row">No email app? Write to <strong>{{ to }}</strong><button class="ibtn bv-md js-only" type="button" data-copy="address" aria-label="Copy the address" title="Copy the address">{% icon "copy" %}</button><span class="done" data-copied="address" aria-live="polite"></span></div>
+      <div class="copy-row js-only"><button class="btn btn-hdr bv-md" type="button" data-copy="message">{% icon "copy" %}Copy the message</button><span class="done" data-copied="message" aria-live="polite"></span></div>
+    </div>
+    <p class="fineprint">{{ site.promise }}</p>
+    {%- if full %}
+    <p class="phone-line">Rather talk? Call <a href="tel:{{ site.phone.tel }}">{{ site.phone.display }}</a>.</p>
+    {%- endif %}
+  </div>
+</div>
+{%- endmacro -%}

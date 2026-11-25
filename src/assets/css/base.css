@@ -1,0 +1,70 @@
+/* Base: reset, type, links, focus, helpers. Tokens come from design/tokens.json (generated first). */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:calc(var(--header-h) + var(--space-4))}
+body{margin:0;background:var(--surface-0);color:var(--ink);font-family:var(--font-sans);font-size:var(--fs-body);line-height:var(--lh-body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+main{display:block}
+main:focus{outline:none}
+img,svg,canvas{display:block;max-width:100%}
+
+h1,h2,.h1,.h2{font-family:var(--font-display);font-weight:600;letter-spacing:.01em;line-height:1.1;margin:0 0 var(--space-4);text-wrap:balance}
+h1,.h1{font-size:var(--fs-hero)}
+h2,.h2{font-size:var(--fs-h2);line-height:var(--lh-h2)}
+h3,.h3{font-size:var(--fs-h3);line-height:var(--lh-h3);font-weight:700;margin:0 0 var(--space-2)}
+h4,.h4{font-size:var(--fs-h4);line-height:var(--lh-h4);font-weight:700;margin:0 0 var(--space-1)}
+.h4{display:block}
+p{margin:0 0 var(--space-4)}
+strong,b{font-weight:700}
+
+a{color:var(--signal);text-decoration-thickness:2px;text-underline-offset:3px}
+a:hover{text-decoration-thickness:3px}
+:focus-visible{outline:var(--focus-w) solid var(--signal);outline-offset:2px}
+
+.wrap{max-width:var(--container);margin:0 auto;padding:0 var(--space-6)}
+.measure{max-width:var(--measure)}
+.muted{color:var(--ink-muted)}
+.mono{font-family:var(--font-mono);font-weight:500;font-size:14px;letter-spacing:.04em;line-height:1.4}
+.lead{font-size:clamp(18px,17.14px + .238vw,20px);color:var(--ink-muted)}
+.eyebrow{display:inline-block;color:var(--ink-muted);margin-bottom:var(--space-3);text-transform:uppercase}
+.plain{list-style:none;margin:0;padding:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+[hidden]{display:none!important}
+
+/* Script-dependent controls: shown only with JavaScript; their plain-link stand-ins only without */
+html:not(.js) .js-only{display:none!important}
+html.js .no-js{display:none!important}
+
+/* Skip link */
+.skip{position:absolute;left:var(--space-4);top:-100px;z-index:50;background:var(--surface-1);color:var(--ink);padding:var(--space-3) var(--space-4);border:var(--border-control-w) solid var(--signal)}
+.skip:focus{top:var(--space-2)}
+
+/* Machined plates: 45° cuts where supported, 2 px radius elsewhere */
+.bv-sm,.bv-md,.bv-lg{border-radius:var(--bevel-fallback)}
+@supports (corner-shape: bevel){
+  .bv-sm{border-radius:var(--bevel-sm);corner-shape:bevel}
+  .bv-md{border-radius:var(--bevel-md);corner-shape:bevel}
+  .bv-lg{border-radius:var(--bevel-lg);corner-shape:bevel}
+}
+
+/* Icons */
+.ico{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+
+/* Theme switch icon: the sun offers Daylight, the moon offers the night city */
+.i-moon{display:none}
+:root[data-theme="light"] .i-sun{display:none}
+:root[data-theme="light"] .i-moon{display:block}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]) .i-sun{display:none}
+  :root:not([data-theme="dark"]) .i-moon{display:block}
+}
+
+@media (max-width: 760px){
+  .wrap{padding:0 var(--space-4)}
+}
+@media (min-width: 761px) and (max-width: 1060px){
+  .wrap{padding:0 var(--space-5)}
+}
+
+/* Reduced motion: UI changes are instant; world pieces show their still frames (world.css) */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}

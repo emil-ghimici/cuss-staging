@@ -1,0 +1,75 @@
+/* Junk strips (design README "Junk strips", decided 2026-11-19): a crowded scrapyard at every pass between sections,
+   on the page background (no band of colour). Drawn by src/_lib/junk.js. The strip keeps its drawing's shape
+   as the screen widens, so nothing is ever cut off top or bottom; narrower screens trim the sides and keep the middle,
+   where CREW's piece is. This file holds the broken look (first paint); the fixed look and all motion are in late.css. */
+/* width:100%: without it the min-height is carried through the aspect ratio into the width (1280 px, 1024 on phones),
+   so on any narrower page the strip ran off the right edge and the page scrolled sideways (found 2026-11-19) */
+.junk{position:relative;width:100%;aspect-ratio:32/3;min-height:120px;overflow:hidden;content-visibility:auto}
+/* Until its drawing arrives (site.js), the empty slot shows just the kerb it will stand on */
+.junk:empty::after{content:"";position:absolute;left:0;right:0;bottom:0;height:8.4%;border-top:2px solid var(--border-control);background:var(--surface-2)}
+.junk.tall:empty::after{height:6.3%}
+.junk.tall{aspect-ratio:8/1;min-height:160px}
+.junk svg{position:absolute;inset:0;width:100%;height:100%}
+@media (max-width: 760px){.junk{min-height:96px}.junk.tall{min-height:120px}}
+
+/* The scrapyard (also the inner pages' band skyline) */
+.j-bk0{fill:var(--divider);opacity:.4}
+.j-bk{fill:var(--divider);opacity:.85}
+.j-bkl{fill:none;stroke:var(--ink-muted);stroke-width:2;opacity:.4}
+.j-win{fill:var(--amber);opacity:.4}
+.j-c{fill:none;stroke:var(--ink-muted);stroke-width:2;opacity:.6}
+.j-m{fill:var(--surface-2);stroke:var(--border-control);stroke-width:1.5}
+.j-d{fill:var(--surface-1);stroke:var(--divider);stroke-width:1.5}
+.j-hp{fill:var(--divider);stroke:var(--border-control);stroke-width:1.5}
+.j-l{fill:none;stroke:var(--ink-muted);stroke-width:1.5;opacity:.7}
+.j-r{fill:none;stroke:var(--amber);stroke-width:2;opacity:.45}
+.j-scr{fill:var(--screen);stroke:var(--bezel-edge);stroke-width:1.5}
+.j-ph{fill:none;stroke:var(--phosphor);stroke-width:2;opacity:.6}
+.j-tyre{fill:var(--surface-1);stroke:var(--ink-muted);stroke-width:3}
+.j-hz0{fill:var(--surface-1)}
+.j-hz1{fill:var(--hazard)}
+.j-kb{fill:var(--surface-2)}
+.j-jt{fill:none;stroke:var(--divider);stroke-width:2}
+.j-gr{fill:none;stroke:var(--border-control);stroke-width:2}
+.j-pp{fill:none;stroke:var(--border-control);stroke-width:9}
+.j-pp-in{fill:none;stroke:var(--surface-2);stroke-width:5}
+.j-n{font:600 15px var(--font-display);letter-spacing:.14em;text-anchor:middle}
+.n-a{fill:var(--amber);filter:drop-shadow(0 0 5px var(--glow-amber))}
+.n-c{fill:var(--contact);filter:drop-shadow(0 0 5px var(--glow-contact))}
+.n-s{fill:var(--signal);filter:drop-shadow(0 0 5px var(--glow-signal))}
+.n-h{fill:var(--hazard)}
+
+/* The pieces CREW fixes: broken until he gets there */
+.j-fix{opacity:0}
+.j-plate{fill:var(--surface-2);stroke:var(--amber);stroke-width:2}
+.j-plate-d{stroke:var(--divider)}
+.j-wt{fill:var(--amber);font:600 20px var(--font-display);letter-spacing:.2em;text-anchor:middle;filter:drop-shadow(0 0 8px var(--glow-amber))}
+.j-dim{opacity:.22}
+.j-open{fill:none;stroke:var(--amber);stroke-width:3;font:600 46px var(--font-display);letter-spacing:.14em;text-anchor:middle;filter:drop-shadow(0 0 8px var(--glow-amber))}
+.j-wire{fill:none;stroke:var(--contact);stroke-width:2}
+.j-spk{fill:none;stroke:var(--amber);stroke-width:2;stroke-linejoin:round;filter:drop-shadow(0 0 5px var(--glow-amber))}
+.j-pole{fill:none;stroke:var(--border-control);stroke-width:5}
+.j-bl{fill:var(--border-control)}
+.j-rod{fill:none;stroke:var(--amber);stroke-width:4;stroke-linecap:round}
+.j-air{fill:none;stroke:var(--signal);stroke-width:2;stroke-linecap:round}
+.j-cab{fill:none;stroke:var(--ink-muted);stroke-width:3}
+.j-bulb{fill:var(--surface-2);stroke:var(--ink-muted);stroke-width:1.5}
+.j-pipe{fill:none;stroke:var(--border-control);stroke-width:14}
+.j-pipe-in{fill:none;stroke:var(--surface-2);stroke-width:10}
+.j-whl{fill:none;stroke:var(--contact);stroke-width:3}
+.j-steam{fill:var(--ink-muted);opacity:.3}
+.j-tb1{fill:var(--amber)}.j-tb2{fill:var(--hazard)}.j-tb3{fill:var(--signal)}.j-tb4{fill:var(--contact)}.j-tb5{fill:var(--ink-muted)}
+.j-door{transform:scaleX(-.35)}
+.j-flap{transform:rotate(68deg)}
+.j-dish{transform:rotate(95deg)}
+.j-lean{transform:rotate(16deg)}
+.j-sway{transform:rotate(0)}
+.j-hang{transform:rotate(6deg)}
+.j-hookr{opacity:0}
+.j-door,.j-flap,.j-dish,.j-lean,.j-hang,.j-wheel,.j-blades,.j-sway{transform-box:view-box}
+/* The piece CREW fixes stands out from the junk around it: brighter edges */
+.j-pc .j-m{stroke:var(--ink-muted);stroke-width:2}
+
+/* Neon signs ignite once when they come into view (site.js), and again when CREW fixes them */
+.ignite{animation:ignite 1.2s steps(1) 1}
+@keyframes ignite{0%{opacity:.15}20%{opacity:1}35%{opacity:.3}55%{opacity:1}70%{opacity:.4}85%,100%{opacity:1}}

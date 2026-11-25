@@ -1,0 +1,63 @@
+/* World zones: the derelict neon street, screens, the crew. Never behind body text,
+   never between a visitor and the Contact button. Screens follow the theme: dark glass at night,
+   sunlit glass by day, the same content in both. Glow colours (--glow-*) are transparent by day. */
+
+/* Street line art, drawn with the theme tokens */
+.street .ln{fill:none;stroke:var(--divider);stroke-width:2}
+.street .ln2{fill:none;stroke:var(--ink-muted);stroke-width:1.5;opacity:.55}
+.street .amb{fill:none;stroke:var(--amber);stroke-width:3;stroke-linecap:round;color:var(--amber)}
+.street .hazs{fill:none;stroke:var(--hazard);stroke-width:2}
+.street .sig{fill:none;stroke:var(--signal);stroke-width:3;stroke-linecap:round;color:var(--signal)}
+.street .txt-amb{fill:var(--amber);font:600 18px var(--font-display);letter-spacing:.12em}
+.street .blk{fill:var(--surface-1)}
+.street .blk2{fill:var(--surface-2)}
+.street .cable{fill:none;stroke:var(--ink-muted);stroke-width:2;opacity:.6}
+.street .win-a{fill:var(--amber);opacity:.55}
+.street .win-h{fill:var(--hazard);opacity:.5}
+.street .amb{filter:drop-shadow(0 0 6px var(--glow-amber))}
+.street .sig{filter:drop-shadow(0 0 6px var(--glow-signal))}
+
+/* Flicker: at most 3 flashes, ≤ 3 per second, then steady for seconds */
+.flick{animation:flick 6s steps(1) infinite}
+.flick.fixed{animation:none}
+@keyframes flick{0%,100%{opacity:1}61%{opacity:.25}62%{opacity:1}64%{opacity:.35}65%{opacity:1}}
+.spark{opacity:0}
+.spark.on{animation:spark .9s steps(2) 3}
+@keyframes spark{0%{opacity:1}50%{opacity:0}}
+
+/* The crew: a battered maintenance robot */
+.crew{position:absolute;left:0;bottom:calc(50 * var(--u));width:calc(90 * var(--u));height:calc(120 * var(--u));transform:translate(var(--x,0),var(--y,0));z-index:4}
+.crew.held{z-index:5;cursor:grabbing}
+.crew.held svg{transform:rotate(-6deg)}
+.crew.sit{translate:0 calc(-38 * var(--u))}
+.crew svg{width:100%;height:100%;overflow:visible}
+.crew .arm{transform-origin:50px 46px;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .1s}
+.crew.reach .arm{transform:rotate(-70deg)}
+.crew.up .arm{transform:rotate(-140deg)}
+.crew.extend .arm{opacity:0}
+.crew.flinch{animation:flinch .3s steps(2)}
+@keyframes flinch{50%{translate:0 -6px}}
+.crew .mug{opacity:0;transition:opacity .3s}
+.crew.tea .mug{opacity:1}
+.crew.flip svg{transform:scaleX(-1)}
+.crew .eye{fill:var(--phosphor)}
+.crew .eye{filter:drop-shadow(0 0 4px var(--glow-signal))}
+
+/* The crew's speech bubble: a little screen above his head (decoration, hidden from screen readers) */
+.scene .crew{cursor:default}
+@media (min-width: 761px) and (prefers-reduced-motion: no-preference){.scene .crew.live{cursor:grab}}
+@media (prefers-reduced-motion: reduce){.flick{animation:none}}
+/* His tracks: darker links across the belt's top and bottom runs, over its edge; while he rolls the top run moves
+   forward and the bottom run back, like a real track (one link every 6 units, so a 6-unit loop is seamless) */
+.crew .links,.g-crew .links{transform-box:view-box}
+.crew.rolling .links-top,.g-crew.rolling .links-top{animation:links-top .28s linear infinite}
+.crew.rolling .links-bot,.g-crew.rolling .links-bot{animation:links-bot .28s linear infinite}
+@keyframes links-top{to{transform:translateX(6px)}}
+@keyframes links-bot{to{transform:translateX(-6px)}}
+/* Round the ends the links turn with the belt (clockwise when he rolls right; mirrored when he faces left) */
+.crew .links-l,.g-crew .links-l{transform-origin:21.5px 93.5px}
+.crew .links-r,.g-crew .links-r{transform-origin:56.5px 93.5px}
+.crew.rolling .links-l,.g-crew.rolling .links-l,.crew.rolling .links-r,.g-crew.rolling .links-r{animation:links-end .28s linear infinite}
+@keyframes links-end{to{transform:rotate(45deg)}}
+@media (prefers-reduced-motion: reduce){.crew .links,.g-crew .links{animation:none!important}}
+

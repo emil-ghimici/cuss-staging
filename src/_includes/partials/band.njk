@@ -1,0 +1,24 @@
+{#- Street band (design spec sections 2, 7, 13): ~160 px desktop / 96 px phones. CREW starts here, does the
+    page's job once when the page is idle, and the header catches him as you scroll (guide.js).
+    data-crew-stay: he stays in the band (no page uses it since 2026-11-24, when Privacy and the 404 let him
+    travel to the footer's valve strip; kept for a page that needs him to stay put). The band art is decoration, hidden from screen readers. -#}
+<div class="band band-{{ band }}" data-crew-home data-band="{{ band }}"{% if crewStay %} data-crew-stay{% endif %} data-crew-tip="{{ bandTip }}">
+  <div class="band-world" aria-hidden="true">
+    <svg class="band-sky street" viewBox="0 0 1280 112" preserveAspectRatio="xMidYMax slice" focusable="false">
+      {% junkSky %}
+    </svg>
+    <div class="wrap band-in"><div class="band-scene">
+      <svg class="band-art street" viewBox="0 0 420 112" focusable="false">{% include "bands/" + band + ".njk" %}</svg>
+      <div class="crew band-crew">{% include "svg/crew.njk" %}</div>
+    </div></div>
+  </div>
+  <nav class="crumbs" aria-label="Breadcrumb"><div class="wrap">
+    <ol class="full">
+      {%- for c in crumbs %}
+      <li>{% if not loop.first %}<span class="sep" aria-hidden="true">/</span>{% endif %}{% if loop.last %}<span aria-current="page">{{ c.name }}</span>{% else %}<a href="{{ c.url }}">{{ c.name }}</a>{% endif %}</li>
+      {%- endfor %}
+    </ol>
+    {%- set parent = crumbs[crumbs.length - 2] %}
+    <ol class="back"><li><a href="{{ parent.url }}">{% icon "arrow-left", "ico" %}{{ parent.name }}</a></li></ol>
+  </div></nav>
+</div>

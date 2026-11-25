@@ -1,0 +1,14 @@
+<header class="hdr">
+  <div class="wrap hdr-in">
+    <a class="logo" href="/"><span class="led bv-sm" aria-hidden="true"></span>CuSS<span class="sr"> home</span></a>
+    {#- Contact · About · the theme switch, in the top right corner, on every width (design README, step 3c).
+        Services and Work live on the home page and in the footer; there is no menu. #}
+    <div class="hdr-end">
+      <nav class="hdr-nav" aria-label="Main">
+        <a class="btn btn-contact btn-hdr bv-md" href="/contact/"{% if section == 'contact' %} aria-current="page"{% endif %}>Contact</a>
+        <a class="btn btn-hdr bv-md" href="/about/"{% if section == 'about' %} aria-current="page"{% endif %}>About</a>
+      </nav>
+      <button class="ibtn bv-md js-only" type="button" data-theme-toggle aria-pressed="false" aria-label="Daylight theme" title="Daylight theme">{% icon "sun", "i-sun" %}{% icon "moon", "i-moon" %}</button>
+    </div>
+  </div>
+</header>

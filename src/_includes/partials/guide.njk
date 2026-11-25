@@ -1,0 +1,10 @@
+{#- CREW as the site guide: one character, the same size as in the hero. He is caught by the header where he
+    stands, rappels on his telescopic arm to the next box, sits on its top edge and rides with the page.
+    Decoration only (hidden from screen readers); nothing shows without JavaScript. -#}
+<div class="g-fixed" data-guide aria-hidden="true" hidden>
+  <span class="g-arm g-arm1"></span><span class="g-hand g-hand1"></span>
+  <span class="g-arm g-arm2"></span><span class="g-hand g-hand2"></span>
+</div>
+<div class="g-doc" aria-hidden="true">
+  <div class="g-crew" hidden>{% include "svg/crew.njk" %}<div class="crew-bubble g-bubble" hidden><span class="who">CREW</span><p></p></div></div>
+</div>

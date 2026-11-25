@@ -1,0 +1,37 @@
+{
+  "display": {
+    "fallback": "Arial Bold",
+    "sizeAdjust": "97.75%",
+    "ascent": "101.48%",
+    "descent": "31.51%",
+    "lineGap": "0.00%"
+  },
+  "sans": {
+    "fallback": "Arial",
+    "sizeAdjust": "99.18%",
+    "ascent": "99.21%",
+    "descent": "31.86%",
+    "lineGap": "0.00%"
+  },
+  "sansBold": {
+    "fallback": "Arial Bold",
+    "sizeAdjust": "99.47%",
+    "ascent": "98.92%",
+    "descent": "31.77%",
+    "lineGap": "0.00%"
+  },
+  "mono": {
+    "fallback": "Courier New",
+    "sizeAdjust": "99.98%",
+    "ascent": "102.02%",
+    "descent": "30.00%",
+    "lineGap": "0.00%"
+  },
+  "serif": {
+    "fallback": "Georgia Bold",
+    "sizeAdjust": "93.28%",
+    "ascent": "104.84%",
+    "descent": "27.34%",
+    "lineGap": "0.00%"
+  }
+}

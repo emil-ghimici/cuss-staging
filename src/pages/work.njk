@@ -1,0 +1,36 @@
+---
+layout: layouts/inner.njk
+permalink: /work/
+section: work
+band: work
+bandTip: "Real work, and a couple of labelled demos."
+crewPerches: ".card.work"
+scripts: [band]
+title: "Work: client projects and labelled demos | CuSS"
+description: "Software, automation and websites we’ve built, with clearly labelled demos. CuSS, Athlone, working with businesses across Ireland."
+crumbs:
+  - { name: "Home", url: "/" }
+  - { name: "Work" }
+---
+{#- Work (design spec sections 7, 11): few items, demos clearly labelled. The three bakery demos link to their pages; the client project's
+    card keeps its dashed outline until real screenshots exist (src/_data/work.js); no "Copy to come" note on the live site (2026-11-25). -#}
+{%- from "macros.njk" import contact with context %}
+{%- from "work-card.njk" import workCard %}
+<div class="wrap">
+  <div class="intro">
+    <p class="mono eyebrow">Work</p>
+    <h1>Things we’ve built</h1>
+    <p class="lead measure">A real client project and three demos built on fictional data, each clearly labelled. Fewer things, shown properly.</p>
+  </div>
+  <section class="sec-tight" aria-label="Projects and demos" data-crew-tip="Real work, and a couple of labelled demos.">
+    {#- Four cards, 2 × 2 on wide screens, one column on phones (demo step 11a) #}
+    <ul class="grid g2 plain">
+      {%- for w in work %}
+      <li>{{ workCard(w, "h2") }}</li>
+      {%- endfor %}
+    </ul>
+  </section>
+  <section class="contact-sec sec-tight" aria-labelledby="contact-h" data-crew-tip="Tick a few boxes. I’ll do the typing.">
+    {{ contact('Got something similar in mind?') }}
+  </section>
+</div>
