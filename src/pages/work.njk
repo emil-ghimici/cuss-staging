@@ -12,9 +12,9 @@ crumbs:
   - { name: "Home", url: "/" }
   - { name: "Work" }
 ---
-{#- Work (design spec sections 7, 11): few items, demos clearly labelled. The three bakery demos link to their pages; PLACEHOLDER: the client
-    project's screenshots (copy agreed 2026-11-18). -#}
-{%- from "macros.njk" import contact, ph with context %}
+{#- Work (design spec sections 7, 11): few items, demos clearly labelled. The three bakery demos link to their pages; the client project's
+    card keeps its dashed outline until real screenshots exist (src/_data/work.js); no "Copy to come" note on the live site (2026-11-25). -#}
+{%- from "macros.njk" import contact with context %}
 {%- from "work-card.njk" import workCard %}
 <div class="wrap">
   <div class="intro">
@@ -29,7 +29,6 @@ crumbs:
       <li>{{ workCard(w, "h2") }}</li>
       {%- endfor %}
     </ul>
-    {{ ph('real screenshots of the client project, once it’s finished') }}
   </section>
   <section class="contact-sec sec-tight" aria-labelledby="contact-h" data-crew-tip="Tick a few boxes. I’ll do the typing.">
     {{ contact('Got something similar in mind?') }}
