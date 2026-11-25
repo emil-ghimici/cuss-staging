@@ -1,6 +1,7 @@
 # Builds the Eleventy site and publishes it with GitHub Pages.
 # - In the staging repo (cuss-staging) every push to main deploys, with noindex and the /cuss-staging/ path.
-# - In the live repo it only runs when started by hand, until cuss.ie's Pages source is switched to Actions.
+# - In the live repo (cuss-website) every push to main deploys cuss.ie (Pages source switched to Actions 2026-11-25).
+# - Either repo can also be deployed by hand (Run workflow), e.g. after a failed run.
 name: Deploy
 
 on:
@@ -19,7 +20,6 @@ concurrency:
 
 jobs:
   build:
-    if: github.repository == 'emil-ghimici/cuss-staging' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       STAGING: ${{ github.repository == 'emil-ghimici/cuss-staging' && '1' || '' }}
