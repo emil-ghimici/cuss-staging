@@ -85,7 +85,7 @@ export default {
     faqH: 'Questions about custom web apps',
     faqs: [
       { q: 'Why not just use an off-the-shelf app?', a: 'Often you should, and we’ll tell you so. A custom app makes sense when the way you work is what sets you apart, or when you’re paying for several tools that each do half the job.' },
-      { q: 'Can my team use it on their phones?', a: 'Yes. It runs in the browser on computers, tablets and phones, with nothing to install.' },
+      { q: 'Can my team use it on their phones?', a: 'Yes. It runs in the browser on computers, tablets and phones, with nothing to install. If you need an app in the app stores, we bring in a partner team and stay your one point of contact.' },
       { q: 'What happens to our spreadsheets?', a: 'We move the data into the app and check it with you. You can still export to Excel whenever you need to.' },
       { q: 'How long does it take?', a: 'You get the first part early and the rest follows in stages. The written quote sets out what comes when.' },
       { q: 'Who owns the app, and where does it run?', a: 'You do. We usually run it in Microsoft’s Irish data centre, backed up in the Netherlands. If what the app does calls for it, it can run on your own computers instead: the recommendation follows what you need. Anything outside the EU only if absolutely necessary and the law allows.' },

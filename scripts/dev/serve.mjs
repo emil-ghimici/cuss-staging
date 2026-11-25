@@ -1,4 +1,5 @@
 // Static server with gzip and Pages-like caching, for Lighthouse runs against _site.
+// Caches like a host (max-age=600): after a rebuild, reload scripts with cache:'reload' or use a new port.
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import zlib from 'node:zlib';
 const root = process.argv[2], port = +process.argv[3] || 8090;
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.xml': 'application/xml', '.txt': 'text/plain' };

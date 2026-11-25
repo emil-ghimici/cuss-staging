@@ -11,8 +11,15 @@ export function jsonld({ site, env, services, url, crumbs, faqs, service }) {
     url: base,
     email: site.email,
     telephone: site.phone.tel,
-    logo: abs('/assets/img/apple-touch-icon.png'),
-    image: abs('/assets/img/og.png'),
+    // Logo, cover, hours and areas match the Google Business Profile (and Bing Places, which syncs from it): change them together.
+    logo: abs('/assets/img/logo.png'),
+    image: abs('/assets/img/cover.png'),
+    openingHoursSpecification: [{
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      opens: '07:00',
+      closes: '16:00',
+    }],
     address: {
       '@type': 'PostalAddress',
       streetAddress: site.legal.streetAddress,
@@ -21,9 +28,16 @@ export function jsonld({ site, env, services, url, crumbs, faqs, service }) {
       postalCode: site.legal.postalCode,
       addressCountry: 'IE',
     },
+    // The profile's service areas, closest to Athlone first; Ireland is the site's only (the site targets Ireland-wide searches)
     areaServed: [
+      { '@type': 'City', name: 'Athlone' },
       { '@type': 'AdministrativeArea', name: 'County Westmeath' },
-      { '@type': 'AdministrativeArea', name: 'Midlands, Ireland' },
+      { '@type': 'City', name: 'Roscommon' },
+      { '@type': 'AdministrativeArea', name: 'County Offaly' },
+      { '@type': 'City', name: 'Longford' },
+      { '@type': 'AdministrativeArea', name: 'County Laois' },
+      { '@type': 'City', name: 'Galway' },
+      { '@type': 'City', name: 'Dublin' },
       { '@type': 'Country', name: 'Ireland' },
     ],
     knowsLanguage: 'en',
