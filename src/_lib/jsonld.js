@@ -28,7 +28,7 @@ export function jsonld({ site, env, services, url, crumbs, faqs, service }) {
       postalCode: site.legal.postalCode,
       addressCountry: 'IE',
     },
-    // The profile's service areas, closest to Athlone first; Ireland is the site's only (the site targets Ireland-wide searches)
+    // The profile's service areas, closest to Athlone first; Midlands, Ireland and Ireland are the site's only (the region its copy names, and Ireland-wide searches)
     areaServed: [
       { '@type': 'City', name: 'Athlone' },
       { '@type': 'AdministrativeArea', name: 'County Westmeath' },

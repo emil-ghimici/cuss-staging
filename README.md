@@ -1,27 +1,24 @@
 # cuss.ie
 
-The website of CuSS Custom Software Solutions. A plain static site (HTML, CSS and JavaScript, no build step) published with GitHub Pages.
+The website of CuSS Custom Software Solutions, built with Eleventy and published with GitHub Pages through GitHub Actions.
 
-## Look at it on your computer
+## Work on it
 
-Double-click `index.html`. The page works straight from the folder. The one exception is the "Copy" button: browsers only allow copying on a real web address, so here it selects the email address for you to copy instead.
+- `npm ci`, then `npm run dev` serves the site at http://localhost:8080 and rebuilds on save.
+- `npm run build` writes the site to `_site/`.
+- `npm run shots` re-renders the Work page's demo screenshots (needs ffmpeg).
+- `scripts/dev/` holds the local preview server and the headless-browser checks; see its README.
 
 ## What's where
 
-| File | What it is |
+| Path | What it is |
 |---|---|
-| `index.html` | The whole page. All the text is here. |
-| `privacy.html`, `404.html` | The privacy notice and the "page not found" page |
-| `assets/css/main.css` | Styles. Colours are at the top (`--accent` is the teal). |
-| `assets/js/dotfield.js` | The moving dots behind the headline |
-| `assets/js/beforeafter.js` | The spreadsheet → app section |
-| `assets/js/livestrip.js` | The clock and the numbers under the headline |
-| `assets/js/theme.js` | The light/dark switch |
-| `assets/js/site.js` | Small shared helpers, the copy button, the footer year |
-| `assets/fonts/` | The three fonts, stored here so visitors' browsers don't contact Google |
-| `assets/img/` | Favicon, phone icon, social preview image |
-| `CNAME` | Tells GitHub Pages the domain is cuss.ie |
+| `src/` | Pages, layouts, data and assets; the only folder the build reads |
+| `src/_data/` | Site details, services, Work items, contact chips |
+| `src/_lib/` | Build helpers: inlined CSS, icons, structured data, share images |
+| `design/tokens.json` | Colours, type and spacing, turned into CSS variables at build time |
+| `src/CNAME` | The cuss.ie domain, copied into the live build only |
 
 ## Publishing
 
-Merging a pull request into `main` publishes the site.
+Every push to `main` builds the site and publishes cuss.ie (`.github/workflows/deploy.yml`). Use "Run workflow" by hand only after a failed run. The staging repo runs the same workflow with noindex and the `/cuss-staging/` path.
