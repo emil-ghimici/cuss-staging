@@ -79,7 +79,7 @@
 .band.done .key{transform:rotate(90deg)}
 
 .band.paused *{animation-play-state:paused!important}
-@media (prefers-reduced-motion: reduce){.band *{transition:none!important;animation:none!important}}
+html.still .band *{transition:none!important;animation:none!important}
 
 @media (max-width: 760px){
   .band{height:96px}

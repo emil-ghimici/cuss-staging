@@ -6,7 +6,7 @@
 (function () {
   'use strict';
   var doc = document;
-  var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduced = document.documentElement.classList.contains('still');   // the shared motion flag (layouts/base.njk)
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, reduced ? 0 : ms); }); }
   function whenIdle(fn) {
     var go = function () { if ('requestIdleCallback' in window) requestIdleCallback(fn, { timeout: 2000 }); else setTimeout(fn, 300); };

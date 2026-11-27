@@ -17,6 +17,8 @@ export default {
   // Shown only on the Contact page and in the footer, never as the first contact option.
   phone: { display: '089 704 4394', tel: '+353897044394' },
   town: 'Athlone, Co. Westmeath',
+  // The footer's copyright year: the build's year, so it never goes stale (every push to main rebuilds the site).
+  year: new Date().getFullYear(),
   legal: {
     cro: '797449',
     owner: 'Emil Stefan Ghimici',

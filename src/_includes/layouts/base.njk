@@ -11,6 +11,7 @@
 {%- else %}
 <link rel="canonical" href="{{ pageUrl }}">
 {%- endif %}
+<meta name="tdm-reservation" content="1">
 <meta name="theme-color" content="#0b0f14">
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
@@ -26,7 +27,10 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<script>(function(d){d.classList.add('js');try{var t=localStorage.getItem('cuss-theme');if(t==='light'||t==='dark')d.setAttribute('data-theme',t)}catch(e){}})(document.documentElement)</script>
+{#- Theme and motion before first paint. Motion (design README rule 9): the device's reduced-motion setting by default,
+    the visitor's switch (cuss-motion: play | still) overrides it. html.still = nothing moves; html.still-os = still only
+    because of the device setting, which shows the hero's "Play animation" line. The only reader of the media query. #}
+<script>(function(d){d.classList.add('js');var m,r=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;try{var t=localStorage.getItem('cuss-theme');if(t==='light'||t==='dark')d.setAttribute('data-theme',t);m=localStorage.getItem('cuss-motion')}catch(e){}if(m==='still'||(m!=='play'&&r))d.classList.add('still');if(r&&m!=='play'&&m!=='still')d.classList.add('still-os')})(document.documentElement)</script>
 <style>{% inlineCss css %}</style>
 {%- include "partials/jsonld.njk" %}
 </head>

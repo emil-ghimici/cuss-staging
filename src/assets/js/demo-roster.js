@@ -378,7 +378,7 @@
   function scrollToPanel() {
     var p = $('[data-panel] .panel'); if (!p) return;
     var r = p.getBoundingClientRect();
-    if (r.top > innerHeight - 120 || r.top < 0) scrollTo({ top: scrollY + r.top - 80, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    if (r.top > innerHeight - 120 || r.top < 0) scrollTo({ top: scrollY + r.top - 80, behavior: document.documentElement.classList.contains('still') ? 'auto' : 'smooth' });
   }
 
   /* ---------- Export hours for payroll (a real CSV, made on the device) ---------- */

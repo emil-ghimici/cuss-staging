@@ -116,7 +116,7 @@ a.card:hover{box-shadow:0 0 12px var(--glow-signal-soft)}
 .crt .label{position:absolute;left:12px;bottom:6px;font:500 14px/1.4 var(--font-mono);letter-spacing:.06em;color:var(--bezel-label);text-transform:uppercase}
 .cursor{display:inline-block;width:9px;height:17px;background:var(--phosphor);vertical-align:-3px;animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
-@media (prefers-reduced-motion: reduce){.cursor{animation:none}}
+html.still .cursor{animation:none}
 .send-row{display:grid;margin-top:var(--space-5)}
 .assist{margin:var(--space-5) 0 var(--space-3);color:var(--ink-muted);font-size:16px;display:grid}
 .assist>span{grid-area:1/1}

@@ -12,6 +12,8 @@ permalink: /
       <p class="lead">Automation, apps, dashboards and websites for small businesses in Athlone, the Midlands and across Ireland.</p>
       <div class="actions"><a class="btn btn-contact bv-md" href="#contact">Tell us what you need</a><a class="btn bv-md" href="#demo">See how it works</a></div>
       <p class="note">{{ site.promise }}</p>
+      {#- Shown only when the page is still because of the device's reduced-motion setting (html.still-os, rule 9). #}
+      <div class="motion-note js-only"><p>Animation is paused because your device asks for less motion.</p><button class="btn bv-md" type="button" data-motion-play>Play animation</button></div>
     </div>
     {% include "partials/hero-scene.njk" %}
   </div>

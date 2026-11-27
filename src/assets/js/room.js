@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   var doc = document;
-  var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduced = document.documentElement.classList.contains('still');   // the shared motion flag (layouts/base.njk)
   var mqPhone = matchMedia('(max-width: 760px)');
   function $(s, c) { return (c || doc).querySelector(s); }
   function $$(s, c) { return Array.prototype.slice.call((c || doc).querySelectorAll(s)); }

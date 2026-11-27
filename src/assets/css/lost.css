@@ -19,4 +19,4 @@
   .lost-404{font-size:84px}
   .lost-scene .crew{width:54px;height:72px}
 }
-@media (prefers-reduced-motion: reduce){.glyph,.lost-404,.lost-scene .crew,.lost-scene .broom{transition:none!important;animation:none!important}}
+html.still .glyph,html.still .lost-404,html.still .lost-scene .crew,html.still .lost-scene .broom{transition:none!important;animation:none!important}

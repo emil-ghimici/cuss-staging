@@ -1,14 +1,22 @@
 <header class="hdr">
   <div class="wrap hdr-in">
     <a class="logo" href="/"><span class="led bv-sm" aria-hidden="true"></span>CuSS<span class="sr"> home</span></a>
-    {#- Contact · About · the theme switch, in the top right corner, on every width (design README, step 3c).
+    {#- Contact · About · the settings gear, in the top right corner, on every width (design README, Header).
         Services and Work live on the home page and in the footer; there is no menu. #}
     <div class="hdr-end">
       <nav class="hdr-nav" aria-label="Main">
         <a class="btn btn-contact btn-hdr bv-md" href="/contact/"{% if section == 'contact' %} aria-current="page"{% endif %}>Contact</a>
         <a class="btn btn-hdr bv-md" href="/about/"{% if section == 'about' %} aria-current="page"{% endif %}>About</a>
       </nav>
-      <button class="ibtn bv-md js-only" type="button" data-theme-toggle aria-pressed="false" aria-label="Daylight theme" title="Daylight theme">{% icon "sun", "i-sun" %}{% icon "moon", "i-moon" %}</button>
+      {#- Settings gear (2026-11-27): opens a panel underneath with the theme and motion switches (rule 9). Each label
+          names what a tap does; site.js keeps the labels in step. Without JavaScript the page follows the system settings. #}
+      <div class="hdr-set js-only">
+        <button class="ibtn bv-md" type="button" data-settings aria-expanded="false" aria-controls="hdr-panel" aria-label="Display settings" title="Display settings">{% icon "settings" %}</button>
+        <div class="hdr-panel" id="hdr-panel" role="group" aria-label="Display settings" hidden>
+          <button class="btn bv-md" type="button" data-theme-toggle>{% icon "sun", "i-sun" %}{% icon "moon", "i-moon" %}<span data-lbl>Daylight theme</span></button>
+          <button class="btn bv-md" type="button" data-motion-toggle>{% icon "pause", "i-pause" %}{% icon "play", "i-play" %}<span data-lbl>Stop motion</span></button>
+        </div>
+      </div>
     </div>
   </div>
 </header>

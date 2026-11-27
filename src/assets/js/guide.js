@@ -35,7 +35,7 @@
   // The Control room's storefront (room.js): a scene of its own, like the hero. He's handed in on its pavement.
   var shopEl = doc.querySelector('[data-shop]'), shopCrew = shopEl && shopEl.querySelector('.shop-crew');
   if (homeEl && homeEl.hasAttribute('data-crew-stay')) return;            // a page that keeps him in its band (none since 2026-11-24)
-  var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduced = document.documentElement.classList.contains('still');   // the shared motion flag (layouts/base.njk)
   var mqPhone = matchMedia('(max-width: 760px)');
 
   var IDLE = ['We fix things. That’s the whole job.', 'The first call’s free, by the way.', 'Got something that needs fixing? That’s the Contact button.'];

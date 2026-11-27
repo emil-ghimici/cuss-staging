@@ -7,6 +7,7 @@
 <meta name="description" content="{{ description }}">
 {#- The bakery demos are labelled demos of a fictional business: never indexed, never in the sitemap (noindex: true). #}
 <meta name="robots" content="noindex">
+<meta name="tdm-reservation" content="1">
 {%- set pageUrl = page.url | absUrl(env.url + '/') %}
 <meta name="theme-color" content="{{ '#fbf6ec' if demo == 'site' else '#0b0f14' }}">
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
@@ -21,7 +22,8 @@
 <meta property="og:image:alt" content="{{ ogTitle or title }}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<script>(function(d){d.classList.add('js');try{var t=localStorage.getItem('cuss-theme');if(t==='light'||t==='dark')d.setAttribute('data-theme',t)}catch(e){}})(document.documentElement)</script>
+{#- Same theme + motion flag as base.njk (the demos have no animation; the flag only makes the roster's scroll instant). #}
+<script>(function(d){d.classList.add('js');var m,r=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;try{var t=localStorage.getItem('cuss-theme');if(t==='light'||t==='dark')d.setAttribute('data-theme',t);m=localStorage.getItem('cuss-motion')}catch(e){}if(m==='still'||(m!=='play'&&r))d.classList.add('still');if(r&&m!=='play'&&m!=='still')d.classList.add('still-os')})(document.documentElement)</script>
 <style>{% inlineDemoCss css %}</style>
 </head>
 <body class="bk bk-{{ demo }}">

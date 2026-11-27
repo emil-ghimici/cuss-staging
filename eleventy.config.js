@@ -7,6 +7,12 @@ import { compose } from './src/_lib/compose.js';
 import { junk, junkSky } from './src/_lib/junk.js';
 import chips from './src/_data/chips.js';
 import { writeOgImages, ogSlug } from './src/_lib/og.js';
+import { checkMotionGuard } from './src/_lib/motion-guard.js';
+import { transformSync } from 'esbuild';
+
+// Served JavaScript is minified and loses its comments (2026-11-27): visitors get compact code, the source keeps its
+// explanations. Top-level names of these classic scripts are kept (esbuild's transform doesn't rename them).
+const minifyJs = (code) => transformSync(code, { loader: 'js', minify: true, legalComments: 'none' }).code;
 
 const FONTS = {
   'node_modules/@fontsource/chakra-petch/files/chakra-petch-latin-600-normal.woff2': 'assets/fonts/chakra-petch-latin-600-normal.woff2',
@@ -50,7 +56,7 @@ export default function (cfg) {
   });
   cfg.addFilter('money', (n, dec = 2) => Number(n).toLocaleString('en-IE', { minimumFractionDigits: dec, maximumFractionDigits: dec }));
   // A file's text, for a script a page must run before its first paint (the roster demo draws its week with it)
-  cfg.addShortcode('inlineFile', (p) => fs.readFileSync(p, 'utf8').replace(/<\/script/gi, '<\\/script'));
+  cfg.addShortcode('inlineFile', (p) => minifyJs(fs.readFileSync(p, 'utf8')).replace(/<\/script/gi, '<\\/script'));
   cfg.addFilter('f2', (n) => Number(n).toFixed(2));
   // Page data as JSON for a script tag (a demo page's script reads its fictional data from it)
   cfg.addFilter('json', (v) => JSON.stringify(v).replace(/</g, '\\u003c'));
@@ -67,9 +73,18 @@ export default function (cfg) {
   // Absolute URL on the site's own address (keeps the staging path prefix).
   cfg.addFilter('absUrl', (path, base) => new URL(String(path).replace(/^\//, ''), base).href);
 
+  // Build check: motion follows the one shared flag (src/_lib/motion-guard.js, design README rule 9)
+  cfg.on('eleventy.before', () => checkMotionGuard());
+
   // Open Graph images: one per page, rendered after the build from each page's og:title (src/_lib/og.js)
   cfg.addFilter('ogSlug', ogSlug);
   cfg.on('eleventy.after', async ({ dir, results }) => {
+    // Minify the copied scripts in place (a build writes them; the dev server serves the source as it is)
+    const jsDir = `${dir.output}/assets/js`;
+    if (fs.existsSync(jsDir)) for (const f of fs.readdirSync(jsDir).filter((n) => n.endsWith('.js'))) {
+      const p = `${jsDir}/${f}`;
+      fs.writeFileSync(p, minifyJs(fs.readFileSync(p, 'utf8')));
+    }
     // Build check: every email link opens in a new tab (the transform above); fails the build naming the page
     const bad = results.filter((r) => r.outputPath && r.outputPath.endsWith('.html'))
       .flatMap((r) => (r.content.match(/<a\b[^>]*href="mailto:[^>]*>/g) || []).filter((a) => !/target="_blank"/.test(a) || !/rel="noopener"/.test(a)).map((a) => r.outputPath + ': ' + a.slice(0, 80)));

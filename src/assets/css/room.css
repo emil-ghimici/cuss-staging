@@ -70,7 +70,7 @@
 
 /* The roller shutter: steel slats over a dark back; welding light leaks through the gaps (late.css) */
 .shutter{position:absolute;inset:0;z-index:2;transform:translateY(-101%);will-change:transform}
-@media (prefers-reduced-motion: no-preference){html.js .shop .shutter{transform:none}}
+html.js:not(.still) .shop .shutter{transform:none}
 .shutter .leak{position:absolute;inset:0;background:var(--shutter-back)}
 .shutter .slats{position:absolute;inset:0;background:radial-gradient(circle at 22% 64%,rgba(150,80,40,.3),transparent 4%),radial-gradient(circle at 71% 30%,rgba(150,80,40,.25),transparent 3%),
   repeating-linear-gradient(to bottom,var(--shutter) 0 calc(19 * var(--u)),var(--shutter-edge) calc(19 * var(--u)) calc(20 * var(--u)),transparent calc(20 * var(--u)) calc(23 * var(--u)));border-bottom:calc(12 * var(--u)) solid var(--shutter-edge)}
@@ -110,4 +110,4 @@ html.js .shop .acts[hidden]{display:grid;visibility:hidden}
 /* On a service page it sits on the page background like Home's (one background, 2026-11-24): no panel of its own */
 .shop.mini{background:none;padding:0;border:0}
 .shop.mini .room-tag{display:block;margin-bottom:var(--space-4)}
-@media (prefers-reduced-motion: reduce){.shop *,.shop *::before,.shop *::after{animation:none!important;transition:none!important}}
+html.still .shop *,html.still .shop *::before,html.still .shop *::after{animation:none!important;transition:none!important}

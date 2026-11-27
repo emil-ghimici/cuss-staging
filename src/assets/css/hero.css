@@ -6,6 +6,9 @@
 .hero-in{display:grid;grid-template-columns:6fr 7fr;gap:var(--space-6);align-items:center;min-height:720px;padding-top:var(--space-7);padding-bottom:var(--space-7)}
 .hero-copy{position:relative;z-index:2;align-self:start;padding-top:var(--space-5)}
 .hero-copy .note{font-size:16px;margin:0;color:var(--ink-muted)}
+.motion-note{display:none;gap:var(--space-2);margin-top:var(--space-4);max-width:560px}
+html.still-os .motion-note{display:grid}
+.motion-note p{margin:0;font-size:16px;color:var(--ink-muted)}
 
 /* The scene is one picture: everything inside is measured in --u, 1/640 of the scene's width,
    so the street, the TV and the crew keep their proportions and places at any width. */
@@ -52,8 +55,8 @@
 }
 .scene.paused .flick,.scene.paused .spark.on{animation-play-state:paused}
 /* Desktop: the crew stays out of sight until his script brings him in (the still pose stays for reduced motion) */
-@media (min-width: 761px) and (prefers-reduced-motion: no-preference){
-  html.js .scene .crew:not(.live){visibility:hidden}
+@media (min-width: 761px){
+  html.js:not(.still) .scene .crew:not(.live){visibility:hidden}
 }
 @media (min-width: 761px) and (max-width: 1060px){.hero .actions{grid-template-columns:1fr}}
 
@@ -81,4 +84,4 @@
 @keyframes ripple{0%,34%{opacity:0;transform:scale(.3)}36%{opacity:.9;transform:scale(.4)}70%,100%{opacity:0;transform:scale(1.1)}}
 .scene.paused .drop,.scene.paused .tv .bucket::after,.scene.paused .lamp *{animation-play-state:paused}
 @media (max-width: 760px){.scene{--jx:415;--fall:74}}
-@media (prefers-reduced-motion: reduce){.scene .drop,.scene .tv .bucket::after{animation:none!important;opacity:0}}
+html.still .scene .drop,html.still .scene .tv .bucket::after{animation:none!important;opacity:0}

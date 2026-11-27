@@ -50,6 +50,9 @@ html.js .no-js{display:none!important}
 
 /* Theme switch icon: the sun offers Daylight, the moon offers the night city */
 .i-moon{display:none}
+.i-play{display:none}
+html.still .i-pause{display:none}
+html.still .i-play{display:block}
 :root[data-theme="light"] .i-sun{display:none}
 :root[data-theme="light"] .i-moon{display:block}
 @media (prefers-color-scheme: light){
@@ -65,6 +68,9 @@ html.js .no-js{display:none!important}
 }
 
 /* Reduced motion: UI changes are instant; world pieces show their still frames (world.css) */
+/* Motion off (rule 9): html.still comes from the head script (device setting, overridden by the visitor's switch).
+   Without JavaScript there is no switch, so the device setting applies directly; the only CSS reader of the media query. */
+html.still *,html.still *::before,html.still *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 @media (prefers-reduced-motion: reduce){
-  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  html:not(.js) *,html:not(.js) *::before,html:not(.js) *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }

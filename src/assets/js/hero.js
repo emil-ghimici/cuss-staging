@@ -17,7 +17,7 @@
   var crewEl = scene.querySelector('.crew'), dial = tv.querySelector('.dial.d1');
   var tube = scene.querySelector('[data-tube]'), spark = scene.querySelector('[data-spark]'), sign = scene.querySelector('[data-sign]');
   var lamp = scene.querySelector('[data-lamp]'), joint = scene.querySelector('[data-joint]'), drop = scene.querySelector('.drop');
-  var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduced = document.documentElement.classList.contains('still');   // the shared motion flag (layouts/base.njk)
 
   // What the crew says when you hover over him (tap on phones), by what he's doing.
   // Approved 2026-11-17. Plain, warm, a bit dry; no doom.

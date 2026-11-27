@@ -45,7 +45,7 @@
     b.style.setProperty('--tail', (cx - x) + 'px');
     }
   };
-  var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduced = document.documentElement.classList.contains('still');   // the shared motion flag (layouts/base.njk)
   function $(s, c) { return (c || doc).querySelector(s); }
   function $$(s, c) { return Array.prototype.slice.call((c || doc).querySelectorAll(s)); }
 
@@ -58,7 +58,9 @@
   function syncThemeButtons() {
     var light = isLight();
     $$('[data-theme-toggle]').forEach(function (b) {
-      b.setAttribute('aria-pressed', String(light));
+      var lbl = $('[data-lbl]', b);
+      if (lbl) { lbl.textContent = light ? 'Night theme' : 'Daylight theme'; return; }   // the gear panel: the label names the tap
+      b.setAttribute('aria-pressed', String(light));                                       // the demos' icon button
       b.title = light ? 'Night theme' : 'Daylight theme';
     });
     var meta = $('meta[name="theme-color"]');
@@ -75,6 +77,29 @@
   });
   if (mqLight && mqLight.addEventListener) mqLight.addEventListener('change', syncThemeButtons);
   syncThemeButtons();
+
+  /* ---------- Motion: the device setting by default, overridden by the header switch or the hero's "Play animation"
+     (kept in localStorage as cuss-motion). Every scene reads the flag once when it starts, so a change reloads the page
+     where it is (the browser keeps the scroll position; a demo form with typed content asks first through its own guard). */
+  function setMotion(v) {
+    try { localStorage.setItem('cuss-motion', v); } catch (e) {}
+    location.reload();
+  }
+  $$('[data-motion-toggle]').forEach(function (b) {
+    var lbl = $('[data-lbl]', b);
+    if (lbl) lbl.textContent = reduced ? 'Play motion' : 'Stop motion';
+    b.addEventListener('click', function () { setMotion(reduced ? 'play' : 'still'); });
+  });
+  $$('[data-motion-play]').forEach(function (b) { b.addEventListener('click', function () { setMotion('play'); }); });
+
+  /* ---------- Settings gear: the panel opens underneath; a second tap, a tap elsewhere or Esc closes it ---------- */
+  $$('[data-settings]').forEach(function (g) {
+    var panel = doc.getElementById(g.getAttribute('aria-controls'));
+    function set(open) { panel.hidden = !open; g.setAttribute('aria-expanded', String(open)); }
+    g.addEventListener('click', function () { set(panel.hidden); });
+    doc.addEventListener('click', function (e) { if (!panel.hidden && !g.contains(e.target) && !panel.contains(e.target)) set(false); });
+    doc.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) { set(false); g.focus(); } });
+  });
 
   /* ---------- Neon signs ignite once when they come into view ---------- */
   var io = 'IntersectionObserver' in window && !reduced && new IntersectionObserver(function (es) {

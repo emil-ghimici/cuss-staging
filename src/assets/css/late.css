@@ -72,7 +72,7 @@
 @keyframes gtread{25%,75%{transform:rotate(-10deg)}50%{transform:rotate(5deg)}}
 .g-crew.typing .arm{animation:gtype .6s steps(4)}
 @keyframes gtype{0%,50%{transform:rotate(-30deg)}25%,75%{transform:rotate(-45deg)}}
-@media (prefers-reduced-motion: reduce){.g-crew svg,.g-crew .arm{animation:none!important}.g-crew .eye,.g-crew .tread{transition:none}}
+html.still .g-crew svg,html.still .g-crew .arm{animation:none!important}html.still .g-crew .eye,html.still .g-crew .tread{transition:none}
 /* His bubble rides with him, beside his head */
 .g-bubble{position:absolute;top:0;right:calc(100% + 10px);left:auto;max-width:240px;width:max-content;transform:none}
 .g-bubble.on{transform:none}
@@ -165,7 +165,7 @@
   .shop .crew{width:54px;height:72px}
   .shop-pic .reach-arm,.shop-pic .reach-hand{--u:.643px}
 }
-@media (prefers-reduced-motion: reduce){.shop *,.shop *::before,.shop *::after{animation:none!important;transition:none!important}}
+html.still .shop *,html.still .shop *::before,html.still .shop *::after{animation:none!important;transition:none!important}
 /* The sign's left hanger gives when CREW nudges it: it snaps and dangles; fixed, it hangs straight again */
 .hanger.l{transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
 .hanger.l.snap{transform:rotate(16deg) scaleY(.55)}
@@ -187,17 +187,15 @@
 .junk.fixed .j-wheel{transform:rotate(180deg)}
 .junk.fixed .j-hookr{opacity:.6}
 .junk.fixed .j-bulb{fill:var(--amber);filter:drop-shadow(0 0 5px var(--glow-amber))}
-@media (prefers-reduced-motion: no-preference){
-  .junk.live .j-flk{animation:jflk 6s steps(1) infinite}
-  .junk.live .j-flk:nth-of-type(3n){animation-delay:-2.3s}
-  .junk.live:not(.fixed) .j-spk{animation:jspk .8s steps(2) infinite}
-  .junk.live:not(.fixed) .j-flap{animation:jflap 1.6s ease-in-out infinite alternate}
-  .junk.live:not(.fixed) .j-sway{animation:jsway 2.4s ease-in-out infinite alternate}
-  .junk.live:not(.fixed) .j-steam circle{animation:jsteam 1.8s ease-out infinite}
-  .junk.live:not(.fixed) .j-steam circle:nth-child(2){animation-delay:-.6s}
-  .junk.live:not(.fixed) .j-steam circle:nth-child(3){animation-delay:-1.2s}
-  .junk.live.fixed .j-blades{animation:jspin .9s linear infinite}
-}
+html:not(.still) .junk.live .j-flk{animation:jflk 6s steps(1) infinite}
+html:not(.still) .junk.live .j-flk:nth-of-type(3n){animation-delay:-2.3s}
+html:not(.still) .junk.live:not(.fixed) .j-spk{animation:jspk .8s steps(2) infinite}
+html:not(.still) .junk.live:not(.fixed) .j-flap{animation:jflap 1.6s ease-in-out infinite alternate}
+html:not(.still) .junk.live:not(.fixed) .j-sway{animation:jsway 2.4s ease-in-out infinite alternate}
+html:not(.still) .junk.live:not(.fixed) .j-steam circle{animation:jsteam 1.8s ease-out infinite}
+html:not(.still) .junk.live:not(.fixed) .j-steam circle:nth-child(2){animation-delay:-.6s}
+html:not(.still) .junk.live:not(.fixed) .j-steam circle:nth-child(3){animation-delay:-1.2s}
+html:not(.still) .junk.live.fixed .j-blades{animation:jspin .9s linear infinite}
 @keyframes jflk{0%,100%{opacity:1}61%{opacity:.2}62%{opacity:1}64%{opacity:.3}65%{opacity:1}}
 @keyframes jspk{50%{opacity:0}}
 @keyframes jflap{from{transform:rotate(60deg)}to{transform:rotate(74deg)}}
