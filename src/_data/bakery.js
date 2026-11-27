@@ -2,9 +2,10 @@
 // (design README section 3; demo decisions of 2026-11-18/19). Everything here is made up: no real town, street,
 // phone, person or business. First names only for staff; customers are generic and descriptive.
 // Figures agree with the Control room: order #1042 from the email, Café on Main St, 40 sourdough + 24 scones at
-// trade prices = €186.00, invoice INV-0142, Van 2 Thursday 07:30, paid +€186.00; this week's sales €4,280 (▲ 6%),
-// 37 orders, overdue €0; flour 11 bags left; an unmatched +€410.00 (INV-0139, Hotel on the Square).
-// The dashboard and the roster are fixed at Thursday 10:30 of "this week"; the website runs on the real clock.
+// trade prices = €186.00, invoice INV-0142, Van 2 Thursday 07:30, paid +€186.00; this week's sales €4,280 (▲ 8% on
+// last week to Thursday 10:30), 37 orders, overdue €0; flour 11 bags left; an unmatched +€410.00 (INV-0139).
+// The dashboard and the roster are fixed at Thursday 26 November 2026, 10:30 (scripts/shots.mjs uses the same moment);
+// the website runs on the real clock.
 
 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -91,11 +92,16 @@ const worked = {
 
 // ---- Dashboard figures (Thursday 10:30) ----
 // Sales by day: shop + wholesale; Thursday so far (includes #1042's €186.00). Mon–Thu = €4,280.
-// Last week, the same days = €4,038 (so ▲ 6%), and its Fri–Sun for the thin line.
+// lastWeek: last week's full days, for the chart's thin line. The tile compares like for like (2026-11-27): last week
+// up to the same moment, Monday to Wednesday plus last Thursday to 10:30 (€880) = €3,960, so ▲ 8%.
 const sales = {
   thisWeek: [[720, 380], [690, 350], [740, 420], [520, 460], null, null, null],
   lastWeek: [1010, 990, 1080, 958, 1240, 1420, 610],
+  lastThuToNow: 880,
 };
+sales.soFar = sales.thisWeek.reduce((s, d) => s + (d ? d[0] + d[1] : 0), 0);
+sales.lastToNow = sales.lastWeek.slice(0, 3).reduce((a, b) => a + b, 0) + sales.lastThuToNow;
+sales.pct = Math.round((sales.soFar / sales.lastToNow - 1) * 100);
 
 const orders = [
   { n: 1041, who: 'School canteen', what: '30 brown soda · 60 scones', when: 'Thu', state: 'out', src: 'by phone' },
@@ -109,17 +115,28 @@ const orders = [
   { n: 1039, who: 'Corner Shop', what: '12 sourdough · 12 brown soda', when: 'Wed', state: 'delivered', src: 'by phone', note: 'Van 2 · Wed 07:20' },
 ];
 const ordersWeek = 37; // this week's wholesale orders, all states
+// Worked out from the orders (2026-11-27), never typed: still to deliver, delivered this week, and the delivered ones
+// earlier in the week that the fold doesn't list.
+const ordersOpen = orders.filter((o) => o.state !== 'delivered').length;
+const deliveredWeek = ordersWeek - ordersOpen;
+const deliveredEarlier = deliveredWeek - orders.filter((o) => o.state === 'delivered').length;
 
+// The demo's day as a date, so due dates and their weekdays can never disagree (2026-11-27: the old labels carried
+// 2025's weekdays). One formatter builds every label: "today", or "Fri 27 Nov".
+const TODAY = '2026-11-26';
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const dayLabel = (iso) => { if (iso === TODAY) return 'today'; const d = new Date(iso + 'T12:00:00Z'); return WD[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MON[d.getUTCMonth()]; };
 const invoices = [
-  { n: 'INV-0135', who: 'Golf Club', amount: 148.50, due: 'Wed 26 Nov' },
-  { n: 'INV-0137', who: 'Corner Shop', amount: 96.00, due: 'Thu 27 Nov' },
-  { n: 'INV-0138', who: 'Farmers’ market stall', amount: 72.00, due: 'Fri 28 Nov' },
-  { n: 'INV-0139', who: 'Hotel on the Square', amount: 410.00, due: 'Fri 28 Nov' },
-  { n: 'INV-0140', who: 'School canteen', amount: 212.40, due: 'Mon 1 Dec' },
-  { n: 'INV-0141', who: 'Garage forecourt', amount: 88.20, due: 'Tue 2 Dec' },
-  { n: 'INV-0143', who: 'Corner Shop', amount: 104.90, due: 'Wed 3 Dec' },
-  { n: 'INV-0144', who: 'Golf Club', amount: 108.00, due: 'Thu 4 Dec' },
-];
+  { n: 'INV-0135', who: 'Golf Club', amount: 148.50, dueIso: '2026-11-26' },
+  { n: 'INV-0137', who: 'Corner Shop', amount: 96.00, dueIso: '2026-11-27' },
+  { n: 'INV-0138', who: 'Farmers’ market stall', amount: 72.00, dueIso: '2026-11-27' },
+  { n: 'INV-0139', who: 'Hotel on the Square', amount: 410.00, dueIso: '2026-11-27' },
+  { n: 'INV-0140', who: 'School canteen', amount: 212.40, dueIso: '2026-11-30' },
+  { n: 'INV-0141', who: 'Garage forecourt', amount: 88.20, dueIso: '2026-12-01' },
+  { n: 'INV-0143', who: 'Corner Shop', amount: 104.90, dueIso: '2026-12-02' },
+  { n: 'INV-0144', who: 'Golf Club', amount: 108.00, dueIso: '2026-12-03' },
+].map((i) => ({ ...i, due: dayLabel(i.dueIso), overdue: i.dueIso < TODAY }));
 const paidThisWeek = [
   { n: 'INV-0142', who: 'Café on Main St', amount: 186.00, how: 'matched automatically' },
   { n: 'INV-0136', who: 'School canteen', amount: 198.60, how: 'matched automatically' },
@@ -128,7 +145,7 @@ const paidThisWeek = [
 
 // Wages so far this week (Mon to Thursday 10:30), from what was really worked: paid time = finish − start − break;
 // a shift still running counts to 10:30. The dashboard's Wages tile and the roster's line both show this figure.
-const NOW = { day: 3, min: 10 * 60 + 30 };
+const NOW = { day: 3, min: 10 * 60 + 30, date: TODAY };
 const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 const wages = (() => {
   let total = 0, hours = 0;
@@ -137,9 +154,13 @@ const wages = (() => {
     const mins = (end ? toMin(end) : NOW.min) - toMin(start) - brk;
     hours += mins / 60; total += (mins / 60) * p.rate;
   }
-  const salesSoFar = sales.thisWeek.reduce((s, d) => s + (d ? d[0] + d[1] : 0), 0);
-  return { total: Math.round(total), hours: Math.round(hours * 10) / 10, pct: Math.round((total / salesSoFar) * 100), sales: salesSoFar };
+  return { total: Math.round(total), hours: Math.round(hours * 10) / 10, pct: Math.round((total / sales.soFar) * 100), sales: sales.soFar };
 })();
 
-export default { name: 'Shutter & Crumb', now: NOW, wages, closures, days, dayNames, hours, menu, trade, staff, kinds, shifts, worked, sales, orders, ordersWeek, invoices, paidThisWeek, nextOrder: 1048 };
+// The dashboard's "On today" (2026-11-27): people already in first, then whoever starts later, each by start time.
+const onToday = shifts.filter((s) => s.day === NOW.day && s.who)
+  .map((s) => ({ s, inNow: !!worked[s.id], t: toMin(kinds[s.kind].start) }))
+  .sort((a, b) => (b.inNow - a.inNow) || (a.t - b.t)).map((x) => x.s);
+
+export default { name: 'Shutter & Crumb', now: NOW, onToday, wages, closures, days, dayNames, hours, menu, trade, staff, kinds, shifts, worked, sales, orders, ordersWeek, ordersOpen, deliveredWeek, deliveredEarlier, invoices, paidThisWeek, nextOrder: 1048 };
 // nextOrder: the website demo's first "Order #… received" (after the dashboard's #1043–#1047, so the demos agree)

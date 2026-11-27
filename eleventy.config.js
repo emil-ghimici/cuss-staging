@@ -9,6 +9,8 @@ import chips from './src/_data/chips.js';
 import { writeOgImages, ogSlug } from './src/_lib/og.js';
 import { checkMotionGuard } from './src/_lib/motion-guard.js';
 import { checkNameGuard } from './src/_lib/name-guard.js';
+import { checkCountGuard } from './src/_lib/count-guard.js';
+import { count } from './src/_lib/count.js';
 import { transformSync } from 'esbuild';
 
 // Served JavaScript is minified and loses its comments (2026-11-27): visitors get compact code, the source keeps its
@@ -59,6 +61,8 @@ export default function (cfg) {
   // A file's text, for a script a page must run before its first paint (the roster demo draws its week with it)
   cfg.addShortcode('inlineFile', (p) => minifyJs(fs.readFileSync(p, 'utf8')).replace(/<\/script/gi, '<\\/script'));
   cfg.addFilter('f2', (n) => Number(n).toFixed(2));
+  // Counts: "1 invoice", "8 invoices" with the demos' one count helper (read from demo.js, src/_lib/count.js)
+  cfg.addFilter('count', (n, one, many) => count(n, one, many));
   // Page data as JSON for a script tag (a demo page's script reads its fictional data from it)
   cfg.addFilter('json', (v) => JSON.stringify(v).replace(/</g, '\\u003c'));
   cfg.addShortcode('icon', icon);
@@ -78,6 +82,8 @@ export default function (cfg) {
   cfg.on('eleventy.before', () => checkMotionGuard());
   // Build check: no function shares a name with another declaration in its scope (src/_lib/name-guard.js)
   cfg.on('eleventy.before', () => checkNameGuard());
+  // Build check: no count built by hand in the demos; every count goes through the one helper (src/_lib/count-guard.js)
+  cfg.on('eleventy.before', () => checkCountGuard());
 
   // Open Graph images: one per page, rendered after the build from each page's og:title (src/_lib/og.js)
   cfg.addFilter('ogSlug', ogSlug);

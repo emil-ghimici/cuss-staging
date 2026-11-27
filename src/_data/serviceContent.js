@@ -137,7 +137,7 @@ export default {
     // Before/after screens: illustrative only (labelled Example), draft wording for review
     screens: {
       before: { label: 'Before', text: '<span class="dim">SALES_final(2).xlsx</span>\nTab 1   Tab 2   Tab 2 (old)\nMon   =SUM(B2:B9) <span class="amb">#REF!</span>\nTue   ask Mary\n<span class="amb">updated: 3 weeks ago</span>' },
-      after: { label: 'After', text: '<span class="dim">THIS WEEK</span>\nSales    €4,280  <span class="hz">▲ 6%</span>\nOrders   37\nOverdue  €0\n<span class="dim">updated just now</span>' },
+      after: { label: 'After', text: '<span class="dim">THIS WEEK</span>\nSales    €4,280  <span class="hz">▲ 8%</span>\nOrders   37\nOverdue  €0\n<span class="dim">updated just now</span>' },
     },
     related: ['automation', 'custom-software', 'ai-data'],
   },

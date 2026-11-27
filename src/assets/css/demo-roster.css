@@ -32,10 +32,14 @@
 .u18{display:inline-block;font-size:12px;font-weight:700;border:1.5px solid currentColor;border-radius:6px;padding:0 5px;color:var(--bk-crust);vertical-align:1px}
 .cell .pill{font-size:13px;min-height:24px}
 .days7,.dayview{display:none}
+/* Phones and tablets held upright (2026-11-27): the days in two rows, Mon–Thu and Fri–Sun, each split evenly, 48 px
+   or more with 8 px between; text in the shifts at 14 px or more. */
 @media (max-width:820px){
   .wk{display:none}
-  .days7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:0 0 var(--space-3)}
-  .dbtn{padding:4px 0;min-width:0;font-size:15px}
+  .days7{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;margin:0 0 var(--space-3)}
+  .dbtn{grid-column:span 3;min-height:48px;padding:4px 0;min-width:0;font-size:16px}
+  .dbtn:nth-child(n+5){grid-column:span 4}
+  .c-time,.c-sub,.c-sun,.c-chg,.cell .pill,.u18{font-size:14px}
   .dbtn.past{color:var(--bk-muted)}
   .dbtn[aria-pressed="true"]{background:var(--bk-btn)!important;color:var(--bk-on-btn)!important}
   .dayview{display:grid;gap:10px}
@@ -59,6 +63,17 @@
 .rs.red{border-color:var(--bk-red)}
 .rs.amb{border-color:var(--bk-amb-edge)}
 .rs .lnk{min-height:32px}
+/* On phones "Why?" is a real button, 48 px tall (2026-11-27); on desktop it stays a link. */
+@media (max-width:820px){
+  .bk-roster .lnk{display:inline-flex;align-items:center;min-height:48px;min-width:64px;justify-content:center;padding:0 14px;margin:4px 0;border:2px solid var(--bk-edge);border-radius:10px;background:var(--bk-surface);color:var(--bk-ink);text-decoration:none;font-weight:700}
+  .rs{display:flex;flex-wrap:wrap;align-items:center;gap:0 10px}
+  .rs .why{flex-basis:100%}
+}
+/* Phones: an opened shift is a page of its own, with "‹ Day" on top (2026-11-27) */
+.shiftpage>:not([data-panel]){display:none}
+.panel .back{margin:0 0 var(--space-3);min-height:48px}
+.undo-chg{margin:var(--space-2) 0 0}
+.chl li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px}
 .why{margin:6px 0 4px;padding:10px 12px;background:var(--surface-1);color:var(--ink);border:1px solid var(--divider);border-left:4px solid var(--signal);border-radius:var(--bevel-fallback);font-size:15px}
 .why p{margin:0 0 4px}
 .why .cite{font-size:14px;color:var(--ink-muted);margin:0}
@@ -74,7 +89,14 @@
 .hrs th,.hrs td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--bk-line)}
 .hrs thead th{font-size:14px;color:var(--bk-muted)}
 .hrs tbody th{font-weight:700}
-@media (max-width:560px){.hrs thead th:nth-child(4),.hrs td:nth-child(4){display:none}.hrs .muted{display:block;font-weight:400}}
+/* Phones keep all four columns (the 4-month average is what the 48-hour limit is measured on); the team goes under the
+   name without its dot (2026-11-27). */
+.hrs .sm{display:none}
+@media (max-width:560px){
+  .hrs th,.hrs td{padding:8px 4px}
+  .hrs .lg,.hrs .sep{display:none}.hrs .sm{display:inline}
+  .hrs .team{display:block;font-weight:400}
+}
 .wages,.rec{margin:0 0 var(--space-2)}
 .row1 .b{width:100%;max-width:420px;margin-top:var(--space-3)}
 .pub .main{width:100%}
@@ -93,12 +115,19 @@
 .req{padding:14px;border:2px solid var(--bk-amb-edge);background:var(--bk-amb-bg);border-radius:14px}
 .req-t{font-weight:700;font-size:18px;margin:0 0 4px}
 .req-done{font-weight:700;color:var(--bk-ok);margin:var(--space-3) 0}
+/* My shifts (2026-11-27): every row has the same three lines: the day; the time · the role; the state. (Four columns
+   were tried for the wider phone frame on desktop: at its 402 px the state got 60 px and broke into three lines.)
+   A value with its unit or a time range never breaks. */
 .myl{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.my{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;padding:10px 12px;border:1px solid var(--bk-line);border-radius:10px;background:var(--bk-surface)}
-.my>b{min-width:96px}
-.my-t{font-weight:700}
+.my{display:grid;grid-template-columns:auto 1fr;gap:2px 6px;align-items:baseline;padding:10px 12px;border:1px solid var(--bk-line);border-radius:10px;background:var(--bk-surface)}
+.my>b,.my-s{grid-column:1/-1}
+.my-r::before{content:"· "}
+.my-t,.nw{font-weight:700;white-space:nowrap}
+.nw{font-weight:inherit}
 .my.none{background:transparent}
 .myh{margin:var(--space-3) 0}
+.phone fieldset.fld{margin-top:var(--space-4)}
+.phone .hint{font-size:15px;margin:var(--space-2) 0 0}
 .pickday{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px}
 .pickday .b[aria-pressed="true"],.phone .row2 .b[aria-pressed="true"]{background:var(--bk-btn);color:var(--bk-on-btn)}
 .phone .cnote{margin:var(--space-2) 0}

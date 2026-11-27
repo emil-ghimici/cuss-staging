@@ -15,10 +15,20 @@
 .r p{margin:0}
 .r-t{font-weight:700}
 .r .cnote{grid-column:1/-1;margin:0}
+/* A narrow row (a phone, or a column of the two-column layout) puts its pill or button under the text (2026-11-27):
+   buttons full width, pills at the left. */
+.rows{container-type:inline-size}
+@container (max-width:479px){
+  .r{grid-template-columns:1fr}
+  .r>.pill{justify-self:start}
+}
 .done-t{font-weight:700;color:var(--bk-ok)}
 .undo{font-size:15px}
+/* Paper: the light colours (demo.css keeps the night ones for screens), buttons and notes left out; the legend's
+   swatches and the work count keep their colour even with the browser's background graphics off. */
 @media print{
   .cbar,.b,.cnote,.fold>summary::after{display:none!important}
   .fold>*{display:block!important}
   body.bk{background:#fff;color:#000}
+  .legend i,.wcount,.pill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }

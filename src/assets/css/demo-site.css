@@ -80,7 +80,9 @@
 .dayb[aria-pressed="true"]{background:var(--bk-btn);color:var(--bk-on-btn)}
 .dayb[aria-disabled="true"]{border-style:dashed;border-color:var(--bk-edge);background:var(--bk-sunk);color:var(--bk-muted);cursor:help}
 .dayb .wd-s{display:none}
-@media (max-width:620px){.dayb .wd-l{display:none}.dayb .wd-s{display:block}.dayb{min-height:56px;font-size:15px}.week7{gap:4px}}
+/* Phones (2026-11-27): seven in a row would be under 48 px wide, so two rows, four then three, split evenly, 8 px apart */
+@media (max-width:620px){.dayb .wd-l{display:none}.dayb .wd-s{display:block}.dayb{min-height:56px;font-size:16px}
+  .week7{grid-template-columns:repeat(12,minmax(0,1fr));gap:8px}.week7>.dayb{grid-column:span 3}.week7>.dayb:nth-child(n+5){grid-column:span 4}}
 .calb{width:100%;margin-top:var(--space-2)}
 .calb[aria-expanded="true"]{background:var(--bk-sunk)}
 .cal{margin-top:var(--space-2);padding:var(--space-3);border:2px solid var(--bk-line);border-radius:12px;background:var(--bk-bg)}

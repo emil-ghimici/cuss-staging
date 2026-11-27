@@ -36,6 +36,7 @@
 @media (max-width:900px){.two{grid-template-columns:1fr}}
 .r-act{min-width:170px;text-align:right}
 .r-act .b{width:100%}
+@container (max-width:479px){.r-act{min-width:0;text-align:left}}
 .fc{font-weight:400}
 .fold{margin:0 0 var(--space-2)}
 .fold[open]>summary{margin-bottom:8px}
@@ -43,8 +44,14 @@
 .ontoday li{display:flex;flex-direction:column;padding:10px 14px;background:var(--bk-surface);border:1px solid var(--bk-line);border-radius:10px}
 .ot-who{font-weight:700}
 .ot-in{color:var(--bk-ok);font-weight:700;font-size:15px}
+.ot-in.later{color:var(--bk-muted)}
 .t-out .row2{max-width:520px}
 .t-out .cnote{max-width:520px}
-.c-narrow,.c-totals{display:none}
-@media (max-width:560px){.c-wide{display:none}.c-narrow{display:block}.c-totals{display:flex;flex-wrap:wrap;gap:4px 14px;margin:8px 0 0;font-size:15px}}
+/* Two drawings of one chart, picked by the chart's own width (2026-11-27): the wide one only where its 13-unit labels
+   draw at 14 px or more (754 px of chart: 700 × 14 / 13); below that the narrow one, drawn for a 300 px chart with
+   14-unit labels, and the day totals as text. */
+.chart{container-type:inline-size}
+.c-wide{display:none}
+.c-totals{display:flex;flex-wrap:wrap;gap:4px 14px;margin:8px 0 0;font-size:15px}
+@container (min-width:754px){.c-wide{display:block}.c-narrow,.c-totals{display:none}}
 .fold>summary .fc{margin-left:auto;margin-right:8px}

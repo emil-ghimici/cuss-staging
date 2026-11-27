@@ -61,7 +61,8 @@
     </div>
     <p class="fineprint">{{ site.promise }}</p>
     {%- if full %}
-    <p class="phone-line">Rather talk? Call <a href="tel:{{ site.phone.tel }}">{{ site.phone.display }}</a>.</p>
+    {#- The number is a real button (48 px, 2026-11-27), still below the email: never the first way to reach us. #}
+    <p class="phone-line">Rather talk? Call <a class="btn btn-hdr bv-md" href="tel:{{ site.phone.tel }}">{{ site.phone.display }}</a></p>
     {%- endif %}
   </div>
 </div>

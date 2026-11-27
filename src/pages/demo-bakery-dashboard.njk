@@ -12,11 +12,13 @@ noindex: true
     Follows the device's theme and the bar's switch. The bakery's own words are drafts for review on the page. #}
 {%- set b = bakery %}
 {%- set unpaidTotal = b.invoices | sum('amount') %}
+{%- set overdueN = (b.invoices | selectattr('overdue') | list).length %}
+{%- set overdueTxt = 'none overdue' if overdueN == 0 else (overdueN | count('overdue', 'overdue')) %}
 <div class="bk-wrap tool">
   <header class="t-head">
     <p class="t-biz">Shutter &amp; Crumb</p>
     <h1>This week at Shutter &amp; Crumb</h1>
-    <p class="muted">Thursday 10:30 · Updated 2 min ago</p>
+    <p class="muted">Thursday 10:30 · Updated just now</p>
   </header>
 
   <section class="t-sec" aria-labelledby="look-h">
@@ -61,20 +63,20 @@ noindex: true
     <div class="tiles">
       <div class="tile">
         <p class="tl">Sales</p>
-        <p class="tv">€4,280 <span class="up">▲ 6%</span></p>
-        <p class="ts">on the same days last week</p>
+        <p class="tv">€{{ b.sales.soFar | money(0) }} <span class="up">{{ '▲' if b.sales.pct >= 0 else '▼' }} {{ b.sales.pct | abs }}%</span></p>
+        <p class="ts">on last week to Thursday 10:30</p>
         <p class="src">From the till and wholesale orders · 10:28</p>
       </div>
       <div class="tile">
         <p class="tl">Wholesale orders</p>
         <p class="tv">{{ b.ordersWeek }}</p>
-        <p class="ts">6 still to deliver</p>
+        <p class="ts">{{ b.ordersOpen }} still to deliver</p>
         <p class="src">From the orders queue · 10:29</p>
       </div>
       <div class="tile">
         <p class="tl">Unpaid</p>
         <p class="tv" data-unpaid>€{{ unpaidTotal | money(0) }}</p>
-        <p class="ts" data-unpaid-n>8 invoices · none overdue</p>
+        <p class="ts" data-unpaid-n>{{ b.invoices.length | count('invoice') }} · {{ overdueTxt }}</p>
         <p class="src">From the accounts · 10:15</p>
       </div>
       <div class="tile">
@@ -88,8 +90,9 @@ noindex: true
 
   <section class="t-sec" aria-labelledby="sales-h">
     <h2 id="sales-h">Sales by day</h2>
-    {#- Two drawings of one chart: wide screens get bar values; phones get their own proportions so every label stays
-        at 14 px or more (no sideways scroll), with the day totals as text underneath. #}
+    {#- Two drawings of one chart, picked by the chart's own width (demo-dash.css): wide charts get bar values; narrower
+        ones get their own proportions, drawn for a 300 px chart, so every label stays at 14 px or more (no sideways
+        scroll), with the day totals as text underneath. #}
     {%- macro chart(bk, cls, VW, H, bw, step, x0, fs, vals) %}
       <svg class="{{ cls }}" viewBox="0 0 {{ VW }} {{ H + 40 }}" role="img" aria-labelledby="sales-h sales-d{{ cls }}">
         <desc id="sales-d{{ cls }}">Shop and wholesale sales for Monday to Thursday this week, with last week’s days as a thin line. Friday to Sunday are still to come.</desc>
@@ -115,7 +118,7 @@ noindex: true
     {%- endmacro %}
     <figure class="chart">
       {{ chart(b, 'c-wide', 700, 240, 56, 92, 46, 13, true) }}
-      {{ chart(b, 'c-narrow', 340, 220, 30, 42, 44, 14, false) }}
+      {{ chart(b, 'c-narrow', 300, 220, 26, 36, 42, 14, false) }}
       <figcaption class="legend"><span><i class="k-shop"></i>Shop</span><span><i class="k-ws"></i>Wholesale</span><span><i class="k-last"></i>Last week</span></figcaption>
       <p class="c-totals">{% for d in b.sales.thisWeek %}{% if d %}<span>{{ b.days[loop.index0] }} €{{ (d[0] + d[1]) | money(0) }}{% if loop.index0 == 3 %} so far{% endif %}</span>{% endif %}{% endfor %}</p>
     </figure>
@@ -135,20 +138,20 @@ noindex: true
         {%- endif %}{% endfor %}
       </ul>
       <details class="fold">
-        <summary>Delivered this week <span class="muted fc">31</span></summary>
+        <summary>Delivered this week <span class="muted fc">{{ b.deliveredWeek }}</span></summary>
         <ul class="plain rows">
           {%- for o in b.orders %}{% if o.state == 'delivered' %}
           <li class="r"><div><p class="r-t">#{{ o.n }} · {{ o.who }}</p><p class="muted">{{ o.what }} · {{ o.note }}</p><p class="src">{{ o.src | capitalize }}</p></div><span class="pill dim">Delivered</span></li>
           {%- endif %}{% endfor %}
         </ul>
-        <p class="muted">And 28 earlier this week.</p>
+        <p class="muted">And {{ b.deliveredEarlier }} earlier this week.</p>
       </details>
       <p class="src">From the orders queue · 10:29</p>
     </section>
 
     <section class="t-sec" aria-labelledby="inv-h">
       <h2 id="inv-h">Unpaid invoices</h2>
-      <p class="muted">By due date · none overdue</p>
+      <p class="muted">By due date · {{ overdueTxt }}</p>
       <ul class="plain rows">
         {%- for i in b.invoices %}
         <li class="r" data-inv="{{ i.n }}">
@@ -174,13 +177,13 @@ noindex: true
 
   <section class="t-sec" aria-labelledby="on-h">
     <h2 id="on-h">On today</h2>
+    {#- People already in come first, by start time; then whoever starts later (2026-11-27). Green means "here now". #}
     <ul class="plain ontoday">
-      {%- for s in b.shifts %}{% if s.day == 3 and s.who %}
-      {%- set k = b.kinds[s.kind] %}{% set w = b.worked[s.id] %}
+      {%- for s in b.onToday %}{% set w = b.worked[s.id] %}{% set k = b.kinds[s.kind] %}
       {%- for p in b.staff %}{% if p.id == s.who %}
-      <li><span class="ot-who">{{ p.name }}</span><span class="muted">{{ k.label }} · {{ k.start | replace(r/^0/, "") }}–{{ k.end | replace(r/^0/, "") }}</span><span class="ot-in">{% if w %}In since {{ w[0] | replace(r/^0/, "") }}{% else %}Starts {{ k.start | replace(r/^0/, "") }}{% endif %}</span></li>
+      <li><span class="ot-who">{{ p.name }}</span><span class="muted">{{ k.label }} · {{ k.start | replace(r/^0/, "") }}–{{ k.end | replace(r/^0/, "") }}</span>{% if w %}<span class="ot-in">In since {{ w[0] | replace(r/^0/, "") }}</span>{% else %}<span class="ot-in later">Starts {{ k.start | replace(r/^0/, "") }}</span>{% endif %}</li>
       {%- endif %}{% endfor %}
-      {%- endif %}{% endfor %}
+      {%- endfor %}
     </ul>
     <p class="src">From the roster · 10:30</p>
     <a class="b" href="/work/demo-bakery-roster/">Open the roster</a>

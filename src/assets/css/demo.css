@@ -10,7 +10,8 @@
   --bk-ok:#1d6b3a; --bk-ok-bg:#e3f2e6; --bk-amb:#7a4600; --bk-amb-bg:#fdebc4; --bk-amb-edge:#c98a1a;
   --bk-red:#a1231b; --bk-red-bg:#fbe3df; --bk-focus:#1f5fbf; --bk-hi:#fff3c4;
 }
-@media (prefers-color-scheme:dark){
+/* The night colours are for screens only: paper always gets the light ones (2026-11-27), whatever the theme. */
+@media screen and (prefers-color-scheme:dark){
   :root:not([data-theme="light"]) .bk-dashboard,:root:not([data-theme="light"]) .bk-roster{
     --bk-bg:#121826; --bk-surface:#1a2233; --bk-sunk:#0e1420; --bk-ink:#f2eadb; --bk-muted:#bab3a5;
     --bk-crust:#e8ac74; --bk-btn:#f2eadb; --bk-on-btn:#141b2d; --bk-line:#3a4459; --bk-edge:#6f7a90;
@@ -18,11 +19,13 @@
     --bk-red:#ff8f85; --bk-red-bg:rgba(255,110,100,.14); --bk-focus:#8fb8ff; --bk-hi:rgba(255,214,102,.16);
   }
 }
+@media screen{
 :root[data-theme="dark"] .bk-dashboard,:root[data-theme="dark"] .bk-roster{
   --bk-bg:#121826; --bk-surface:#1a2233; --bk-sunk:#0e1420; --bk-ink:#f2eadb; --bk-muted:#bab3a5;
   --bk-crust:#e8ac74; --bk-btn:#f2eadb; --bk-on-btn:#141b2d; --bk-line:#3a4459; --bk-edge:#6f7a90;
   --bk-ok:#86d6a0; --bk-ok-bg:rgba(134,214,160,.13); --bk-amb:#ffc670; --bk-amb-bg:rgba(255,184,77,.14); --bk-amb-edge:#c98a1a;
   --bk-red:#ff8f85; --bk-red-bg:rgba(255,110,100,.14); --bk-focus:#8fb8ff; --bk-hi:rgba(255,214,102,.16);
+}
 }
 body.bk{background:var(--bk-bg);color:var(--bk-ink)}
 .bk main{display:block}

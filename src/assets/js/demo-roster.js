@@ -25,7 +25,9 @@
   function why(text, cite) { return { text: text, cite: cite }; }
 
   /* ---------- State ---------- */
-  var st = { published: 'Published Monday 09:12', changes: {}, request: null, sick: null, swap: null, corrections: {}, open: null, day: D.now.day, view: 'owner', viewAs: 'niamh', confirmShort: false, saidNo: {} };
+  // changes: shift id → { from: who was on it at the last publish }; log: every change since, newest last, so each can
+  // be undone one step at a time until Publish, the point of no return (2026-11-27).
+  var st = { published: 'Published Monday 09:12', changes: {}, log: [], request: null, sick: null, swap: null, corrections: {}, open: null, day: D.now.day, view: 'owner', viewAs: 'niamh', confirmShort: false, saidNo: {} };
   // Times show as 5:00, not 05:00
   var worked = {}; Object.keys(D.worked).forEach(function (k) { var w = D.worked[k]; worked[k] = [w[0].replace(/^0/, ''), w[1] && w[1].replace(/^0/, ''), w[2]]; });
 
@@ -66,8 +68,9 @@
       if (gap < need) {
         var txt = pr[1] ? p.name + ' finishes ' + DAY[o.day] + ' at ' + o.end + ', so a ' + s.start + ' start leaves ' + fmtH(gap) + '.'
                         : p.name + ' starts ' + DAY[o.day] + ' at ' + o.start + ', so a ' + s.end + ' finish leaves ' + fmtH(gap) + '.';
-        if (p.under18) red.push({ short: 'Under 18: only ' + fmtH(gap) + ' hours’ rest', why: why('Under-18s need 12 hours off in a row between working days, and two days off in every 7, together where possible. ' + txt, CITE.p6) });
-        else red.push({ short: 'Only ' + fmtH(gap) + ' hours’ rest', why: why('Everyone needs 11 hours off in a row in every 24. ' + txt, CITE.s11) });
+        var rest = BK.count(fmtH(gap), 'hour’s rest', 'hours’ rest');
+        if (p.under18) red.push({ short: 'Under 18: only ' + rest, why: why('Under-18s need 12 hours off in a row between working days, and two days off in every 7, together where possible. ' + txt, CITE.p6) });
+        else red.push({ short: 'Only ' + rest, why: why('Everyone needs 11 hours off in a row in every 24. ' + txt, CITE.s11) });
       }
     });
     // 4-month average (s.15): the last 16 weeks' average plus this week
@@ -84,7 +87,7 @@
     // Notice (s.17)
     if (t0(s) - NOW < 24 * 60) amb.push({ short: 'Less than 24 hours’ notice', why: why('Shift times have to be given at least 24 hours ahead, unless the contract fixes them. Less notice is allowed only when something comes up that couldn’t reasonably have been foreseen, like someone off sick.', CITE.s17) });
     // Contract hours (cost)
-    if (weekH > p.contract) amb.push({ short: 'Over contract: ' + fmtH(weekH) + ' of ' + p.contract + ' hours', why: why('Not a legal rule, a cost: this takes ' + p.name + ' to ' + fmtH(weekH) + ' hours against a ' + p.contract + '-hour contract.', null) });
+    if (weekH > p.contract) amb.push({ short: 'Over contract: ' + fmtH(weekH) + ' of ' + BK.count(p.contract, 'hour'), why: why('Not a legal rule, a cost: this takes ' + p.name + ' to ' + BK.count(fmtH(weekH), 'hour') + ' against a ' + p.contract + '-hour contract.', null) });
     return { red: red, amb: amb, ask: notMyDay, hours: weekH, otherTeam: p.team !== s.team };
   }
   function planned(pid) { return mine(pid).reduce(function (a, x) { return a + len(x); }, 0); }
@@ -181,15 +184,18 @@
         else act = '<button class="b fill" type="button" data-put="' + p.id + '">Put ' + esc(p.name) + ' on</button>';
       }
       html += '<li class="pk' + (c.otherTeam ? ' other' : '') + '"><div class="pk-top"><p class="pk-name">' + esc(p.name) + (p.under18 ? ' <span class="u18">Under 18</span>' : '') + '</p>' + pill + '</div>' +
-        '<p class="muted pk-sub">' + esc(p.role) + ' · ' + fmtH(planned(p.id)) + ' of ' + p.contract + ' hours this week</p>' +
+        '<p class="muted pk-sub">' + esc(p.role) + ' · ' + fmtH(planned(p.id)) + ' of ' + BK.count(p.contract, 'hour') + ' this week</p>' + (asked && st.request.prev ? '<p class="muted">' + esc('Answer changed: ' + st.request.prev + ' → ' + (st.request.state === 'waiting' ? 'waiting' : st.request.state)) + '</p>' : '') +
         '<ul class="plain rlist">' + reasonsHtml(c.red, 'red') + reasonsHtml(c.amb, 'amb') + '</ul>' + (act ? '<div class="pk-act">' + act + '</div>' : '') + '</li>';
     });
     return html + '</ul>';
   }
   function renderPanel() {
     var box = $('[data-panel]');
-    if (!st.open) { box.innerHTML = ''; return; }
-    var s = byId[st.open], p = s.who && people[s.who], html = '<section class="panel" aria-labelledby="pan-h"><div class="pan-head"><h2 id="pan-h">' + esc(DAY[s.day] + ' · ' + s.label + ' ' + s.start + '–' + s.end) + '</h2><button class="b" type="button" data-close>Close</button></div>';
+    if (!st.open) { box.innerHTML = ''; $('[data-pane="owner"]').classList.remove('shiftpage'); return; }
+    var s = byId[st.open], p = s.who && people[s.who], pg = phone();
+    $('[data-pane="owner"]').classList.toggle('shiftpage', pg);
+    var html = '<section class="panel' + (pg ? ' page' : '') + '" aria-labelledby="pan-h">' + (pg ? '<button class="b back" type="button" data-back>‹ ' + esc(DAY[s.day]) + '</button>' : '') +
+      '<div class="pan-head"><h2 id="pan-h">' + esc(DAY[s.day] + ' · ' + s.label + ' ' + s.start + '–' + s.end) + '</h2>' + (pg ? '' : '<button class="b" type="button" data-close>Close</button>') + '</div>';
     if (finished(s) && p) {
       var w = worked[s.id], c = st.corrections[s.id];
       html += '<p><b>' + esc(p.name) + '</b> worked ' + esc((c ? c.start : w[0]) + '–' + (c ? c.end : w[1]) + ', break ' + (c ? c.brk : w[2]) + ' min') + '.</p>';
@@ -201,7 +207,7 @@
     } else {
       if (p && s.status !== 'sick') {
         var bk = brk(s, p);
-        html += '<p><b>' + esc(p.name) + '</b> is on. ' + esc(bk.txt) + (bk.why ? ' <button class="lnk" type="button" data-why="pb" aria-expanded="false">Why?</button>' : '') + '</p>' + (bk.why ? '<div class="why" id="pb" hidden>' + whyBody(bk.why) + '</div>' : '');
+        html += '<p><b>' + esc(p.name) + '</b> is on' + (st.changes[s.id] && st.changes[s.id].from && st.changes[s.id].from !== s.who ? ' instead of ' + esc(people[st.changes[s.id].from].name) + ', not published yet' : '') + '. ' + esc(bk.txt) + (bk.why ? ' <button class="lnk" type="button" data-why="pb" aria-expanded="false">Why?</button>' : '') + '</p>' + (bk.why ? '<div class="why" id="pb" hidden>' + whyBody(bk.why) + '</div>' : '') + undoBtn(s.id);
         if (s.day === 6) html += '<p>' + esc(SUNDAY.txt) + ' <button class="lnk" type="button" data-why="ps" aria-expanded="false">Why?</button></p><div class="why" id="ps" hidden>' + whyBody(SUNDAY.why) + '</div>';
         html += '<h3>Who else could take it</h3>';
       } else {
@@ -217,12 +223,33 @@
 
   /* ---------- Hours, changes, publish ---------- */
   function renderHours() {
-    var html = '<table class="hrs"><thead><tr><th scope="col">Name</th><th scope="col">This week</th><th scope="col">Contract</th><th scope="col">4-month average</th></tr></thead><tbody>';
+    var html = '<table class="hrs"><thead><tr><th scope="col">Name</th><th scope="col">This week</th><th scope="col">Contract</th><th scope="col"><span class="lg">4-month average</span><span class="sm">4-month avg</span></th></tr></thead><tbody>';
     D.staff.forEach(function (p) {
       var h = planned(p.id), avg = (p.avg * 16 + h) / 17;
-      html += '<tr><th scope="row">' + esc(p.name) + (p.under18 ? ' <span class="u18">Under 18</span>' : '') + '<span class="muted"> · ' + esc(p.team) + '</span></th><td>' + fmtH(h) + ' h' + (h > p.contract ? ' <span class="pill amb">Over contract</span>' : '') + '</td><td>' + p.contract + ' h</td><td>' + fmtH(avg) + ' h</td></tr>';
+      html += '<tr><th scope="row">' + esc(p.name) + (p.under18 ? ' <span class="u18">Under 18</span>' : '') + '<span class="muted team"><span class="sep"> · </span>' + esc(p.team) + '</span></th><td>' + fmtH(h) + ' h' + (h > p.contract ? ' <span class="pill amb">Over contract</span>' : '') + '</td><td>' + p.contract + ' h</td><td>' + fmtH(avg) + ' h</td></tr>';
     });
     $('[data-hours]').innerHTML = html + '</tbody></table>';
+  }
+  // A change of who is on a shift, kept for its undo: "Undo: Ciarán on Friday’s baking"
+  function setWho(s, who) {
+    var last = { id: s.id, from: s.who, status: s.status, sick: st.sick };
+    if (s.status === 'sick') { s.status = null; st.sick = null; }
+    if (!st.changes[s.id]) st.changes[s.id] = { from: last.from };
+    s.who = who;
+    if (st.changes[s.id].from === who && !s.status) delete st.changes[s.id];
+    st.log.push(last);
+  }
+  function undoLabel(l) { var s = byId[l.id]; return 'Undo: ' + (s.who ? people[s.who].name : 'nobody') + ' on ' + DAY[s.day] + '’s ' + s.label.toLowerCase(); }
+  function undoLast() {
+    var l = st.log.pop(); if (!l) return;
+    var s = byId[l.id];
+    if (st.request && st.request.shift === l.id && st.request.state === 'yes' && s.who === st.request.who) st.request.state = 'waiting';
+    s.who = l.from; s.status = l.status; st.sick = l.sick;
+    if (st.changes[s.id] && st.changes[s.id].from === s.who) delete st.changes[s.id];
+  }
+  function undoBtn(forId) {
+    var l = st.log[st.log.length - 1];
+    return l && (!forId || l.id === forId) ? '<button class="b undo-chg" type="button" data-undo-chg>' + esc(undoLabel(l)) + '</button>' : '';
   }
   function renderPublish() {
     var ids = Object.keys(st.changes), why = [], box = $('[data-changes]');
@@ -231,7 +258,12 @@
     shifts.forEach(function (s) { if (s.who && !finished(s) && s.status !== 'sick' && check(s.who, s).red.length) why.push(people[s.who].name + ' can’t work ' + when(s) + ': ' + check(s.who, s).red[0].short); });
     var html = '';
     if (ids.length) {
-      html = '<h3>Changes since the last publish</h3><ul class="plain chl">' + ids.map(function (id) { var s = byId[id]; return '<li>' + esc(when(s) + ' · ' + s.label + ': ' + (s.who ? people[s.who].name : 'nobody')) + '</li>'; }).join('') + '</ul>';
+      var lastId = st.log.length ? st.log[st.log.length - 1].id : null;
+      html = '<h3>Changes since the last publish</h3><ul class="plain chl">' + ids.map(function (id) {
+        var s = byId[id], from = st.changes[id].from;
+        var who = s.who ? people[s.who].name + (from && from !== s.who ? ' instead of ' + people[from].name : '') : 'nobody' + (from ? ' (was ' + people[from].name + ')' : '');
+        return '<li><span>' + esc(when(s) + ' · ' + s.label + ': ' + who) + '</span>' + (id === lastId ? undoBtn() : '') + '</li>';
+      }).join('') + '</ul>';
       if (short) html += '<label class="chk"><input type="checkbox" data-short' + (st.confirmShort ? ' checked' : '') + '> <span>Less than 24 hours’ notice: I’ve spoken to the people affected</span></label>';
     }
     if (short && ids.length && !st.confirmShort) why.push('Confirm the short notice above');
@@ -255,27 +287,32 @@
     if (req) {
       var rs = byId[req.shift];
       if (req.state === 'waiting') html += '<section class="req"><p class="req-t">Mary asks: can you take ' + esc(DAY[rs.day] + ' ' + rs.start + '–' + rs.end) + '?</p><p class="muted">' + esc(rs.label) + ' · ' + esc(brk(rs, p).txt) + '</p><div class="row2"><button class="b fill main" type="button" data-answer="yes">Yes, I’ll take it</button><button class="b main" type="button" data-answer="no">No, I can’t</button></div></section>';
-      else html += '<p class="req-done">' + esc(req.state === 'yes' ? 'You said yes: ' + DAY[rs.day] + ' ' + rs.start + '–' + rs.end + ' is yours.' : 'You said no to ' + DAY[rs.day] + ' ' + rs.start + '–' + rs.end + '. Mary can ask someone else.') + '</p>';
+      else html += '<p class="req-done">' + esc(req.state === 'yes' ? 'You said yes: ' + DAY[rs.day] + ' ' + rs.start + '–' + rs.end + ' is yours.' : 'You said no to ' + DAY[rs.day] + ' ' + rs.start + '–' + rs.end + '. Mary can ask someone else.') + '</p>' +
+        (req.final ? '' : '<button class="b" type="button" data-reanswer>Change my answer</button><p class="muted hint">You can change it until Mary publishes the roster.</p>');
     }
     html += '<h2>Hi ' + esc(p.name) + '</h2>';
     var mineAll = shifts.filter(function (s) { return s.who === pid; }).sort(function (a, b) { return t0(a) - t0(b); });
     var next = mineAll.filter(function (s) { return !finished(s); }), done = mineAll.filter(finished);
+    // Every row has the same parts: the day, the time · the role, the state. A narrow phone stacks them in three lines;
+    // the wider phone frame lines them up as columns (demo-roster.css, 2026-11-27).
     html += '<h3>My shifts</h3><ul class="plain myl">';
+    var notOut = [];
     for (var k = 0; k < 7; k++) {
       var d = (D.now.day + k) % 7;
-      if (k > 0 && d < D.now.day) { html += '<li class="my none"><b>' + DAY[d] + '</b><span class="muted">Next week’s roster isn’t out yet</span></li>'; continue; }
+      if (k > 0 && d < D.now.day) { notOut.push(d); continue; }
       var ds = next.filter(function (s) { return s.day === d; });
-      if (!ds.length) { html += '<li class="my none"><b>' + DAY[d] + (k === 0 ? ' · today' : '') + '</b><span class="muted">Off</span></li>'; continue; }
+      if (!ds.length) { html += '<li class="my none"><b>' + DAY[d] + (k === 0 ? ' · today' : '') + '</b><span class="muted my-s">Off</span></li>'; continue; }
       ds.forEach(function (s) {
         var bk = brk(s, p), sick = s.status === 'sick';
-        html += '<li class="my"><b>' + DAY[d] + (k === 0 ? ' · today' : '') + '</b><span class="my-t">' + s.start + '–' + s.end + '</span><span>' + esc(s.label) + '</span>' +
-          (sick ? '<span class="pill amb">Off sick</span>' : running(s) ? '<span class="ok">On now</span>' : '<span class="muted">' + esc(bk.txt) + '</span>') + (s.day === 6 ? '<span class="c-sun">' + esc(SUNDAY.txt) + '</span>' : '') + '</li>';
+        html += '<li class="my"><b>' + DAY[d] + (k === 0 ? ' · today' : '') + '</b><span class="my-t">' + s.start + '–' + s.end + '</span><span class="my-r">' + esc(s.label) + '</span>' +
+          '<span class="my-s">' + (sick ? '<span class="pill amb">Off sick</span>' : running(s) ? '<span class="ok">On now</span>' : '<span class="muted">' + esc(bk.txt) + '</span>') + (s.day === 6 ? ' <span class="c-sun">' + esc(SUNDAY.txt) + '</span>' : '') + '</span></li>';
       });
     }
+    if (notOut.length) html += '<li class="my none"><b>' + DAY[notOut[0]] + (notOut.length > 1 ? ' to ' + DAY[notOut[notOut.length - 1]] : '') + '</b><span class="muted my-s">Next week’s roster isn’t out yet</span></li>';
     html += '</ul>';
     if (done.length) {
       var dh = done.reduce(function (a, s) { var w = worked[s.id]; return a + (w && w[1] ? (toMin(w[1]) - toMin(w[0]) - w[2]) / 60 : 0); }, 0);
-      html += '<details class="fold"><summary>Done this week <span class="muted fc">' + BK.count(done.length, 'shift') + ' · ' + fmtH(dh) + ' h</span></summary><ul class="plain myl">' + done.map(function (s) { var w = worked[s.id]; return '<li class="my"><b>' + DAY[s.day] + '</b><span class="my-t">' + (w ? w[0] + '–' + w[1] : s.start + '–' + s.end) + '</span><span class="muted">' + esc(s.label) + (w ? ' · break ' + w[2] + ' min' : '') + '</span></li>'; }).join('') + '</ul></details>';
+      html += '<details class="fold"><summary>Done this week <span class="muted fc"><span class="nw">' + BK.count(done.length, 'shift') + '</span> · <span class="nw">' + fmtH(dh) + ' h</span></span></summary><ul class="plain myl">' + done.map(function (s) { var w = worked[s.id]; return '<li class="my"><b>' + DAY[s.day] + '</b><span class="my-t">' + (w ? w[0] + '–' + w[1] : s.start + '–' + s.end) + '</span><span class="muted my-r">' + esc(s.label) + (w ? ' · break ' + w[2] + ' min' : '') + '</span></li>'; }).join('') + '</ul></details>';
     }
     html += '<p class="myh"><b>My hours:</b> ' + fmtH(planned(pid)) + ' this week, against a ' + p.contract + '-hour contract.</p>';
     // Can't make a shift?
@@ -348,24 +385,45 @@
   });
   doc.addEventListener('click', function (e) {
     var t = e.target, b;
-    if ((b = t.closest('[data-shift]'))) { var id = b.getAttribute('data-shift'); st.open = st.open === id && !b.closest('.banner') ? null : id; render(); if (st.open) scrollToPanel(); return; }
+    if ((b = t.closest('[data-shift]'))) {
+      var id = b.getAttribute('data-shift');
+      if (phone()) { openPage(id); return; }
+      st.open = st.open === id && !b.closest('.banner') ? null : id; render(); if (st.open) scrollToPanel(); return;
+    }
     if ((b = t.closest('[data-close]'))) { st.open = null; render(); return; }
+    if ((b = t.closest('[data-back]'))) { if (history.state && history.state.shift) history.back(); else closePage(); return; }
     if ((b = t.closest('[data-day]'))) { st.day = +b.getAttribute('data-day'); renderGrid(); return; }
     if ((b = t.closest('[data-uncorrect]'))) { delete st.corrections[st.open]; render(); return; }
     if ((b = t.closest('[data-ask]'))) { st.request = { shift: st.open, who: b.getAttribute('data-ask'), state: 'waiting' }; render(); return; }
-    if ((b = t.closest('[data-put]'))) { var s = byId[st.open]; if (s.status === 'sick') { s.status = null; st.sick = null; } s.who = b.getAttribute('data-put'); st.changes[s.id] = 1; render(); return; }
+    if ((b = t.closest('[data-put]'))) { setWho(byId[st.open], b.getAttribute('data-put')); render(); return; }
+    if ((b = t.closest('[data-undo-chg]'))) { undoLast(); render(); return; }
     if ((b = t.closest('[data-export]'))) { exportCsv(); BK.note('n-export', true); return; }
     if ((b = t.closest('[data-publish]'))) {
-      st.changes = {}; st.confirmShort = false; st.published = 'Published Thursday 10:40';
+      // The demo's clock stands at 10:30, so the publish is "just now" (2026-11-27); undo ends here.
+      st.changes = {}; st.log = []; st.confirmShort = false; st.published = 'Published just now';
+      if (st.request && st.request.state !== 'waiting') st.request.final = true;
       $('[data-published]').textContent = st.published;
-      var done = $('[data-pub-done]'); done.textContent = 'Published Thursday 10:40'; done.hidden = false; BK.note('n-pub', true);
+      var done = $('[data-pub-done]'); done.textContent = st.published; done.hidden = false; BK.note('n-pub', true);
       render(); return;
     }
     // Staff view
     if ((b = t.closest('[data-answer]'))) {
       var r = st.request, rs = byId[r.shift];
-      if (b.getAttribute('data-answer') === 'yes') { rs.who = r.who; st.changes[rs.id] = 1; r.state = 'yes'; }
+      if (b.getAttribute('data-answer') === 'yes') { setWho(rs, r.who); r.state = 'yes'; }
       else { r.state = 'no'; st.saidNo[rs.id + r.who] = 1; }
+      render(); return;
+    }
+    // An answer can be changed until Mary publishes (2026-11-27); Mary's view shows the old and the new answer.
+    if ((b = t.closest('[data-reanswer]'))) {
+      var r2 = st.request, rs2 = byId[r2.shift];
+      r2.prev = r2.state === 'yes' ? 'yes' : 'no';
+      if (r2.state === 'yes') for (var i = st.log.length - 1; i >= 0; i--) if (st.log[i].id === rs2.id) {
+        var le = st.log.splice(i, 1)[0]; rs2.who = le.from; rs2.status = le.status; st.sick = le.sick;
+        if (st.changes[rs2.id] && st.changes[rs2.id].from === rs2.who) delete st.changes[rs2.id];
+        break;
+      }
+      else delete st.saidNo[rs2.id + r2.who];
+      r2.state = 'waiting';
       render(); return;
     }
     if ((b = t.closest('[data-mode]'))) { var m = b.getAttribute('data-mode'); st.mode = st.mode === m ? null : m; st.swapShift = null; renderStaff(); return; }
@@ -375,6 +433,25 @@
     if ((b = t.closest('[data-sick]'))) { var sk = byId[b.getAttribute('data-sick')]; sk.status = 'sick'; st.sick = { who: st.viewAs, shift: sk.id }; renderStaff(); return; }
     if ((b = t.closest('[data-unsick]'))) { byId[st.sick.shift].status = null; st.sick = null; renderStaff(); return; }
   });
+  /* ---------- Phones: a shift opens as a page of its own (2026-11-27) ---------- */
+  var mqPhone = matchMedia('(max-width:820px)');
+  function phone() { return mqPhone.matches; }
+  function openPage(id) {
+    history.pushState({ shift: id }, '', location.pathname + '?shift=' + id);
+    st.open = id; st.day = byId[id].day; render(); scrollTo(0, 0);
+  }
+  function closePage() {
+    var id = st.open; st.open = null;
+    if (/[?&]shift=/.test(location.search)) history.replaceState(null, '', location.pathname);
+    render();
+    var d = id && $('.dayview [data-shift="' + id + '"]'); if (d) d.scrollIntoView({ block: 'center' });
+  }
+  addEventListener('popstate', function (e) {
+    var id = e.state && e.state.shift;
+    if (id && byId[id]) { st.open = id; st.day = byId[id].day; render(); scrollTo(0, 0); }
+    else { var was = st.open; st.open = null; render(); var d = was && $('.dayview [data-shift="' + was + '"]'); if (d) d.scrollIntoView({ block: 'center' }); }
+  });
+  mqPhone.addEventListener('change', function () { if (st.view === 'owner') renderOwner(); });
   function scrollToPanel() {
     var p = $('[data-panel] .panel'); if (!p) return;
     var r = p.getBoundingClientRect();
@@ -397,6 +474,7 @@
   var hiShift = (location.search.match(/[?&]shift=([\w-]+)/) || [])[1];
   if (hiShift && byId[hiShift]) { st.open = hiShift; st.day = byId[hiShift].day; } else hiShift = null;
   render();
-  if (hiShift) setTimeout(function () { var c = $('.wk [data-shift="' + hiShift + '"]'); if (c && c.offsetParent) c.scrollIntoView({ block: 'center' }); else { var d = $('.dayview [data-shift="' + hiShift + '"]'); if (d) d.scrollIntoView({ block: 'center' }); } }, 50);
+  if (hiShift && phone()) scrollTo(0, 0);
+  else if (hiShift) setTimeout(function () { var c = $('.wk [data-shift="' + hiShift + '"]'); if (c && c.offsetParent) c.scrollIntoView({ block: 'center' }); else { var d = $('.dayview [data-shift="' + hiShift + '"]'); if (d) d.scrollIntoView({ block: 'center' }); } }, 50);
   BK.guard(function () { return Object.keys(st.changes).length > 0; });
 })();

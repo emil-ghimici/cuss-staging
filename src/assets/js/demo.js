@@ -60,8 +60,9 @@
     var d = dec === undefined ? 2 : dec;
     return '€' + Number(v).toLocaleString('en-IE', { minimumFractionDigits: d, maximumFractionDigits: d });
   }
-  // English counts: "1 order", "2 orders" (one helper for every count on the demos)
-  function count(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
+  // English counts: "1 order", "2 orders", "1 hour’s rest" / "7 hours’ rest" (one helper for every count on the
+  // demos; the build reads this same function for the templates, src/_lib/count.js). n may be a number or its text.
+  function count(n, one, many) { return n + ' ' + (Number(n) === 1 ? one : (many || one + 's')); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function download(name, text, type) {
     var blob = new Blob([text], { type: type || 'text/csv;charset=utf-8' });

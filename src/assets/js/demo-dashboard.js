@@ -3,7 +3,10 @@
 (function () {
   var BK = window.BK, $ = BK.$, $$ = BK.$$, D = BK.data, doc = document;
   if (!D.invoices) return;
-  var unpaid = D.invoices.map(function (i) { return { n: i.n, who: i.who, amount: i.amount, due: i.due, paid: false }; });
+  var unpaid = D.invoices.map(function (i) { return { n: i.n, who: i.who, amount: i.amount, due: i.due, dueIso: i.dueIso, overdue: i.overdue, paid: false }; });
+  // The order states and sources in the page's own words, for the CSV too (2026-11-27)
+  var STATE = { out: 'Out for delivery', booked: 'Booked', delivered: 'Delivered' };
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
   function lookCount() {
     var n = $$('.look').filter(function (l) { return !l.classList.contains('is-done'); }).length;
@@ -14,7 +17,8 @@
     var open = unpaid.filter(function (i) { return !i.paid; });
     var sum = open.reduce(function (s, i) { return s + i.amount; }, 0);
     $('[data-unpaid]').textContent = BK.euro(sum, 0);
-    $('[data-unpaid-n]').textContent = BK.count(open.length, 'invoice') + ' · none overdue';
+    var late = open.filter(function (i) { return i.overdue; }).length;
+    $('[data-unpaid-n]').textContent = BK.count(open.length, 'invoice') + ' · ' + (late ? BK.count(late, 'overdue', 'overdue') : 'none overdue');
   }
 
   // Each action: what it does, its plain-text result, and its own undo naming what was done.
@@ -75,18 +79,21 @@
   // Exports, made on the device from the demo's figures
   $('[data-csv]').addEventListener('click', function () {
     var rows = [['Shutter & Crumb', 'This week, to Thursday 10:30'], [],
-      ['Figure', 'Value'], ['Sales (Mon–Thu)', D.wages.sales], ['Sales, same days last week', 4038], ['Wholesale orders', D.ordersWeek],
+      ['Figure', 'Value'], ['Sales (Mon–Thu)', D.sales.soFar], ['Sales, last week to Thursday 10:30', D.sales.lastToNow], ['Wholesale orders', D.ordersWeek],
       ['Unpaid', unpaid.filter(function (i) { return !i.paid; }).reduce(function (s, i) { return s + i.amount; }, 0).toFixed(2)], ['Wages so far', D.wages.total], [],
       ['Day', 'Shop', 'Wholesale', 'Last week']];
     D.days.forEach(function (d, i) { var t = D.sales.thisWeek[i]; rows.push([d, t ? t[0] : '', t ? t[1] : '', D.sales.lastWeek[i]]); });
     rows.push([], ['Order', 'Customer', 'Items', 'Delivery', 'State', 'Came']);
-    D.orders.forEach(function (o) { rows.push(['#' + o.n, o.who, o.what, o.when, o.state, o.src]); });
+    D.orders.forEach(function (o) { rows.push(['#' + o.n, o.who, o.what, o.when, STATE[o.state] || o.state, cap(o.src)]); });
     rows.push([], ['Invoice', 'Customer', 'Amount', 'Due', 'State']);
-    unpaid.forEach(function (i) { rows.push([i.n, i.who, i.amount.toFixed(2), i.due, i.paid ? 'paid' : 'unpaid']); });
+    unpaid.forEach(function (i) { rows.push([i.n, i.who, i.amount.toFixed(2), i.dueIso, i.paid ? 'Paid' : 'Unpaid']); });
     BK.download('shutter-and-crumb-this-week.csv', BK.csv(rows));
   });
+  // PDF: the folds open for the print and go back to how they were once printing ends (2026-11-27)
   $('[data-pdf]').addEventListener('click', function () {
-    $$('details').forEach(function (d) { d.open = true; });
+    var was = $$('details').map(function (d) { return [d, d.open]; });
+    was.forEach(function (x) { x[0].open = true; });
+    addEventListener('afterprint', function back() { was.forEach(function (x) { x[0].open = x[1]; }); removeEventListener('afterprint', back); });
     window.print();
   });
   lookCount();
