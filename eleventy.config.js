@@ -8,6 +8,7 @@ import { junk, junkSky } from './src/_lib/junk.js';
 import chips from './src/_data/chips.js';
 import { writeOgImages, ogSlug } from './src/_lib/og.js';
 import { checkMotionGuard } from './src/_lib/motion-guard.js';
+import { checkNameGuard } from './src/_lib/name-guard.js';
 import { transformSync } from 'esbuild';
 
 // Served JavaScript is minified and loses its comments (2026-11-27): visitors get compact code, the source keeps its
@@ -75,6 +76,8 @@ export default function (cfg) {
 
   // Build check: motion follows the one shared flag (src/_lib/motion-guard.js, design README rule 9)
   cfg.on('eleventy.before', () => checkMotionGuard());
+  // Build check: no function shares a name with another declaration in its scope (src/_lib/name-guard.js)
+  cfg.on('eleventy.before', () => checkNameGuard());
 
   // Open Graph images: one per page, rendered after the build from each page's og:title (src/_lib/og.js)
   cfg.addFilter('ogSlug', ogSlug);

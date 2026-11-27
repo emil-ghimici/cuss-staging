@@ -62,7 +62,8 @@
   // mode: 'home' (in the hero/band), 'perch' (sitting on a box, part of the page), 'hang' (from the top bar),
   //       'move' (on his way somewhere; fixed layer), 'tucked' (up in the top bar, out of view, near a Contact button),
   //       'shop' (in the Control room's storefront, which runs him),
-  //       'below' (fell out past the bottom of the screen; fixed layer, out of view, comes back up from there)
+  //       'below' (fell out past the bottom of the screen; fixed layer, out of view, comes back up from there),
+  //       'held' (carried by the visitor; fixed layer, follows the pointer)
   var mode = 'home', perch = null, perchDoc = { x: 0, y: 0 }, pos = { x: 0, y: 0 };
   var lastFrame = 0;                                       // the last frame any move of his ran (the "never stuck" check)
   var done = {};                                           // sign jobs done on this page
@@ -500,16 +501,26 @@
       crewEl.classList.remove('slip');
       if (g !== slipGen || mode !== 'move') return;          // scrolling caught him meanwhile
       under = boxUnder(x, pos.y + ch() - dangle());
-      var x1 = under ? landAt(under, x) : x;
-      var target = function () { return under ? seatY(seatOf(under.el), x1) : innerHeight + 4; };   // re-read: it may still be moving
-      var ms = Math.min(900, Math.max(120, Math.sqrt(2 * Math.max(0, target() - y) / FALL_G) * 1000));
-      return tween(ms, function (k) { return k * k; }, function (e) { putFixed(lerp(x, x1, e), lerp(y, target(), e)); })
+      if (under) return fallOnto(under, x, y);
+      var target = function () { return innerHeight + 4; };
+      return tween(fallMs(target() - y), function (k) { return k * k; }, function (e) { putFixed(x, lerp(y, target(), e)); })
         .then(function (ok) {
           if (!ok || mode !== 'move') return;
-          if (under) { squash(); return sitOn(under.el); }
           mode = 'below';                                   // out of view under the screen; back up after the next stop
         });
     });
+  }
+  function fallMs(dy) { return Math.min(900, Math.max(120, Math.sqrt(2 * Math.max(0, dy) / FALL_G) * 1000)); }
+  // Straight down onto the box under him (gravity), a squash, and he sits; also where he's let go (carrying)
+  function fallOnto(under, x, y) {
+    var g = slipGen; mode = 'move';
+    var x1 = landAt(under, x);
+    var target = function () { return seatY(seatOf(under.el), x1); };   // re-read: it may still be moving
+    return tween(fallMs(target() - y), function (k) { return k * k; }, function (e) { putFixed(lerp(x, x1, e), lerp(y, target(), e)); })
+      .then(function (ok) {
+        if (!ok || mode !== 'move' || g !== slipGen) return;
+        squash(); return sitOn(under.el);
+      });
   }
   // Just below the bottom edge, where his box took him out of view
   function fromBelow(x) {
@@ -704,7 +715,7 @@
 
   /* ---------- Home (hero or band) hands him over, and gets him back ---------- */
   function homeRect() { return homeCrew.getBoundingClientRect(); }
-  function homeReady() { return homeCrew && homeCrew.classList.contains('live') && !homeCrew.classList.contains('held'); }
+  function homeReady() { return homeCrew && homeCrew.classList.contains('live'); }
   function takeFromHome() {
     var r = homeRect();
     homeCrew.classList.add('away');
@@ -727,6 +738,85 @@
     var r = homeRect(), h = homeEl.getBoundingClientRect();
     if (r.top <= hh() + hangGap() + 4 || r.bottom > innerHeight) return false;
     return homeEl.hasAttribute('data-hero') ? h.bottom > innerHeight * 0.6 : h.top >= hh() - 4;   // a band: scrolled right back up
+  }
+
+  /* ---------- Carrying him (desktop: mouse or pen; 2026-11-27) ----------
+     A press and a short drag (6 px) on him picks him up wherever he is: his home scene's CREW (the hero's or a band's),
+     or this one sitting on a box, hanging from the top bar or on his way somewhere. He follows the pointer across the
+     whole window, never above the top bar, tilted, with a line; scrolling doesn't take him out of your hand.
+     Letting go (the button comes up, the pointer is cancelled or lost, the window loses focus), at the last spot:
+       over his home scene: he's handed back to it; the hero drops him to its floor right there (crew:drop);
+       a box under him on screen: he falls straight down onto it, lands with a squash and sits (a strip: its job);
+       nothing under him: his arm shoots up and clamps the top bar above him, and after the usual delay he pulls
+       himself to solid ground the way he always does from there (act, 'hang').
+     Phones (a tap talks) and stopped motion: no carrying. */
+  var HELD = ['Whoa, easy!', 'I can walk, you know.', 'Mind the paintwork.'];
+  var press = null, carry = null;
+  function canCarry(e) { return !reduced && !mqPhone.matches && (e.pointerType === 'mouse' || e.pointerType === 'pen') && e.button === 0; }
+  function onPress(el) {
+    return function (e) {
+      if (carry || fixedEl.hidden || !canCarry(e)) return;
+      if (el === homeCrew ? !(mode === 'home' && homeReady()) : (crewEl.hidden || mode === 'shop')) return;
+      var r = el.getBoundingClientRect();
+      press = { id: e.pointerId, x0: e.clientX, y0: e.clientY, ox: e.clientX - r.left, oy: e.clientY - r.top };
+      e.preventDefault();                                     // no text selection while he's carried
+    };
+  }
+  crewEl.addEventListener('pointerdown', onPress(crewEl));
+  if (homeCrew) homeCrew.addEventListener('pointerdown', onPress(homeCrew));
+  function carryTo(cx, cy) {
+    putFixed(Math.max(0, Math.min(innerWidth - cw(), cx - carry.ox)), Math.max(hh(), Math.min(innerHeight - ch(), cy - carry.oy)));
+  }
+  function pickUp(p, e) {
+    if (moveTok) moveTok.dead = true;
+    stopWalk(); tvAbort(); ++slipGen; ++arm1Gen;
+    clearTimeout(delayT); clearTimeout(peekT);
+    arm1Off(); dropArm2(); hush();
+    crewEl.classList.remove('hang', 'rolling', 'peek', 'tapping', 'typing', 'slip', 'land', 'jolt');
+    if (mode === 'home') {                                    // his home scene lets him go (hero.js / band.js: crew:left)
+      homeCrew.classList.add('away'); homeEl.classList.add('crew-out');
+      crewEl.classList.toggle('flip', homeCrew.classList.contains('flip'));
+      doc.dispatchEvent(new CustomEvent('crew:left'));
+    }
+    crewEl.hidden = false; perch = null; mode = 'held';
+    carry = { id: p.id, ox: p.ox, oy: p.oy };
+    carryTo(e.clientX, e.clientY);
+    tilt(-6); crewEl.classList.add('held'); doc.documentElement.classList.add('crew-held');
+    try { crewEl.setPointerCapture(p.id); } catch (err) {}
+    say(HELD[(Math.random() * HELD.length) | 0], 2500);
+  }
+  doc.addEventListener('pointermove', function (e) {
+    if (press && e.pointerId === press.id && Math.hypot(e.clientX - press.x0, e.clientY - press.y0) >= 6) { var p = press; press = null; pickUp(p, e); return; }
+    if (carry && e.pointerId === carry.id) carryTo(e.clientX, e.clientY);
+  });
+  function letGo(e) {
+    if (press && (!e || e.pointerId === press.id)) press = null;
+    if (!carry || (e && e.pointerId !== undefined && e.pointerId !== carry.id)) return;
+    var id = carry.id; carry = null;
+    try { crewEl.releasePointerCapture(id); } catch (err) {}
+    crewEl.classList.remove('held'); doc.documentElement.classList.remove('crew-held'); tilt(0); hush();
+    var x = pos.x, y = pos.y, foot = y + ch(), mid = x + cw() / 2;
+    var sc = homeCrew && homeCrew.parentElement.getBoundingClientRect();
+    if (sc && mid > sc.left && mid < sc.right && foot > sc.top && y < sc.bottom) { dropHome(x, foot); return; }
+    mode = 'move';
+    var under = boxUnder(x, foot - dangle());
+    if (under) { fallOnto(under, x, y); return; }
+    startHang(); clampTopBar(); jolt();                       // nothing under him: the top bar, right above him
+    if (nearNever()) { tuck(); return; }
+    clearTimeout(delayT); delayT = setTimeout(act, CREW_DELAY_MS);
+  }
+  doc.addEventListener('pointerup', letGo);
+  doc.addEventListener('pointercancel', letGo);
+  crewEl.addEventListener('lostpointercapture', letGo);
+  window.addEventListener('blur', function () { letGo(); });
+  // Let go over his home scene: the hero takes him where he was let go and drops him to its floor; a band, at its spot
+  function dropHome(x, foot) {
+    if (!homeEl.hasAttribute('data-hero')) { backHome(); return; }
+    tvAbort(); tvWant = false;
+    homeCrew.classList.toggle('flip', flipped());
+    doc.dispatchEvent(new CustomEvent('crew:drop', { detail: { x: x, bottom: foot } }));
+    crewEl.hidden = true; mode = 'home'; perch = null;
+    homeCrew.classList.remove('away'); homeEl.classList.remove('crew-out');
   }
 
   /* ---------- Watching the scroll ---------- */
@@ -770,7 +860,7 @@
   // After the stop and the delay: the one move he makes
   function act() {
     tvAbort();                                                // a move comes first; the telly can wait a moment
-    if (scrolling || touching) return;
+    if (scrolling || touching || carry) return;               // carried: he goes nowhere until he's let go
     if (reduced) { sitStill(); return; }
     if (mode === 'shop') { outOfShop(); return; }
     // Never stuck: "on his way" with no move running for a second (a move cut off without a scroll) counts as hanging

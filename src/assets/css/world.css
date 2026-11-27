@@ -27,8 +27,6 @@
 
 /* The crew: a battered maintenance robot */
 .crew{position:absolute;left:0;bottom:calc(50 * var(--u));width:calc(90 * var(--u));height:calc(120 * var(--u));transform:translate(var(--x,0),var(--y,0));z-index:4}
-.crew.held{z-index:5;cursor:grabbing}
-.crew.held svg{transform:rotate(-6deg)}
 .crew.sit{translate:0 calc(-38 * var(--u))}
 .crew svg{width:100%;height:100%;overflow:visible}
 .crew .arm{transform-origin:50px 46px;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .1s}
@@ -45,7 +43,8 @@
 
 /* The crew's speech bubble: a little screen above his head (decoration, hidden from screen readers) */
 .scene .crew{cursor:default}
-@media (min-width: 761px){html:not(.still) .scene .crew.live{cursor:grab}}
+/* Carrying him (guide.js, 2026-11-27): a grab hand on him wherever he is, a closed one everywhere while he's held */
+@media (min-width: 761px){html:not(.still) .scene .crew.live,html:not(.still) .band .crew{cursor:grab}}
 html.still .flick{animation:none}
 /* His tracks: darker links across the belt's top and bottom runs, over its edge; while he rolls the top run moves
    forward and the bottom run back, like a real track (one link every 6 units, so a 6-unit loop is seamless) */

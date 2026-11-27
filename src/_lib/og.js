@@ -6,6 +6,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import * as fontkit from 'fontkit';
 import { Resvg } from '@resvg/resvg-js';
+import { NIGHT as CREW_NIGHT } from './crew-colours.js';
 
 const FS = 'node_modules/@fontsource';
 let fonts = null;
@@ -49,7 +50,9 @@ function crewSvg() {
   return fs.readFileSync('src/_includes/svg/crew.njk', 'utf8')
     .replace(/<svg[^>]*>/, '').replace('</svg>', '')
     .replace('class="eye"', `fill="${C.signal}"`)
-    .replace(/<g class="mug">[\s\S]*?<\/g><\/g>/, '</g>');
+    .replace(/<g class="mug">[\s\S]*?<\/g><\/g>/, '</g>')
+    // his theme colours (style="fill:var(--crew-…)") become their Night values: resvg has no CSS variables
+    .replace(/var\(--(crew-[a-z]+)\)/g, (m, n) => CREW_NIGHT[n]);
 }
 
 export function ogSvg({ title, eyebrow }) {

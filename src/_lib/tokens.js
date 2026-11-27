@@ -1,5 +1,6 @@
 // Turns design/tokens.json (the design system's single source of truth) into CSS custom properties.
 import fs from 'node:fs';
+import { crewTokens } from './crew-colours.js';
 
 const fm = JSON.parse(fs.readFileSync('src/_data/fontMetrics.json', 'utf8'));
 const px = (v) => parseFloat(v);
@@ -59,7 +60,8 @@ export function tokensCss() {
   }
   // Derived theme values (not design tokens): screen details and glow colours. Glow belongs to the
   // night city only, so its colours are transparent in Daylight; one selector set below serves both.
-  for (const [name, d, l] of DERIVED) { dark.push(`--${name}:${d}`); light.push(`--${name}:${l}`); }
+  // CREW's colours: Daylight derived from Night by one rule (crew-colours.js)
+  for (const [name, d, l] of [...DERIVED, ...crewTokens()]) { dark.push(`--${name}:${d}`); light.push(`--${name}:${l}`); }
   const other = [];
   for (const fam of ['spacing', 'radius', 'border']) for (const s of t[fam]?.tokens ?? []) other.push(`--${s.name}:${s.value}`);
 

@@ -7,9 +7,9 @@
 .scene .reach-arm,.scene .reach-hand{--u:1px}
 @media (max-width: 760px){.scene .reach-arm,.scene .reach-hand,.band .reach-arm,.band .reach-hand{--u:.643px}}
 .reach-arm,.reach-hand{position:absolute;left:0;top:0;z-index:5;pointer-events:none;opacity:0}
-.reach-arm{height:calc(7 * var(--u));margin-top:calc(-3.5 * var(--u));transform-origin:0 50%;border-radius:999px;background:repeating-linear-gradient(90deg,#8a93a0 0 calc(16 * var(--u)),#4b525d calc(16 * var(--u)) calc(19 * var(--u)));
+.reach-arm{height:calc(7 * var(--u));margin-top:calc(-3.5 * var(--u));transform-origin:0 50%;border-radius:999px;background:repeating-linear-gradient(90deg,var(--crew-arm) 0 calc(16 * var(--u)),var(--crew-joint) calc(16 * var(--u)) calc(19 * var(--u)));
   transform:translate(var(--sx),var(--sy)) rotate(var(--ang));clip-path:inset(0 100% 0 0 round 999px);transition:clip-path .45s cubic-bezier(.2,.8,.2,1),opacity .1s}
-.reach-hand{width:calc(14 * var(--u));height:calc(14 * var(--u));margin:calc(-7 * var(--u)) 0 0 calc(-7 * var(--u));border-radius:50%;background:#9aa3ae;border:calc(2 * var(--u)) solid #59606b;
+.reach-hand{width:calc(14 * var(--u));height:calc(14 * var(--u));margin:calc(-7 * var(--u)) 0 0 calc(-7 * var(--u));border-radius:50%;background:var(--crew-hand);border:calc(2 * var(--u)) solid var(--crew-metal);
   transform:translate(var(--sx),var(--sy));transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .1s}
 .reach-arm.on,.reach-hand.on{opacity:1}
 .reach-arm.out{clip-path:inset(0 0 0 0 round 999px)}
@@ -36,7 +36,9 @@
 /* ---------- CREW the guide: caught by the header where he stands, rappels to the next box ---------- */
 .g-fixed{position:fixed;left:0;top:0;width:0;height:0;z-index:28;pointer-events:none}
 .g-doc{position:absolute;left:0;top:0;width:0;height:0;z-index:20}
-.g-crew{position:absolute;left:0;top:0;width:84px;height:112px;cursor:pointer;will-change:transform}
+.g-crew{position:absolute;left:0;top:0;width:84px;height:112px;cursor:pointer;will-change:transform;pointer-events:auto}   /* the fixed layer lets clicks through; he doesn't: he can be picked up anywhere */
+@media (min-width: 761px){html:not(.still) .g-crew{cursor:grab}}
+html.crew-held,html.crew-held *{cursor:grabbing!important}
 .g-crew svg{width:100%;height:100%;overflow:visible}
 .g-crew .eye{fill:var(--phosphor)}
 .g-crew .mug{display:none}
@@ -49,8 +51,8 @@
 .g-fixed{--gs:1}
 @media (max-width: 760px){.g-fixed{--gs:.643}}
 .g-arm{position:absolute;left:0;top:0;width:0;height:calc(7px * var(--gs));margin-top:calc(-3.5px * var(--gs));transform-origin:0 50%;border-radius:999px;opacity:0;
-  background:repeating-linear-gradient(90deg,#8a93a0 0 calc(16px * var(--gs)),#4b525d calc(16px * var(--gs)) calc(19px * var(--gs)))}
-.g-hand{position:absolute;left:0;top:0;width:calc(14px * var(--gs));height:calc(14px * var(--gs));margin:calc(-7px * var(--gs)) 0 0 calc(-7px * var(--gs));border-radius:50%;background:#9aa3ae;border:calc(2px * var(--gs)) solid #59606b;opacity:0}
+  background:repeating-linear-gradient(90deg,var(--crew-arm) 0 calc(16px * var(--gs)),var(--crew-joint) calc(16px * var(--gs)) calc(19px * var(--gs)))}
+.g-hand{position:absolute;left:0;top:0;width:calc(14px * var(--gs));height:calc(14px * var(--gs));margin:calc(-7px * var(--gs)) 0 0 calc(-7px * var(--gs));border-radius:50%;background:var(--crew-hand);border:calc(2px * var(--gs)) solid var(--crew-metal);opacity:0}
 .g-arm.on,.g-hand.on{opacity:1}
 .g-arm,.g-hand{z-index:29}   /* in front of him, like the arm on the TV */
 .g-crew.extend .arm{opacity:0}

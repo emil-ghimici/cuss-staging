@@ -16,7 +16,7 @@
   if (!ctx) return;
   var crewEl = scene.querySelector('.crew'), dial = tv.querySelector('.dial.d1');
   var tube = scene.querySelector('[data-tube]'), spark = scene.querySelector('[data-spark]'), sign = scene.querySelector('[data-sign]');
-  var lamp = scene.querySelector('[data-lamp]'), joint = scene.querySelector('[data-joint]'), drop = scene.querySelector('.drop');
+  var lamp = scene.querySelector('[data-lamp]'), joint = scene.querySelector('[data-joint]'), dripEl = scene.querySelector('.drop');
   var reduced = document.documentElement.classList.contains('still');   // the shared motion flag (layouts/base.njk)
 
   // What the crew says when you hover over him (tap on phones), by what he's doing.
@@ -31,7 +31,6 @@
     lamp: ['Bulb’s gone again. Good job I carry spares.'],
     pipe: ['Drip, drip. Not on my watch.'],
     off: ['Just popping out. Back in a tick.'],
-    held: ['Whoa, easy!', 'I can walk, you know.', 'Mind the paintwork.'],
     thanks: ['Cheers, I was getting to that.'],
     // His name (confirmed 2026-11-17), said once per visit after he first tunes the TV
     intro: ['Hiya. I’m CREW: CuSS Robot for Everyday Work.'],
@@ -224,7 +223,7 @@
   function loop(t) {
     raf = requestAnimationFrame(loop);
     var el = lastT ? Math.min(250, t - lastT) : FRAME_MS; lastT = t;
-    if (!chatting && !held) clock += el;   // he stops what he's doing while you talk to him or carry him
+    if (!chatting) clock += el;   // he stops what he's doing while you talk to him or carry him
     acc += el;
     if (waits.length) {
       var due = waits.filter(function (w) { return w.t <= clock; });
@@ -249,7 +248,6 @@
 
   /* ---------------- The crew ---------------- */
   var crew = { x: 0, needTV: true, wake: null, busy: false };
-  var held = false;                                   // being carried by the visitor (desktop)
   function sceneW() { return scene.clientWidth; }
   // A point of the street drawing (viewBox 640×520, "xMidYMax slice") in scene pixels
   function vx(x) { var w = sceneW(), h = scene.clientHeight, s = Math.max(w / 640, h / 520); return (x - 320) * s + w / 2; }
@@ -319,7 +317,7 @@
       breakIt: function () { joint.style.transform = ''; scene.classList.add('leak'); },
       fix: function () {
         pipeFixing = true;
-        drop.addEventListener('animationiteration', function () { scene.classList.remove('leak'); pipeFixing = false; }, { once: true });
+        dripEl.addEventListener('animationiteration', function () { scene.classList.remove('leak'); pipeFixing = false; }, { once: true });
         breakLater(30000, 90000, THINGS.pipe.breakIt);
       } }
   };
@@ -422,7 +420,7 @@
   // scene stopping mid-climb: the arm lets go and pulls in, he lowers to the ground, and the climb waits for his next
   // break. Phones (no crate): the announcement, the mug, the line, beside the telly. Reduced motion: no moves.
   function teaLine(kind) {                            // the break's own lines: closer together than 12 s, never over a chat
-    if (chatting || held || crewEl.classList.contains('away')) return;
+    if (chatting || crewEl.classList.contains('away')) return;
     lastMutter = performance.now(); showBubble(pick(kind), 3500);
   }
   // A move on the crew's clock (it stops while he's chatted to, carried, or the hero is paused); false if cut off
@@ -449,7 +447,7 @@
   }
   function climb(startAny) {
     var my = gen, lift = crateEl.offsetHeight * 38 / 40, left = armSide();
-    var cut = function () { return gen !== my || held || lastAny !== startAny; };
+    var cut = function () { return gen !== my || lastAny !== startAny; };
     var hdr = doc.querySelector('.hdr'), sr = scene.getBoundingClientRect();
     var cx = crew.x + crewW() / 2, ty = (hdr ? hdr.getBoundingClientRect().bottom : sr.top) - sr.top + 2;
     function letGo() {                                // the arm lets go and pulls in; he lowers to the ground
@@ -523,7 +521,7 @@
       // He introduces himself once per visit
       var seen = false;
       try { seen = sessionStorage.getItem('cuss-crew-hello') === '1'; sessionStorage.setItem('cuss-crew-hello', '1'); } catch (e) {}
-      if (!seen && !chatting && !held && !reduced) { lastMutter = performance.now(); showBubble(LINES.intro[0], 5000); return wait(5200); }
+      if (!seen && !chatting && !reduced) { lastMutter = performance.now(); showBubble(LINES.intro[0], 5000); return wait(5200); }
     }).then(life);
   }
 
@@ -572,7 +570,7 @@
   function hideBubble() { clearTimeout(bubbleTimer); bubble.classList.remove('on'); bubble.hidden = true; }
   // He speaks up now and then on his own, at most one line every 12 s, and never over a chat
   function mutter(kind, sure) {
-    if (chatting || held || reduced || crewEl.classList.contains('away')) return;
+    if (chatting || reduced || crewEl.classList.contains('away')) return;
     var now = performance.now();
     if (now - lastMutter < 12000 || (!sure && Math.random() > 0.5)) return;
     lastMutter = now;
@@ -588,7 +586,6 @@
     var d = Math.abs(walkTarget - crew.x); place(walkTarget, Math.max(0.2, d / 90)); walkTarget = null; crewEl.classList.add('rolling');
   }
   function openChat() {
-    if (held) return;
     if (!chatting) { chatting = true; freezeWalk(); showBubble(pick(situation())); }
     clearTimeout(bubbleTimer); bubbleTimer = setTimeout(closeChat, 5000);
   }
@@ -598,20 +595,18 @@
     resumeWalk();
   }
   crewEl.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') openChat(); });
-  crewEl.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse' && !held) { clearTimeout(bubbleTimer); bubbleTimer = setTimeout(closeChat, 300); } });
+  crewEl.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') { clearTimeout(bubbleTimer); bubbleTimer = setTimeout(closeChat, 300); } });
   crewEl.addEventListener('pointerdown', function (e) {
-    if (e.pointerType === 'mouse' || e.pointerType === 'pen') return;          // desktop: hover talks, press-and-drag carries
+    if (e.pointerType === 'mouse' || e.pointerType === 'pen') return;          // desktop: hover talks, press-and-drag carries (guide.js)
     e.stopPropagation();
     chatting ? closeChat() : openChat();
   });
   doc.addEventListener('pointerdown', function (e) { if (chatting && !crewEl.contains(e.target)) closeChat(); });
 
-  /* ---------------- Carrying him (desktop) ---------------- */
-  // A short drag picks him up; he follows the pointer inside the scene and drops to the ground on release.
-  // Dropped near something broken, he fixes it straight away. He is on the top layer, so he can be left anywhere.
-  var drag = null;
-  // While the site guide has him, his routine here stops where it is (he doesn't wander about unseen), so the guide
-  // can hand him back exactly where he left; he carries on once he's back.
+  /* ---------------- Carrying him (desktop; 2026-11-27) ----------------
+     A short drag picks him up and the site guide takes him over (guide.js: crew:left), so he can be carried anywhere
+     on the page and let go anywhere. Let go over this scene, he's handed back here (crew:drop): he drops to the floor
+     where he was let go, and if he lands near something broken he fixes it straight away. */
   doc.addEventListener('crew:left', function () { freezeWalk(); walkTarget = null; hideBubble(); chatting = false; stopEverything(); });
   // The guide's CREW has reached the dial from where he is: two clicks, the full name tunes in
   var remoteAsked = false;
@@ -639,50 +634,21 @@
     if (resting) { resting = false; teaLong = false; crew.wake = null; sync(); }
     crew.busy = false; walkTarget = null;
   }
-  crewEl.addEventListener('pointerdown', function (e) {
-    if (phone || reduced || !(e.pointerType === 'mouse' || e.pointerType === 'pen') || e.button !== 0) return;
-    var cr = crewEl.getBoundingClientRect();
-    drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, ox: e.clientX - cr.left, oy: e.clientY - cr.top, on: false };
-    e.preventDefault();
-  });
-  doc.addEventListener('pointermove', function (e) {
-    if (!drag || e.pointerId !== drag.id) return;
-    if (!drag.on) {
-      if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 6) return;
-      drag.on = true; held = true; chatting = false;
-      try { crewEl.setPointerCapture(e.pointerId); } catch (err) {}
-      stopEverything();
-      var m = new DOMMatrixReadOnly(getComputedStyle(crewEl).transform);
-      crew.x = m.m41; place(crew.x, 0);
-      drag.base = crewEl.offsetTop;                          // his top when standing on the ground
-      crewEl.classList.add('held');
-      showBubble(pick('held'));
-    }
-    var sr = scene.getBoundingClientRect();
-    var x = Math.max(0, Math.min(sceneW() - crewW(), e.clientX - sr.left - drag.ox));
-    var top = Math.max(0, Math.min(drag.base, e.clientY - sr.top - drag.oy));
-    crew.x = x;
-    crewEl.style.setProperty('--x', Math.round(x) + 'px');
-    crewEl.style.setProperty('--y', Math.round(top - drag.base) + 'px');
-    placeBubble();
-  });
-  function drop(e) {
-    if (!drag || (e && e.pointerId !== drag.id)) return;
-    var was = drag.on; drag = null;
-    if (!was) return;
-    held = false; hideBubble();
-    crewEl.classList.remove('held');
-    var x = crew.x;
+  // Let go over this scene (guide.js): from the spot where he was let go (never below the floor) he drops to the floor
+  doc.addEventListener('crew:drop', function (e) {
+    var sr = scene.getBoundingClientRect(), base = crewEl.offsetTop, h = crewEl.offsetHeight;
+    var x = Math.max(0, Math.min(sceneW() - crewW(), e.detail.x - sr.left));
+    var top = Math.min(base, e.detail.bottom - sr.top - h);
+    remoteAsked = false; chatting = false;
+    place(x, 0);
+    crewEl.style.setProperty('--y', Math.round(top - base) + 'px');
+    void crewEl.offsetWidth;                                                      // start the fall from there
     crewEl.style.transition = 'transform .4s cubic-bezier(.5,0,.9,.6)';
-    crewEl.style.setProperty('--x', Math.round(x) + 'px');
     crewEl.style.setProperty('--y', '0px');
-    crew.x = x;
     poke();
     var my = gen;
     wait(420).then(function () { return afterDrop(); }).then(function () { if (my === gen) return life(); });
-  }
-  doc.addEventListener('pointerup', drop);
-  doc.addEventListener('pointercancel', drop);
+  });
   function afterDrop() {
     var mid = crew.x + crewW() / 2, best = null, bd = 170;
     if ((crew.needTV || state === 'broken') && Math.abs(mid - (tvRight() + crewW() / 2)) < bd) best = 'tv';

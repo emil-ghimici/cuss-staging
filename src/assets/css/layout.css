@@ -9,9 +9,11 @@
 .hdr-nav{margin-left:0;gap:inherit}
 /* About (an outlined header button): on its own page, its outline and text light up in signal */
 .btn-hdr[aria-current="page"]:not(.btn-contact){border-color:var(--signal);color:var(--signal)}
-/* Settings gear: its panel opens directly underneath, floating over the page (nothing below moves); two buttons, half each */
+/* Settings gear: its panel opens directly underneath, floating over the page (nothing below moves); two buttons, half each.
+   Its edge is the open gear's signal outline (2026-11-27): the panel has the page's background, and the divider colour
+   measured 1.53:1 (Night) and 1.36:1 (Daylight), so the text behind it read as part of it. */
 .hdr-set{position:relative}
-.hdr-panel{position:absolute;right:0;top:calc(100% + var(--space-2));z-index:40;display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);width:min(360px,calc(100vw - 2 * var(--space-4)));padding:var(--space-2);background:var(--surface-0);border:var(--border-divider-w) solid var(--divider);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.hdr-panel{position:absolute;right:0;top:calc(100% + var(--space-2));z-index:40;display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);width:min(360px,calc(100vw - 2 * var(--space-4)));padding:var(--space-2);background:var(--surface-0);border:var(--border-control-w) solid var(--signal);box-shadow:0 8px 24px rgba(0,0,0,.35)}
 .hdr-panel[hidden]{display:none}
 .hdr-panel .btn{padding:var(--space-1) var(--space-2);font-size:16px;line-height:1.2}
 .hdr-panel .btn .ico{flex:none}
